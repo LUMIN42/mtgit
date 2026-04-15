@@ -1,0 +1,22 @@
+# Workspace artifacts
+node_modules/
+dist/
+
+# Keep shared .idea config, skip user-local IDE state
+.idea/workspace.xml
+.idea/copilotDiffState.xml
+
+# Frontend local datasets
+apps/frontend/src/assets/oracle-cards-20260411090222.json
+apps/frontend/src/assets/sample_card.json
+
+# Frontend package-manager leftovers
+apps/frontend/package-lock.json
+apps/frontend/yarn.lock
+apps/frontend/.yarnrc.yml
+apps/frontend/.yarn/
+
+# API environment files
+apps/api/.env*
+!apps/api/.env.example
+
