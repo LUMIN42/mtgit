@@ -1,4 +1,4 @@
-import {AspectRatio, Box, Text} from "@mantine/core";
+import {Box, Text, Image, Overlay} from "@mantine/core";
 import {getCardImageUrl} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 import type {CardDisplayMode} from "../context/DeckContext.tsx";
@@ -40,14 +40,19 @@ export function Card({
   }
 
   return (
-    <AspectRatio
-      ratio={63 / 88}
-      onClick={() => onSelect?.(card)}
-      style={onSelect ? {cursor: "pointer"} : undefined}
-    >
-      <img src={imageUrl} alt={card.name}/>
-    </AspectRatio>
+    <Box style={{position: "relative", width: "100%"}}>
+      <Overlay color="black" opacity={1} zIndex={0} style={{ backgroundColor: "black" }} />
+      <Image
+        src={imageUrl}
+        alt={card.name}
+        width="100%"
+        onClick={() => onSelect?.(card)}
+        pos={"relative"}
+        style={{
+          cursor: onSelect ? "pointer" : undefined,
+        }}
+        radius="lg"
+      />
+    </Box>
   );
 }
-
-export default Card;

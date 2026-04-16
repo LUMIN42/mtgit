@@ -1,4 +1,5 @@
 import {Anchor, Group} from "@mantine/core";
+import {useState} from "react";
 import {Tip} from "../Tip.tsx";
 import {SearchBox} from "../SearchBox.tsx";
 import {FieldSection} from "./FieldSection.tsx";
@@ -6,10 +7,12 @@ import {useDeckContext} from "../../context/DeckContext.tsx";
 
 export function CardSearchSection() {
   const deck = useDeckContext();
+  const [searchString, setSearchString] = useState('');
 
-  function startSearch(searchString: string) {
+  function startSearch(rawValue: string) {
+    const trimmedValue = rawValue.trim();
     deck.setIsSearching(true);
-    deck.setSubmittedSearch(searchString);
+    deck.setSubmittedSearch(trimmedValue);
   }
 
   return (
@@ -27,9 +30,12 @@ export function CardSearchSection() {
         </Group>
       }
     >
-      <SearchBox value={deck.searchString} onChange={deck.setSearchString} onSearch={(val) => startSearch(val)}
-                 size="xs"/>
+      <SearchBox
+        value={searchString}
+        onChange={setSearchString}
+        onSearch={startSearch}
+        size="xs"
+      />
     </FieldSection>
   );
 }
-

@@ -11,7 +11,7 @@ interface CardGroupProps {
   displayMode: CardDisplayMode;
   sortingMode?: CardSortMode;
   groupKey: string;
-  onCardSelect?: (card: CardWithTags) => void;
+  onCardSelect?: (card: CardWithTags, index: number, cards: CardWithTags[]) => void;
   onCardHover?: (imageUrl: string | null) => void;
 }
 
@@ -34,7 +34,7 @@ export function CardGroup({
             card={card}
             displayMode={displayMode}
             className={style.cardNameItem}
-            onSelect={onCardSelect}
+            onSelect={() => onCardSelect(card, index, sortedCards)}
             onHoverImage={onCardHover}
           />
         ))}
@@ -49,7 +49,7 @@ export function CardGroup({
           key={`${groupKey}-${card.id}-${index}`}
           card={card}
           displayMode={displayMode}
-          onSelect={onCardSelect}
+          onSelect={() => onCardSelect(card, index, sortedCards)}
         />
       ))}
     </Box>

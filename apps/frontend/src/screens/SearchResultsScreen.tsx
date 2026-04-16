@@ -1,20 +1,35 @@
-import {useMemo} from 'react';
-import {Alert, Button, Stack, Text} from "@mantine/core";
+import {useEffect, useMemo, useState} from 'react';
+import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
 import {useDeckContext} from "../context/DeckContext.tsx";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/CardGroup.tsx";
+import {CardDetailsModal, type CardDetailsModalCard} from "../components/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
-import type {CardWithTags} from "../types/cardWithTags.ts";
 
 function hasScryfallOrderClause(query: string): boolean {
-  return /(?:^|\s)(?:order|sort)(?::|=)\S+/i.test(query.trim());
+  return query
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .some((token) =>
+      token.startsWith('order:')
+      || token.startsWith('order=')
+      || token.startsWith('sort:')
+      || token.startsWith('sort='),
+    );
 }
 
 function SearchResultsScreen() {
   const deck = useDeckContext();
 
   const submittedSearch = deck.submittedSearch;
+  const [searchInput, setSearchInput] = useState(submittedSearch);
+  const [selection, setSelection] = useState<{cards: CardDetailsModalCard[]; index: number} | null>(null);
+
+  useEffect(() => {
+    setSearchInput(submittedSearch);
+  }, [submittedSearch]);
 
   const usesServerOrder = hasScryfallOrderClause(submittedSearch);
 
@@ -29,7 +44,10 @@ function SearchResultsScreen() {
     [searchQuery.data],
   );
 
-  const cardsWithTags = useMemo<CardWithTags[]>(
+  const showInitialLoading = searchQuery.isPending && submittedSearch.trim().length > 0 && cards.length === 0;
+  const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
+
+  const cardsWithTags = useMemo<CardDetailsModalCard[]>(
     () => cards.map((card) => ({...card, tags: []})),
     [cards],
   );
@@ -37,6 +55,7 @@ function SearchResultsScreen() {
   const handleSearchSubmit = (value: string) => {
     const trimmedValue = value.trim();
     deck.setSubmittedSearch(trimmedValue);
+    setSelection(null);
   };
 
   return (
@@ -45,9 +64,10 @@ function SearchResultsScreen() {
         Return to Deck View
       </Button>
       <SearchBox
-        value={deck.searchString ?? ''}
-        onChange={deck.setSearchString}
+        value={searchInput}
+        onChange={setSearchInput}
         onSearch={handleSearchSubmit}
+        loading={searchQuery.isFetching}
       />
 
       <Text size="sm" c="dimmed">
@@ -55,6 +75,21 @@ function SearchResultsScreen() {
           ? `Showing ${cards.length} result(s) for: ${submittedSearch}`
           : 'Type a search and press Enter or click the search icon.'}
       </Text>
+
+      {showRefreshLoading ? (
+        <Center>
+          <Loader type="dots" size="sm" />
+        </Center>
+      ) : null}
+
+      {showInitialLoading ? (
+        <Center py="xl">
+          <Stack gap="xs" align="center">
+            <Loader type="dots" size="lg" />
+            <Text size="sm" c="dimmed">Loading cards from Scryfall...</Text>
+          </Stack>
+        </Center>
+      ) : null}
 
       {searchQuery.isError ? (
         <Alert color="red" title="Search failed">
@@ -68,11 +103,22 @@ function SearchResultsScreen() {
         </Alert>
       ) : null}
 
-      <CardGroup
-        cards={cardsWithTags}
-        displayMode={deck.displayMode}
-        sortingMode={usesServerOrder ? undefined : deck.sortingMode}
-        groupKey={submittedSearch || 'search-results'}
+      {!showInitialLoading ? (
+        <CardGroup
+          cards={cardsWithTags}
+          displayMode={deck.displayMode}
+          sortingMode={usesServerOrder ? undefined : deck.sortingMode}
+          groupKey={submittedSearch || 'search-results'}
+          onCardSelect={(card, index, cardsInGroup) => setSelection({cards: cardsInGroup as CardDetailsModalCard[], index})}
+        />
+      ) : null}
+
+      <CardDetailsModal
+        cards={selection?.cards ?? []}
+        index={selection?.index ?? 0}
+        opened={!!selection}
+        onClose={() => setSelection(null)}
+        onIndexChange={(index) => setSelection((current) => current ? {...current, index} : current)}
       />
     </Stack>
   );

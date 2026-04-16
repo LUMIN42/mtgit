@@ -31,9 +31,9 @@ function App() {
 
   return (
     <CustomAppShell>
-      <Alert variant="light" title="tRPC hello">
-        <Text size="sm">{helloMessage}</Text>
-      </Alert>
+      {/*<Alert variant="light" title="tRPC hello">*/}
+      {/*  <Text size="sm">{helloMessage}</Text>*/}
+      {/*</Alert>*/}
 
       <AppBody/>
 

@@ -10,7 +10,7 @@ interface DeckDisplayModeSectionProps {
 export function DeckDisplayModeSection({value, onToggle}: DeckDisplayModeSectionProps) {
   return (
     <FieldSection label="Card Display Mode:">
-      <Box mt="xs" onMouseDownCapture={onToggle}>
+      <Box onMouseDownCapture={onToggle}>
         <SegmentedControl
           fullWidth
           size="xs"

@@ -23,8 +23,6 @@ interface DeckContext {
   deck: Deck;
   setDeck: Dispatch<SetStateAction<Deck>>;
 
-  searchString: string | null;
-  setSearchString: Dispatch<SetStateAction<string | null>>;
   isSearching: boolean;
   setIsSearching: Dispatch<SetStateAction<boolean>>;
 
@@ -59,7 +57,6 @@ export function DeckProvider({deck: initialDeck, children}: OracleCardsProviderP
   const [cardFilterQuery, setCardFilterQuery] = useState("");
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const sectionOrder: DeckSectionName[] = ["Commander", "Main", "Considering"];
-  const [searchString, setSearchString] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
   const [submittedSearch, setSubmittedSearch] = useState('');
 
@@ -109,8 +106,6 @@ export function DeckProvider({deck: initialDeck, children}: OracleCardsProviderP
         hoveredCardImageUrl,
         setHoveredCardImageUrl,
 
-        searchString,
-        setSearchString,
         isSearching,
         setIsSearching,
 

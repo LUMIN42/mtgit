@@ -1,20 +1,17 @@
 import {useDeckContext} from "../context/DeckContext.tsx";
 import {
-  Box,
-  Group,
-  Modal,
   Stack,
   Text,
 } from "@mantine/core";
 import {useState} from "react";
 import type {CardWithTags} from "../types/cardWithTags.ts";
 import {getGroupHeadingId, groupCardsByMode} from "../utils/cardGrouping.ts";
-import {getCardImageUrl} from "@mtgit/shared";
 import {CardGroup} from "./CardGroup.tsx";
+import {CardDetailsModal, type CardDetailsModalCard} from "./CardDetailsModal.tsx";
 
 export function GroupedCards() {
   const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
-  const [selectedCard, setSelectedCard] = useState<CardWithTags | null>(null);
+  const [selection, setSelection] = useState<{cards: CardDetailsModalCard[]; index: number} | null>(null);
 
   const sectionEntries = (Object.entries(filteredDeck.sections) as Array<[string, CardWithTags[]]>).sort(
     ([leftSection], [rightSection]) => {
@@ -29,8 +26,6 @@ export function GroupedCards() {
       return 0;
     },
   );
-
-  const selectedCardImageUrl = selectedCard ? getCardImageUrl(selectedCard) : null;
 
   return (
     <>
@@ -75,7 +70,7 @@ export function GroupedCards() {
                     displayMode={displayMode}
                     sortingMode={sortingMode}
                     groupKey={`${sectionName}-${group.heading}`}
-                    onCardSelect={setSelectedCard}
+                    onCardSelect={(card, index, cardsInGroup) => setSelection({cards: cardsInGroup as CardDetailsModalCard[], index})}
                     onCardHover={setHoveredCardImageUrl}
                   />
                 </Stack>
@@ -85,36 +80,13 @@ export function GroupedCards() {
         })}
       </Stack>
 
-      <Modal
-        opened={!!selectedCard}
-        onClose={() => setSelectedCard(null)}
-        title={selectedCard?.name ?? "Card details"}
-        size="80%"
-      >
-        {selectedCard ? (
-          <Group align="flex-start" grow wrap="nowrap">
-            <Box style={{maxWidth: 420, width: "100%"}}>
-              {selectedCardImageUrl ? (
-                <img src={selectedCardImageUrl} alt={selectedCard.name} style={{width: "100%", borderRadius: 8}}/>
-              ) : (
-                <Text c="dimmed">No card image available.</Text>
-              )}
-            </Box>
-
-            <Stack gap={6} style={{width: "100%"}}>
-              <Text fw={700}>{selectedCard.name}</Text>
-              <Text size="sm"><strong>Type:</strong> {selectedCard.type_line}</Text>
-              {/*<Text size="sm"><strong>Rarity:</strong> {selectedCard.rarity}</Text>*/}
-              <Text size="sm"><strong>Tags:</strong> {selectedCard.tags.length ? selectedCard.tags.join(", ") : "-"}
-              </Text>
-              <Text size="sm" style={{whiteSpace: "pre-line"}}>
-                <strong>OracleText:</strong><br/>
-                {selectedCard.oracle_text || "-"}
-              </Text>
-            </Stack>
-          </Group>
-        ) : null}
-      </Modal>
+      <CardDetailsModal
+        cards={selection?.cards ?? []}
+        index={selection?.index ?? 0}
+        opened={!!selection}
+        onClose={() => setSelection(null)}
+        onIndexChange={(index) => setSelection((current) => current ? {...current, index} : current)}
+      />
     </>
   );
 }

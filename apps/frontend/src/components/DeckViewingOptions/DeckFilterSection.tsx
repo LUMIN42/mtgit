@@ -1,20 +1,20 @@
+import {useDeckContext} from "../../context/DeckContext.tsx";
 import {DebouncedTextInput} from "../DebouncedTextInput.tsx";
 import {FieldSection} from "./FieldSection.tsx";
 
-interface DeckFilterSectionProps {
-  value: string;
-  onDebouncedChange: (value: string) => void;
-}
+export function DeckFilterSection() {
+  const {cardFilterQuery, setCardFilterQuery} = useDeckContext();
 
-export function DeckFilterSection({value, onDebouncedChange}: DeckFilterSectionProps) {
   return (
     <FieldSection label="Card Filter:">
       <DebouncedTextInput
         size="xs"
-        value={value}
-        onDebouncedChange={onDebouncedChange}
+        value={cardFilterQuery}
+        onDebouncedChange={setCardFilterQuery}
         placeholder="type:creature cmc<=3"
         label="Scryfall Query"
+        clearable={true}
+        setValue={setCardFilterQuery}
       />
     </FieldSection>
   );
