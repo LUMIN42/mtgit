@@ -7,6 +7,8 @@ import './assets/index.module.css'
 import App from './App.tsx'
 
 import {createTheme, MantineProvider} from '@mantine/core';
+import {DeckProvider} from "./context/DeckContext.tsx";
+import {SAMPLE_ORACLE_CARDS} from "./data/sampleOracleCards.ts";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +32,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
-        <App/>
+        <DeckProvider deck={SAMPLE_ORACLE_CARDS}>
+          <App/>
+        </DeckProvider>
       </MantineProvider>
     </QueryClientProvider>
   </StrictMode>,

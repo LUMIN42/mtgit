@@ -27,6 +27,9 @@ interface DeckContext {
   setSearchString: Dispatch<SetStateAction<string | null>>;
   isSearching: boolean;
   setIsSearching: Dispatch<SetStateAction<boolean>>;
+
+  submittedSearch: string;
+  setSubmittedSearch: Dispatch<SetStateAction<string>>;
 }
 
 const DeckContext = createContext<DeckContext | undefined>(undefined);
@@ -58,6 +61,8 @@ export function DeckProvider({deck: initialDeck, children}: OracleCardsProviderP
   const sectionOrder: DeckSectionName[] = ["Commander", "Main", "Considering"];
   const [searchString, setSearchString] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
+  const [submittedSearch, setSubmittedSearch] = useState('');
+
 
   const [deck, setDeck] = useState<Deck>(() => {
     try {
@@ -108,6 +113,9 @@ export function DeckProvider({deck: initialDeck, children}: OracleCardsProviderP
         setSearchString,
         isSearching,
         setIsSearching,
+
+        submittedSearch,
+        setSubmittedSearch
       }}
     >
       {children}

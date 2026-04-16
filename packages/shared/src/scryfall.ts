@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import {z} from 'zod';
 
 export const ScryfallImageUrisSchema = z
   .object({
@@ -60,9 +60,52 @@ export const ScryfallOracleCardSchema = z
   })
   .passthrough();
 
+// Live Scryfall API payloads can occasionally omit fields this app expects.
+// This variant keeps core identifiers strict while filling optional app fields.
+export const ScryfallApiOracleCardSchema = ScryfallOracleCardSchema.extend({
+  cmc: z.number().catch(0),
+  type_line: z.string().catch(''),
+  colors: z.array(z.string()).catch([]),
+  color_identity: z.array(z.string()).catch([]),
+  keywords: z.array(z.string()).catch([]),
+  legalities: ScryfallLegalitiesSchema.catch({}),
+  games: z.array(z.string()).catch([]),
+  set: z.string().catch(''),
+  set_name: z.string().catch(''),
+  rarity: z.string().catch('common'),
+}).passthrough();
+
+export const ScryfallSearchListSchema = z.object({
+  object: z.literal('list'),
+  has_more: z.boolean(),
+  data: z.array(ScryfallApiOracleCardSchema),
+  total_cards: z.number().int().nonnegative(),
+  next_page: z.string().url().optional(),
+  warnings: z.array(z.string()).optional(),
+}).passthrough();
+
+export const ScryfallErrorSchema = z.object({
+  object: z.literal('error'),
+  code: z.string(),
+  status: z.number().int(),
+  details: z.string(),
+  type: z.string().optional(),
+  warnings: z.array(z.string()).optional(),
+}).passthrough();
+
+export const ScryfallSearchResponseSchema = z.union([
+  ScryfallSearchListSchema,
+  ScryfallErrorSchema,
+]);
+
 export type ScryfallImageUris = z.infer<typeof ScryfallImageUrisSchema>;
 export type ScryfallCardFace = z.infer<typeof ScryfallCardFaceSchema>;
 export type ScryfallLegalities = z.infer<typeof ScryfallLegalitiesSchema>;
 export type ScryfallPrices = z.infer<typeof ScryfallPricesSchema>;
 export type ScryfallOracleCard = z.infer<typeof ScryfallOracleCardSchema>;
+export type ScryfallApiOracleCard = z.infer<typeof ScryfallApiOracleCardSchema>;
+
+export function getCardImageUrl(card: ScryfallOracleCard): string | null {
+  return card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal ?? null;
+}
 

@@ -1,14 +1,14 @@
 import style from "../assets/index.module.css";
 import {useDeckContext} from "../context/DeckContext.tsx";
 import {Paper, ScrollArea, Stack} from "@mantine/core";
-import {DeckPreviewImage} from "./DeckViewingUtils/DeckPreviewImage.tsx";
-import {CardSearchSection} from "./DeckViewingUtils/CardSearchSection.tsx";
-import {DeckFilterSection} from "./DeckViewingUtils/DeckFilterSection.tsx";
-import {DeckDisplayModeSection} from "./DeckViewingUtils/DeckDisplayModeSection.tsx";
-import {DeckGroupingSection} from "./DeckViewingUtils/DeckGroupingSection.tsx";
-import {DeckSortingSection} from "./DeckViewingUtils/DeckSortingSection.tsx";
-import {DeckSectionsToc} from "./DeckViewingUtils/DeckSectionsToc.tsx";
-import {DeckMainCountBadge} from "./DeckViewingUtils/DeckMainCountBadge.tsx";
+import {DeckPreviewImage} from "./DeckViewingOptions/DeckPreviewImage.tsx";
+import {CardSearchSection} from "./DeckViewingOptions/CardSearchSection.tsx";
+import {DeckFilterSection} from "./DeckViewingOptions/DeckFilterSection.tsx";
+import {DeckDisplayModeSection} from "./DeckViewingOptions/DeckDisplayModeSection.tsx";
+import {DeckGroupingSection} from "./DeckViewingOptions/DeckGroupingSection.tsx";
+import {DeckSortingSection} from "./DeckViewingOptions/DeckSortingSection.tsx";
+import {DeckSectionsToc} from "./DeckViewingOptions/DeckSectionsToc.tsx";
+import {DeckMainCountBadge} from "./DeckViewingOptions/DeckMainCountBadge.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 
 

@@ -7,6 +7,11 @@ import {useDeckContext} from "../../context/DeckContext.tsx";
 export function CardSearchSection() {
   const deck = useDeckContext();
 
+  function startSearch(searchString: string) {
+    deck.setIsSearching(true);
+    deck.setSubmittedSearch(searchString);
+  }
+
   return (
     <FieldSection
       label={
@@ -22,7 +27,7 @@ export function CardSearchSection() {
         </Group>
       }
     >
-      <SearchBox value={deck.searchString} onChange={deck.setSearchString} onSearch={() => deck.setIsSearching(true)}
+      <SearchBox value={deck.searchString} onChange={deck.setSearchString} onSearch={(val) => startSearch(val)}
                  size="xs"/>
     </FieldSection>
   );

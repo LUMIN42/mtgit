@@ -5,10 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./scryfall": "./src/scryfall.ts"
+    "./scryfall": "./src/scryfall.ts",
+    "./scryfallSearch": "./src/scryfallSearch.ts"
   },
   "dependencies": {
     "zod": "^4.1.12"
   }
 }
-
