@@ -1,7 +1,7 @@
-import {ActionIcon, Box, Divider, Group, Modal, Stack, Tabs, Text, Image, Checkbox} from '@mantine/core';
-import {IconChevronLeft, IconChevronRight} from '@tabler/icons-react';
+import {ActionIcon, Box, Divider, Group, Modal, Stack, Tabs, Text, Image, Checkbox, TextInput, Input, useMantineTheme} from '@mantine/core';
+import {IconChevronLeft, IconChevronRight, IconPlus} from '@tabler/icons-react';
 import {getCardImageUrl, type ScryfallOracleCard} from '@mtgit/shared';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {useTagsContext} from "../context/TagsContext.tsx";
 
 interface CardDetailsModalProps {
@@ -13,6 +13,7 @@ interface CardDetailsModalProps {
 }
 
 export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}: CardDetailsModalProps) {
+  const theme = useMantineTheme();
   const card = cards[index] ?? null;
   const cardImageUrl = card ? getCardImageUrl(card) : null;
   const hasPrevious = index > 0;
@@ -21,6 +22,25 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
   const {tags, setTags, allTags} = useTagsContext();
   const cardId = card?.oracle_id ?? card?.id ?? null;
   const currentTags = cardId ? (tags[cardId] ?? []) : [];
+
+  // Tag search state
+  const [tagSearch, setTagSearch] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // Filtered tags
+  const filteredTags = allTags.filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()));
+
+  // Update highlighted index when search or filteredTags changes
+  useEffect(() => {
+    // Avoid setting state if already correct
+    if (tagSearch && filteredTags.length > 0) {
+      setHighlightedIndex(prev => prev === 0 ? prev : 0);
+    } else if (highlightedIndex !== null) {
+      setHighlightedIndex(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tagSearch, filteredTags.length]);
 
   const handleTagToggle = (tag: string) => {
     if (!cardId) {
@@ -44,6 +64,35 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
         [cardId]: nextCardTags,
       };
     });
+  };
+
+  // Add new tag if enter is pressed and no tags are visible
+  const handleTagSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (filteredTags.length > 0 && highlightedIndex !== null) {
+        handleTagToggle(filteredTags[highlightedIndex]);
+      } else if (tagSearch.trim() && filteredTags.length === 0 && cardId) {
+        createTag();
+      }
+    } else if (e.key === 'ArrowDown' && filteredTags.length > 0) {
+      setHighlightedIndex(i => i === null ? 0 : Math.min(i + 1, filteredTags.length - 1));
+    } else if (e.key === 'ArrowUp' && filteredTags.length > 0) {
+      setHighlightedIndex(i => i === null ? 0 : Math.max(i - 1, 0));
+    }
+  };
+
+  // Explicit create tag handler
+  const createTag = () => {
+    if (!cardId || !tagSearch.trim()) return;
+    setTags((previousTags) => {
+      const existing = previousTags[cardId] ?? [];
+      if (existing.includes(tagSearch.trim())) return previousTags;
+      return {
+        ...previousTags,
+        [cardId]: [...existing, tagSearch.trim()],
+      };
+    });
+    setTagSearch('');
   };
 
   // Keyboard navigation: a = left, d = right
@@ -131,21 +180,59 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
 
 
               <Tabs.Panel value="tags" pt="xl">
-                <Stack gap="xs">
-                  {allTags.map((tag) => (
-                    <Checkbox
-                      key={tag}
-                      label={tag}
-                      checked={currentTags.includes(tag)}
-                      onChange={() => handleTagToggle(tag)}
-                      disabled={!cardId}
-                      w="100%"
-                      styles={{
-                        root: {width: '100%', margin: 0},
-                        label: {width: '100%', cursor: 'pointer'},
-                        input: {width: '100%', cursor: 'pointer'},
-                      }}
+                <Stack gap={0}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+                    <TextInput
+                      value={tagSearch}
+                      placeholder="Search or add tag..."
+                      aria-label="Tag search"
+                      onChange={e => setTagSearch(e.currentTarget.value)}
+                      onKeyDown={handleTagSearchKeyDown}
+                      size="sm"
+                      style={{flex: 1}}
+                      rightSection={tagSearch !== '' ? (
+                        <Input.ClearButton onClick={() => setTagSearch('')} />
+                      ) : undefined}
                     />
+                    <ActionIcon
+                      aria-label="Create new tag"
+                      onClick={createTag}
+                      disabled={!tagSearch.trim() || !cardId}
+                    >
+                      <IconPlus size={18}/>
+                    </ActionIcon>
+                  </div>
+                  {filteredTags.length === 0 && tagSearch.trim() && (
+                    <Text c="dimmed" size="sm">Press Enter or click + to add "{tagSearch.trim()}" as a new tag</Text>
+                  )}
+                  {filteredTags.map((tag, idx) => (
+                    <Box
+                      key={tag}
+                      component="label"
+                      onMouseEnter={() => setHoveredIndex(idx)}
+                      onMouseLeave={() => setHoveredIndex((current) => (current === idx ? null : current))}
+                      style={{
+                        width: '100%',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        cursor: 'pointer',
+                        borderRadius: 4,
+                        padding: '0.3em',
+                        backgroundColor: highlightedIndex === idx || hoveredIndex === idx ? theme.colors[theme.primaryColor][0] : undefined,
+                        transition: 'background-color 0.1s',
+                      }}
+                    >
+                      <Checkbox
+                        checked={currentTags.includes(tag)}
+                        onChange={() => handleTagToggle(tag)}
+                        disabled={!cardId}
+                        aria-label={tag}
+                        style={{flexShrink: 0}}
+                      />
+                      <Text style={{flex: 1, cursor: 'pointer'}}>{tag}</Text>
+                    </Box>
                   ))}
                 </Stack>
               </Tabs.Panel>
