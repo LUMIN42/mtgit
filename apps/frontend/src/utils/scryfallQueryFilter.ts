@@ -316,17 +316,13 @@ export function filterDeckByScryfallQuery(deck: Deck, query: string): Deck {
 
 
 // src/utils/oracleSearch.ts
-import oracleCardsUrl from "../assets/oracle-cards-20260411090222.json?url";
 import {extractCardsFromOracleJson} from "./deckImport.ts";
-// import type {ScryfallOracleCard} from "../types/scryfall.ts";
-// import {extractCardsFromOracleJson} from "./deckImport.ts";
-// import {createScryfallCardMatcher} from "./scryfallQueryFilter.ts";
 
 let cachedOracleCardsPromise: Promise<ScryfallOracleCard[]> | null = null;
 
 export async function loadOracleCards(): Promise<ScryfallOracleCard[]> {
   if (!cachedOracleCardsPromise) {
-    cachedOracleCardsPromise = fetch(oracleCardsUrl)
+    cachedOracleCardsPromise = fetch("/assets/oracle-cards-20260411090222.json")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load oracle cards.");
@@ -353,5 +349,3 @@ export async function loadOracleCardsByQuery(
   const cards = await loadOracleCards();
   return filterOracleCardsByQuery(cards, query);
 }
-
-

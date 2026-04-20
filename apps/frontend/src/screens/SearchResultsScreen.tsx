@@ -4,7 +4,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useDeckContext} from "../context/DeckContext.tsx";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/CardGroup.tsx";
-import {CardDetailsModal, type CardDetailsModalCard} from "../components/CardDetailsModal.tsx";
+import {CardDetailsModal} from "../components/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
 function hasScryfallOrderClause(query: string): boolean {
@@ -25,7 +25,7 @@ function SearchResultsScreen() {
 
   const submittedSearch = deck.submittedSearch;
   const [searchInput, setSearchInput] = useState(submittedSearch);
-  const [selection, setSelection] = useState<{cards: CardDetailsModalCard[]; index: number} | null>(null);
+  const [selection, setSelection] = useState<number | null>(null);
 
   useEffect(() => {
     setSearchInput(submittedSearch);
@@ -47,10 +47,12 @@ function SearchResultsScreen() {
   const showInitialLoading = searchQuery.isPending && submittedSearch.trim().length > 0 && cards.length === 0;
   const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
 
-  const cardsWithTags = useMemo<CardDetailsModalCard[]>(
+  const cardsWithTags = useMemo(
     () => cards.map((card) => ({...card, tags: []})),
     [cards],
   );
+
+  const safeSelection = selection !== null && selection < cardsWithTags.length ? selection : null;
 
   const handleSearchSubmit = (value: string) => {
     const trimmedValue = value.trim();
@@ -109,16 +111,16 @@ function SearchResultsScreen() {
           displayMode={deck.displayMode}
           sortingMode={usesServerOrder ? undefined : deck.sortingMode}
           groupKey={submittedSearch || 'search-results'}
-          onCardSelect={(card, index, cardsInGroup) => setSelection({cards: cardsInGroup as CardDetailsModalCard[], index})}
+          onCardSelect={(_, index) => setSelection(index)}
         />
       ) : null}
 
       <CardDetailsModal
-        cards={selection?.cards ?? []}
-        index={selection?.index ?? 0}
-        opened={!!selection}
+        cards={cardsWithTags}
+        index={safeSelection ?? 0}
+        opened={safeSelection !== null}
         onClose={() => setSelection(null)}
-        onIndexChange={(index) => setSelection((current) => current ? {...current, index} : current)}
+        onIndexChange={setSelection}
       />
     </Stack>
   );

@@ -1,7 +1,7 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useDeckContext} from "../context/DeckContext.tsx";
-import oracleCardsUrl from "../assets/oracle-cards-20260411090222.json?url";
+
 import {buildOracleCardIndex, extractCardsFromOracleJson, parseDeckImportText} from "../utils/deckImport.ts";
 import type {OracleCardIndex} from "../utils/deckImport.ts";
 import type {Deck} from "../types/deck.ts";
@@ -40,7 +40,8 @@ export function DeckImportModal() {
       return oracleCardIndex;
     }
 
-    const response = await fetch(oracleCardsUrl);
+    // Use fetch with a hardcoded relative path to the JSON asset
+    const response = await fetch("/assets/oracle-cards-20260420090251.json");
     if (!response.ok) {
       throw new Error("Failed to load oracle cards data.");
     }
@@ -125,4 +126,3 @@ export function DeckImportModal() {
     </>
   );
 }
-
