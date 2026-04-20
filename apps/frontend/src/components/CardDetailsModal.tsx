@@ -1,7 +1,7 @@
 import {ActionIcon, Box, Divider, Group, Modal, Stack, Tabs, Text, Image, Checkbox, TextInput, Input, useMantineTheme} from '@mantine/core';
 import {IconChevronLeft, IconChevronRight, IconPlus} from '@tabler/icons-react';
 import {getCardImageUrl, type ScryfallOracleCard} from '@mtgit/shared';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useTagsContext} from "../context/TagsContext.tsx";
 
 interface CardDetailsModalProps {
@@ -27,6 +27,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
   const [tagSearch, setTagSearch] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const tagSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   // Filtered tags
   const filteredTags = allTags.filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()));
@@ -66,6 +67,12 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
     });
   };
 
+  const handleTagCheckboxChange = (tag: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    handleTagToggle(tag);
+    // Prevent checkbox focus from blocking global A/D navigation.
+    event.currentTarget.blur();
+  };
+
   // Add new tag if enter is pressed and no tags are visible
   const handleTagSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -99,10 +106,8 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
   useEffect(() => {
     if (!opened) return;
     const handler = (e: KeyboardEvent) => {
-      // Ignore if focus is in input/textarea or contenteditable
-      const tag = (e.target as HTMLElement)?.tagName;
-      const editable = (e.target as HTMLElement)?.isContentEditable;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || editable) return;
+      // Disable A/D only when typing in the tags search input.
+      if (document.activeElement === tagSearchInputRef.current) return;
       if (e.key === 'a' || e.key === 'A') {
         if (hasPrevious) {
           e.preventDefault();
@@ -158,9 +163,9 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
             <Tabs defaultValue="details" flex={1}
                   styles={{panel: {marginTop: "var(--mantine-spacing-xl)"}}}>
               <Tabs.List grow>
-                <Tabs.Tab value="details">Details</Tabs.Tab>
-                <Tabs.Tab value="tags">Tags</Tabs.Tab>
-                <Tabs.Tab value="related">Related</Tabs.Tab>
+                <Tabs.Tab value="details" onMouseDown={(event) => event.preventDefault()}>Details</Tabs.Tab>
+                <Tabs.Tab value="tags" onMouseDown={(event) => event.preventDefault()}>Tags</Tabs.Tab>
+                <Tabs.Tab value="related" onMouseDown={(event) => event.preventDefault()}>Related</Tabs.Tab>
               </Tabs.List>
 
               <Tabs.Panel value="details">
@@ -179,10 +184,11 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
               </Tabs.Panel>
 
 
-              <Tabs.Panel value="tags" pt="xl">
+              <Tabs.Panel value="tags">
                 <Stack gap={0}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+                  <Group>
                     <TextInput
+                      ref={tagSearchInputRef}
                       value={tagSearch}
                       placeholder="Search or add tag..."
                       aria-label="Tag search"
@@ -201,7 +207,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
                     >
                       <IconPlus size={18}/>
                     </ActionIcon>
-                  </div>
+                  </Group>
                   {filteredTags.length === 0 && tagSearch.trim() && (
                     <Text c="dimmed" size="sm">Press Enter or click + to add "{tagSearch.trim()}" as a new tag</Text>
                   )}
@@ -226,9 +232,10 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
                     >
                       <Checkbox
                         checked={currentTags.includes(tag)}
-                        onChange={() => handleTagToggle(tag)}
+                        onChange={(event) => handleTagCheckboxChange(tag, event)}
                         disabled={!cardId}
                         aria-label={tag}
+                        tabIndex={-1}
                         style={{flexShrink: 0}}
                       />
                       <Text style={{flex: 1, cursor: 'pointer'}}>{tag}</Text>
