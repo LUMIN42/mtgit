@@ -13,7 +13,7 @@ const TagsContext = createContext<TagsContextType | undefined>(undefined);
 export function TagsProvider({children}: { children: ReactNode }) {
   const [tags, setTags] = useState<TagsMap>({});
 
-  const allTags = Object.values(tags).flat();
+  const allTags = Array.from(new Set(Object.values(tags).flat())).sort();
 
   return (
     <TagsContext.Provider value={{tags, setTags, allTags}}>

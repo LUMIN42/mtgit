@@ -2,13 +2,10 @@ import {ActionIcon, Box, Divider, Group, Modal, Stack, Tabs, Text, Image, Checkb
 import {IconChevronLeft, IconChevronRight} from '@tabler/icons-react';
 import {getCardImageUrl, type ScryfallOracleCard} from '@mtgit/shared';
 import {useEffect} from 'react';
-
-export type CardDetailsModalCard = ScryfallOracleCard & {
-  tags?: string[];
-};
+import {useTagsContext} from "../context/TagsContext.tsx";
 
 interface CardDetailsModalProps {
-  cards: CardDetailsModalCard[];
+  cards: ScryfallOracleCard[];
   index: number;
   opened: boolean;
   onClose: () => void;
@@ -20,6 +17,34 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
   const cardImageUrl = card ? getCardImageUrl(card) : null;
   const hasPrevious = index > 0;
   const hasNext = index < cards.length - 1;
+
+  const {tags, setTags, allTags} = useTagsContext();
+  const cardId = card?.oracle_id ?? card?.id ?? null;
+  const currentTags = cardId ? (tags[cardId] ?? []) : [];
+
+  const handleTagToggle = (tag: string) => {
+    if (!cardId) {
+      return;
+    }
+
+    setTags((previousTags) => {
+      const existing = previousTags[cardId] ?? [];
+      const nextCardTags = existing.includes(tag)
+        ? existing.filter((existingTag) => existingTag !== tag)
+        : [...existing, tag];
+
+      if (nextCardTags.length === 0) {
+        const nextTags = {...previousTags};
+        delete nextTags[cardId];
+        return nextTags;
+      }
+
+      return {
+        ...previousTags,
+        [cardId]: nextCardTags,
+      };
+    });
+  };
 
   // Keyboard navigation: a = left, d = right
   useEffect(() => {
@@ -93,37 +118,36 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
                 <Stack gap="sm">
                   <Text fw={700}>{card.name}</Text>
                   <Text><strong>Type:</strong> {card.type_line}</Text>
-                  <Text><strong>Tags:</strong> {card.tags?.length ? card.tags.join(', ') : '-'}</Text>
+                  <Text><strong>Tags:</strong> {currentTags.length ? currentTags.join(', ') : '-'}</Text>
                   <Text style={{whiteSpace: 'pre-wrap'}}>
                     <strong>OracleText:</strong><br/>
                     {card.oracle_text || '-'}
                   </Text>
                   <Text>
-                    <strong>Price (USD):</strong> ${card.prices.usd}
+                    <strong>Price (USD):</strong> {card.prices?.usd ? `$${card.prices.usd}` : '-'}
                   </Text>
                 </Stack>
               </Tabs.Panel>
 
 
               <Tabs.Panel value="tags" pt="xl">
-                {card.tags?.length ? (
-                  <Stack gap="xs">
-                    {card.tags.map((tag) => (
-                      <Checkbox
-                        key={tag}
-                        label={tag}
-                        w="100%"
-                        styles={{
-                          root: { width: '100%', margin: 0 },
-                          label: { width: '100%', cursor: 'pointer' },
-                          input: { width: '100%', cursor: 'pointer' },
-                        }}
-                      />
-                    ))}
-                  </Stack>
-                ) : (
-                  <Text c="dimmed">No tags.</Text>
-                )}
+                <Stack gap="xs">
+                  {allTags.map((tag) => (
+                    <Checkbox
+                      key={tag}
+                      label={tag}
+                      checked={currentTags.includes(tag)}
+                      onChange={() => handleTagToggle(tag)}
+                      disabled={!cardId}
+                      w="100%"
+                      styles={{
+                        root: {width: '100%', margin: 0},
+                        label: {width: '100%', cursor: 'pointer'},
+                        input: {width: '100%', cursor: 'pointer'},
+                      }}
+                    />
+                  ))}
+                </Stack>
               </Tabs.Panel>
 
 

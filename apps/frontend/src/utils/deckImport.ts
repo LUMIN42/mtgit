@@ -1,5 +1,4 @@
 import type {Deck, DeckSectionName} from "../types/deck.ts";
-import type {CardWithTags} from "../types/cardWithTags.ts";
 import type {ScryfallOracleCard} from "../types/scryfall.ts";
 import type {TagsMap} from "../context/TagsContext.tsx";
 
@@ -44,21 +43,6 @@ function parseCardNameAndTags(rawName: string): { cardName: string; tags: string
     cardName: withoutSetAndCollector,
     tags,
   };
-}
-
-function isLegendaryCreature(card: ScryfallOracleCard): boolean {
-  const typeLine = card.type_line.toLowerCase();
-  return typeLine.includes("legendary") && typeLine.includes("creature");
-}
-
-function promoteCardToCommander(sections: Deck["sections"], sectionCards: CardWithTags[], index: number): void {
-  const commander = sectionCards[index];
-  if (!commander) {
-    return;
-  }
-
-  sectionCards.splice(index, 1);
-  ensureSection(sections, "Commander").push(commander);
 }
 
 export function extractCardsFromOracleJson(payload: unknown): ScryfallOracleCard[] {
@@ -114,6 +98,8 @@ export function buildOracleCardIndex(cards: ScryfallOracleCard[]): OracleCardInd
 }
 
 export function parseDeckImportText(importText: string, oracleCardIndex: OracleCardIndex): { deck: Deck; tagsMap: TagsMap } {
+  console.log("I am here");
+
   const lines = importText.split(/\r?\n/);
   const sectionHeaderPattern = /^(Commander|Main|Sideboard|Considering)\s*:?$/i;
   const hasExplicitSectionHeaders = lines.some((rawLine) => sectionHeaderPattern.test(rawLine.trim()));
@@ -189,10 +175,24 @@ export function parseDeckImportText(importText: string, oracleCardIndex: OracleC
     }
   }
 
+  function isLegendaryCreature(card: ScryfallOracleCard): boolean {
+    const typeLine = card.type_line.toLowerCase();
+    return typeLine.includes("legendary") && typeLine.includes("creature");
+  }
+
+  function promoteCardToCommander(sections: Deck["sections"], sectionCards: ScryfallOracleCard[], index: number): void {
+    const commander = sectionCards[index];
+    if (!commander) {
+      return;
+    }
+
+    sectionCards.splice(index, 1);
+    ensureSection(sections, "Commander").push(commander);
+  }
+
   if (!sections.Commander?.length && sections.Sideboard?.length === 1 && isLegendaryCreature(sections.Sideboard[0])) {
     promoteCardToCommander(sections, sections.Sideboard, 0);
   }
-
 
   if (missingCards.size > 0) {
     const missingList = Array.from(missingCards).slice(0, 8).join(", ");

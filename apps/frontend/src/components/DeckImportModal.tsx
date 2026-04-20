@@ -1,6 +1,7 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useDeckContext} from "../context/DeckUiContext.tsx";
+import {useTagsContext, type TagsMap} from "../context/TagsContext.tsx";
 
 import {buildOracleCardIndex, extractCardsFromOracleJson, parseDeckImportText} from "../utils/deckImport.ts";
 import type {OracleCardIndex} from "../utils/deckImport.ts";
@@ -8,6 +9,7 @@ import type {Deck} from "../types/deck.ts";
 
 export function DeckImportModal() {
   const {setDeck} = useDeckContext();
+  const {setTags} = useTagsContext();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importDeckText, setImportDeckText] = useState("");
   const [isImporting, setIsImporting] = useState(false);
@@ -30,6 +32,17 @@ export function DeckImportModal() {
     },
   });
 
+  const mergeTagsMaps = (currentTags: TagsMap, importedTags: TagsMap): TagsMap => {
+    const merged: TagsMap = {...currentTags};
+
+    for (const [cardId, tags] of Object.entries(importedTags)) {
+      const existingTags = merged[cardId] ?? [];
+      merged[cardId] = Array.from(new Set([...existingTags, ...tags]));
+    }
+
+    return merged;
+  };
+
   const closeModal = () => {
     setIsImportModalOpen(false);
     setImportError(null);
@@ -40,8 +53,8 @@ export function DeckImportModal() {
       return oracleCardIndex;
     }
 
-    // Use fetch with a hardcoded relative path to the JSON asset
-    const response = await fetch("/assets/oracle-cards-20260420090251.json");
+    // Use fetch with the actual path where the oracle JSON exists in this project
+    const response = await fetch("/src/assets/oracle-cards-20260420090251.json");
     if (!response.ok) {
       throw new Error("Failed to load oracle cards data.");
     }
@@ -64,11 +77,13 @@ export function DeckImportModal() {
 
     try {
       const index = await getOracleCardIndex();
-      const { deck: parsedDeck } = parseDeckImportText(importDeckText, index);
+      const {deck: parsedDeck, tagsMap} = parseDeckImportText(importDeckText, index);
       if (mode === "replace") {
         setDeck(parsedDeck);
+        setTags(tagsMap);
       } else {
         setDeck((currentDeck) => mergeDecks(currentDeck, parsedDeck));
+        setTags((currentTags) => mergeTagsMaps(currentTags, tagsMap));
       }
       closeModal();
     } catch (error) {
