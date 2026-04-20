@@ -1,6 +1,6 @@
 import {InputLabel, Stack} from "@mantine/core";
 import {BarChart} from "@mantine/charts";
-import {useDeckContext} from "../context/DeckContext.tsx";
+import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {getGroupHeadingId} from "../utils/cardGrouping.ts";
 
 export function ManaCurvePlot() {

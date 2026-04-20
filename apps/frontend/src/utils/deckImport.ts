@@ -1,6 +1,7 @@
 import type {Deck, DeckSectionName} from "../types/deck.ts";
 import type {CardWithTags} from "../types/cardWithTags.ts";
 import type {ScryfallOracleCard} from "../types/scryfall.ts";
+import type {TagsMap} from "../context/TagsContext.tsx";
 
 export type OracleCardIndex = Map<string, ScryfallOracleCard>;
 
@@ -19,7 +20,7 @@ function normalizeCardName(name: string): string {
     .trim();
 }
 
-function ensureSection(sections: Deck["sections"], section: DeckSectionName): CardWithTags[] {
+function ensureSection(sections: Deck["sections"], section: DeckSectionName): ScryfallOracleCard[] {
   if (section === "Main") {
     return sections.Main;
   }
@@ -112,7 +113,7 @@ export function buildOracleCardIndex(cards: ScryfallOracleCard[]): OracleCardInd
   return index;
 }
 
-export function parseDeckImportText(importText: string, oracleCardIndex: OracleCardIndex): Deck {
+export function parseDeckImportText(importText: string, oracleCardIndex: OracleCardIndex): { deck: Deck; tagsMap: TagsMap } {
   const lines = importText.split(/\r?\n/);
   const sectionHeaderPattern = /^(Commander|Main|Sideboard|Considering)\s*:?$/i;
   const hasExplicitSectionHeaders = lines.some((rawLine) => sectionHeaderPattern.test(rawLine.trim()));
@@ -140,6 +141,7 @@ export function parseDeckImportText(importText: string, oracleCardIndex: OracleC
   const sections: Deck["sections"] = {Main: []};
   let currentSection: DeckSectionName = "Main";
   const missingCards = new Set<string>();
+  const tagsMap: TagsMap = {};
 
   for (const [index, rawLine] of lines.entries()) {
     const line = rawLine.trim();
@@ -170,9 +172,20 @@ export function parseDeckImportText(importText: string, oracleCardIndex: OracleC
       continue;
     }
 
+    // Add tags to tagsMap by card id (oracle_id preferred, fallback to id)
+    if (tags.length > 0) {
+      const cardId = card.oracle_id || card.id;
+      if (cardId) {
+        if (!tagsMap[cardId]) tagsMap[cardId] = [];
+        tagsMap[cardId].push(...tags);
+        // Remove duplicates
+        tagsMap[cardId] = Array.from(new Set(tagsMap[cardId]));
+      }
+    }
+
     const targetSection = ensureSection(sections, currentSection);
     for (let i = 0; i < quantity; i += 1) {
-      targetSection.push({...card, tags: [...tags]});
+      targetSection.push({...card});
     }
   }
 
@@ -188,9 +201,10 @@ export function parseDeckImportText(importText: string, oracleCardIndex: OracleC
   }
 
   return {
-    name: "Imported Deck",
-    sections,
+    deck: {
+      name: "Imported Deck",
+      sections,
+    },
+    tagsMap,
   };
 }
-
-

@@ -1,6 +1,6 @@
 import {Box, Stack} from "@mantine/core";
 import style from "../assets/index.module.css";
-import type {CardDisplayMode} from "../context/DeckContext.tsx";
+import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import type {CardWithTags} from "../types/cardWithTags.ts";
 import type {CardSortMode} from "../types/grouping.ts";
 import {sortCardsInGroup} from "../utils/cardGrouping.ts";

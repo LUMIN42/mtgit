@@ -5,7 +5,7 @@ import {
   Text,
 } from "@mantine/core";
 
-import {useDeckContext} from "./context/DeckContext.tsx";
+import {useDeckContext} from "./context/DeckUiContext.tsx";
 import { trpcClient } from './trpcClient.ts';
 import {DeckViewScreen} from "./screens/DeckViewScreen.tsx";
 import SearchResultsScreen from "./screens/SearchResultsScreen.tsx";

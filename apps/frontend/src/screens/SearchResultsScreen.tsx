@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useState} from 'react';
 import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
-import {useDeckContext} from "../context/DeckContext.tsx";
+import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/CardGroup.tsx";
 import {CardDetailsModal} from "../components/CardDetailsModal.tsx";

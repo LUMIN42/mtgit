@@ -5,7 +5,7 @@ import {Grid, Group, Stack} from "@mantine/core";
 import style from "../assets/index.module.css";
 import {DeckImportModal} from "../components/DeckImportModal.tsx";
 import {DeckDisplayModeSection} from "../components/DeckViewingOptions/DeckDisplayModeSection.tsx";
-import {useDeckContext} from "../context/DeckContext.tsx";
+import {useDeckContext} from "../context/DeckUiContext.tsx";
 
 
 export function DeckViewScreen() {

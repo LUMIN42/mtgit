@@ -1,5 +1,5 @@
 import style from "../assets/index.module.css";
-import {useDeckContext} from "../context/DeckContext.tsx";
+import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {Paper, ScrollArea, Stack} from "@mantine/core";
 import {DeckPreviewImage} from "./DeckViewingOptions/DeckPreviewImage.tsx";
 import {CardSearchSection} from "./DeckViewingOptions/CardSearchSection.tsx";

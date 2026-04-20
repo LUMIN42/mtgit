@@ -1,4 +1,4 @@
-import {useDeckContext} from "../context/DeckContext.tsx";
+import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {
   Stack,
   Text,
@@ -11,7 +11,7 @@ import {CardDetailsModal} from "./CardDetailsModal.tsx";
 
 export function GroupedCards() {
   const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
-  const [selection, setSelection] = useState<number | null>(null);
+  const [selectedCard, setSelectedCard] = useState<CardWithTags | null>(null);
 
   const {sections, pageCards} = useMemo(() => {
     const sectionEntries = (Object.entries(filteredDeck.sections) as Array<[string, CardWithTags[]]>).sort(
@@ -34,7 +34,7 @@ export function GroupedCards() {
         const groupResult = groupCardsByMode(cards, sectionGroupingMode).reduce(
           (groupAcc, group) => {
             const sortedCards = sortingMode ? sortCardsInGroup(group.cards, sortingMode) : group.cards;
-            const startIndex = groupAcc.pageCards.length;
+            const startIndex = sectionAcc.pageCards.length + groupAcc.pageCards.length;
 
             return {
               groups: [
@@ -68,7 +68,8 @@ export function GroupedCards() {
     );
   }, [filteredDeck.sections, groupingMode, sortingMode]);
 
-  const safeSelection = selection !== null && selection < pageCards.length ? selection : null;
+  const safeSelection = selectedCard ? pageCards.indexOf(selectedCard) : -1;
+  const hasSelection = safeSelection >= 0;
 
   return (
     <>
@@ -110,7 +111,7 @@ export function GroupedCards() {
                       displayMode={displayMode}
                       sortingMode={sortingMode}
                       groupKey={`${section.sectionName}-${group.heading}`}
-                      onCardSelect={(_, index) => setSelection(group.startIndex + index)}
+                      onCardSelect={(_, index) => setSelectedCard(pageCards[group.startIndex + index] ?? null)}
                       onCardHover={setHoveredCardImageUrl}
                     />
                   </Stack>
@@ -123,10 +124,10 @@ export function GroupedCards() {
 
       <CardDetailsModal
         cards={pageCards}
-        index={safeSelection ?? 0}
-        opened={safeSelection !== null}
-        onClose={() => setSelection(null)}
-        onIndexChange={setSelection}
+        index={hasSelection ? safeSelection : 0}
+        opened={hasSelection}
+        onClose={() => setSelectedCard(null)}
+        onIndexChange={(nextIndex) => setSelectedCard(pageCards[nextIndex] ?? null)}
       />
     </>
   );

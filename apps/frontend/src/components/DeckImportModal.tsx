@@ -1,6 +1,6 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
-import {useDeckContext} from "../context/DeckContext.tsx";
+import {useDeckContext} from "../context/DeckUiContext.tsx";
 
 import {buildOracleCardIndex, extractCardsFromOracleJson, parseDeckImportText} from "../utils/deckImport.ts";
 import type {OracleCardIndex} from "../utils/deckImport.ts";
@@ -64,7 +64,7 @@ export function DeckImportModal() {
 
     try {
       const index = await getOracleCardIndex();
-      const parsedDeck = parseDeckImportText(importDeckText, index);
+      const { deck: parsedDeck } = parseDeckImportText(importDeckText, index);
       if (mode === "replace") {
         setDeck(parsedDeck);
       } else {

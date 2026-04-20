@@ -1,7 +1,7 @@
 import {Box, Text, Image, Overlay} from "@mantine/core";
 import {getCardImageUrl} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
-import type {CardDisplayMode} from "../context/DeckContext.tsx";
+import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 
 
 type CardProps = {

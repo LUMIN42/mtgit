@@ -3,7 +3,7 @@ import {useState} from "react";
 import {Tip} from "../Tip.tsx";
 import {SearchBox} from "../SearchBox.tsx";
 import {FieldSection} from "./FieldSection.tsx";
-import {useDeckContext} from "../../context/DeckContext.tsx";
+import {useDeckContext} from "../../context/DeckUiContext.tsx";
 
 export function CardSearchSection() {
   const deck = useDeckContext();

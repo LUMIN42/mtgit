@@ -11,15 +11,20 @@ export type CardDisplayMode = "Images" | "Text";
 
 interface DeckUIContextValue {
   sectionOrder: DeckSectionName[];
+
   displayMode: CardDisplayMode;
   setDisplayMode: Dispatch<SetStateAction<CardDisplayMode>>;
+
   groupingMode: CardGroupingMode;
   setGroupingMode: Dispatch<SetStateAction<CardGroupingMode>>;
+
   sortingMode: CardSortMode;
   setSortingMode: Dispatch<SetStateAction<CardSortMode>>;
+
   cardFilterQuery: string;
   setCardFilterQuery: Dispatch<SetStateAction<string>>;
   filteredDeck: Deck;
+
   hoveredCardImageUrl: string | null;
   setHoveredCardImageUrl: Dispatch<SetStateAction<string | null>>;
 

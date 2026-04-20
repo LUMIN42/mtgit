@@ -11,7 +11,7 @@ export type DeckSectionName = "Main" | OptionalDeckSectionName;
 export interface Deck {
   name: string;
   sections: {
-    Main: CardWithTags[];
+    Main: ScryfallOracleCard[];
   } & {
     [K in OptionalDeckSectionName]?: CardWithTags[];
   };

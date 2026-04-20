@@ -1,5 +1,5 @@
 import {Box, SegmentedControl} from "@mantine/core";
-import type {CardDisplayMode} from "../../context/DeckContext.tsx";
+import type {CardDisplayMode} from "../../context/DeckUiContext.tsx";
 import {FieldSection} from "./FieldSection.tsx";
 
 interface DeckDisplayModeSectionProps {
