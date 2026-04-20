@@ -21,3 +21,4 @@ apps/api/.env*
 !apps/api/.env.example
 
 package-lock.json
+apps/frontend/src/assets/oracle-cards-20260420090251.json
