@@ -20,7 +20,7 @@ html, body, #root, .gridRoot {
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
 
     max-width: 1000px;
     margin: auto;
