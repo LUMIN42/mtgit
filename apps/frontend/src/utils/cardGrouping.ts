@@ -7,6 +7,7 @@ export type GroupedCards = {
   cards: CardWithTags[];
 };
 
+// todo move to proper global types
 export const MainCardType = {
   Artifact: "Artifact",
   Battle: "Battle",
@@ -21,7 +22,7 @@ export const MainCardType = {
 
 export type MainCardType = (typeof MainCardType)[keyof typeof MainCardType];
 
-// todo just sort alphabetically
+// todo just sort alphabetically ?
 const MAIN_TYPE_ORDER: MainCardType[] = [
   MainCardType.Artifact,
   MainCardType.Battle,
@@ -30,8 +31,8 @@ const MAIN_TYPE_ORDER: MainCardType[] = [
   MainCardType.Enchantment,
   MainCardType.Instant,
   MainCardType.Sorcery,
-  MainCardType.Land,
   MainCardType.Planeswalker,
+  MainCardType.Land
 ];
 
 const MAIN_TYPE_SET = new Set<string>(MAIN_TYPE_ORDER);
