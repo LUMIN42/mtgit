@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./deckImport": "./src/deckImport.ts",
     "./scryfall": "./src/scryfall.ts",
     "./scryfallSearch": "./src/scryfallSearch.ts"
   },

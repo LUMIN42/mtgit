@@ -1,6 +1,6 @@
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 import type {CardWithTags} from "../types/cardWithTags.ts";
-import type {ScryfallOracleCard} from "../types/scryfall.ts";
+import type {ScryfallOracleCard} from "@mtgit/shared";
 
 export type GroupedCards = {
   heading: string;

@@ -1,5 +1,5 @@
 import type {Deck} from "../types/deck.ts";
-import type {ScryfallOracleCard} from "../types/scryfall.ts";
+import type {ScryfallOracleCard} from "../types/scryfall";
 
 type NumericOperator = "=" | "!=" | ">" | ">=" | "<" | "<=" | ":";
 
@@ -314,38 +314,3 @@ export function filterDeckByScryfallQuery(deck: Deck, query: string): Deck {
 }
 
 
-
-// src/utils/oracleSearch.ts
-import {extractCardsFromOracleJson} from "./deckImport.ts";
-
-let cachedOracleCardsPromise: Promise<ScryfallOracleCard[]> | null = null;
-
-export async function loadOracleCards(): Promise<ScryfallOracleCard[]> {
-  if (!cachedOracleCardsPromise) {
-    cachedOracleCardsPromise = fetch("/assets/oracle-cards-20260411090222.json")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to load oracle cards.");
-        }
-        return response.json();
-      })
-      .then((payload) => extractCardsFromOracleJson(payload));
-  }
-
-  return cachedOracleCardsPromise;
-}
-
-export function filterOracleCardsByQuery(
-  cards: ScryfallOracleCard[],
-  query: string,
-): ScryfallOracleCard[] {
-  const matcher = createScryfallCardMatcher(query);
-  return cards.filter(matcher);
-}
-
-export async function loadOracleCardsByQuery(
-  query: string,
-): Promise<ScryfallOracleCard[]> {
-  const cards = await loadOracleCards();
-  return filterOracleCardsByQuery(cards, query);
-}

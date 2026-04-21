@@ -1,10 +1,9 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useDeckContext} from "../context/DeckUiContext.tsx";
-import {useTagsContext, type TagsMap} from "../context/TagsContext.tsx";
-
-import {buildOracleCardIndex, extractCardsFromOracleJson, parseDeckImportText} from "../utils/deckImport.ts";
-import type {OracleCardIndex} from "../utils/deckImport.ts";
+import {useTagsContext} from "../context/useTagsContext.ts";
+import type {TagsMap} from "@mtgit/shared/deckImport";
+import {trpcClient} from "../trpcClient.ts";
 import type {Deck} from "../types/deck.ts";
 
 export function DeckImportModal() {
@@ -14,7 +13,6 @@ export function DeckImportModal() {
   const [importDeckText, setImportDeckText] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-  const [oracleCardIndex, setOracleCardIndex] = useState<OracleCardIndex | null>(null);
 
   const mergeDecks = (currentDeck: Deck, importedDeck: Deck): Deck => ({
     ...currentDeck,
@@ -48,41 +46,17 @@ export function DeckImportModal() {
     setImportError(null);
   };
 
-  const getOracleCardIndex = async (): Promise<OracleCardIndex> => {
-    if (oracleCardIndex) {
-      return oracleCardIndex;
-    }
-
-    // Use fetch with the actual path where the oracle JSON exists in this project
-    const response = await fetch("/src/assets/oracle-cards-20260420090251.json");
-    if (!response.ok) {
-      throw new Error("Failed to load oracle cards data.");
-    }
-
-    const payload = await response.json();
-    const cards = extractCardsFromOracleJson(payload);
-    const nextIndex = buildOracleCardIndex(cards);
-
-    if (nextIndex.size === 0) {
-      throw new Error("Oracle cards data is empty or invalid.");
-    }
-
-    setOracleCardIndex(nextIndex);
-    return nextIndex;
-  };
-
   const handleConfirmImport = async (mode: "replace" | "append") => {
     setIsImporting(true);
     setImportError(null);
 
     try {
-      const index = await getOracleCardIndex();
-      const {deck: parsedDeck, tagsMap} = parseDeckImportText(importDeckText, index);
+      const {deck: parsedDeck, tagsMap} = await trpcClient.deckImport.parse.mutate({ text: importDeckText });
       if (mode === "replace") {
-        setDeck(parsedDeck);
+        setDeck(parsedDeck as Deck);
         setTags(tagsMap);
       } else {
-        setDeck((currentDeck) => mergeDecks(currentDeck, parsedDeck));
+        setDeck((currentDeck) => mergeDecks(currentDeck, parsedDeck as Deck));
         setTags((currentTags) => mergeTagsMaps(currentTags, tagsMap));
       }
       closeModal();
