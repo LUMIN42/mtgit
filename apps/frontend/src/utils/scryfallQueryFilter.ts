@@ -1,16 +1,22 @@
 import type {Deck} from "../types/deck.ts";
 import type {ScryfallOracleCard} from "../types/scryfall";
 
-type NumericOperator = "=" | "!=" | ">" | ">=" | "<" | "<=" | ":";
+// todo move file to shared code
+
+// todo handle invalid syntax with a warning
+
+type ComparisonOperator = "=" | "!=" | ">" | ">=" | "<" | "<=" | ":";
 
 interface ParsedClause {
   negated: boolean;
   field: string | null;
-  operator: NumericOperator;
+  operator: ComparisonOperator;
   value: string;
 }
 
 const COLOR_SYMBOLS = new Set(["w", "u", "b", "r", "g", "c"]);
+
+// todo add to global type declarations and unify
 const MAIN_TYPE_KEYWORDS = new Set([
   "artifact",
   "battle",
@@ -35,15 +41,26 @@ function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
-function tokenizeQuery(query: string): string[] {
+// todo handle **or** clauses
+/**
+ * Splits the string s. t. each item is a string containing a single clause.
+ * a clause is E.g. '-oracle:"foo \"bar\""' without the outer ''
+ */
+function splitClauses(query: string): string[] {
   const tokens: string[] = [];
-  let current = "";
+
+  let buffer = "";
+
+  // whether we are inside quotes, where spaces are preserved
   let inQuotes = false;
+
+  // whether previous character was an escape character "\"
   let escaped = false;
 
   for (const char of query.trim()) {
+    // if previous character was escape, take this character literally
     if (escaped) {
-      current += char;
+      buffer += char;
       escaped = false;
       continue;
     }
@@ -59,26 +76,27 @@ function tokenizeQuery(query: string): string[] {
     }
 
     if (/\s/.test(char) && !inQuotes) {
-      if (current.length > 0) {
-        tokens.push(current);
-        current = "";
+      if (buffer.length > 0) {
+        tokens.push(buffer);
+        buffer = "";
       }
       continue;
     }
 
-    current += char;
+    buffer += char;
   }
 
-  if (current.length > 0) {
-    tokens.push(current);
+  // final flush
+  if (buffer.length > 0) {
+    tokens.push(buffer);
   }
 
   return tokens;
 }
 
-function parseClause(token: string): ParsedClause {
-  const negated = token.startsWith("-");
-  const trimmedToken = negated ? token.slice(1) : token;
+function parseClause(clauseString: string): ParsedClause {
+  const negated = clauseString.startsWith("-");
+  const trimmedToken = negated ? clauseString.slice(1) : clauseString;
   const match = trimmedToken.match(/^([a-z][a-z0-9_]*)(:|!=|>=|<=|=|>|<)(.+)$/i);
 
   if (!match) {
@@ -93,7 +111,7 @@ function parseClause(token: string): ParsedClause {
   return {
     negated,
     field: match[1].toLowerCase(),
-    operator: match[2] as NumericOperator,
+    operator: match[2] as ComparisonOperator,
     value: match[3].trim(),
   };
 }
@@ -104,28 +122,14 @@ function getFaceSearchText(card: ScryfallOracleCard): string {
     .join(" ") ?? "";
 }
 
-function getSearchableText(card: ScryfallOracleCard): string {
-  return [
-    asString(card.name),
-    asString(card.type_line),
-    asString(card.oracle_text),
-    asString(card.set),
-    asString(card.set_name),
-    asString(card.rarity),
-    asStringArray(card.keywords).join(" "),
-    asStringArray(card.colors).join(" "),
-    asStringArray(card.color_identity).join(" "),
-    getFaceSearchText(card),
-  ]
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .toLowerCase();
-}
-
 function matchesText(haystack: string, needle: string): boolean {
-  return haystack.includes(normalize(needle));
+  return normalize(haystack).includes(normalize(needle));
 }
 
+/**
+ * @param rangeExpression e.g. "2..3" ~ match number from 2 to 3 inclusive
+ * @param value value, for which we are checking, whether it falls within range
+ */
 function matchesRange(value: number, rangeExpression: string): boolean {
   const [lowerRaw, upperRaw] = rangeExpression.split("..", 2);
   const lower = Number.parseFloat(lowerRaw);
@@ -138,7 +142,28 @@ function matchesRange(value: number, rangeExpression: string): boolean {
   return value >= lower && value <= upper;
 }
 
-function matchesNumeric(value: number | string | undefined, operator: NumericOperator, rawQuery: string): boolean {
+/**
+ * Evaluates whether a numeric (or numeric-like) value matches a query using
+ * either comparison operators or range syntax.
+ *
+ * The function supports:
+ * - Direct numeric comparisons using operators (`=`, `!=`, `>`, `>=`, `<`, `<=`)
+ * - Range expressions using `"min..max"` syntax
+ * - Fallback substring matching when numeric parsing fails and operator is `:`
+ *
+ * Behavior:
+ * - If `value` is `undefined`, the match always fails.
+ * - If `rawQuery` contains `".."`, it is treated as a numeric range.
+ * - Otherwise, both `value` and `rawQuery` are parsed as numbers and compared
+ *   using the provided operator.
+ * - If numeric parsing fails, only `:` operator allows fallback string matching.
+ *
+ * @param value - The value to test. Can be a number, numeric string, or undefined.
+ * @param operator - Comparison operator (`:`, `=`, `!=`, `>`, `>=`, `<`, `<=`).
+ * @param rawQuery - The query string, either a number or a range expression like `"2..5"`.
+ * @returns `true` if the value matches the query according to the operator/range rules, otherwise `false`.
+ */
+function matchesNumeric(value: number | string | undefined, operator: ComparisonOperator, rawQuery: string): boolean {
   if (value === undefined) {
     return false;
   }
@@ -175,6 +200,7 @@ function matchesNumeric(value: number | string | undefined, operator: NumericOpe
   }
 }
 
+// todo properly implement <, <=, ... operators
 function matchesColorClause(card: ScryfallOracleCard, rawQuery: string): boolean {
   const query = normalize(rawQuery);
   const colorIdentity = asStringArray(card.color_identity);
@@ -193,9 +219,6 @@ function matchesColorClause(card: ScryfallOracleCard, rawQuery: string): boolean
   }
 
   const symbols = query.replace(/[^wubrgc]/g, "");
-  if (symbols.length === 0) {
-    return getSearchableText(card).includes(query);
-  }
 
   const colorSet = new Set([...colors, ...colorIdentity].map(normalize));
   return Array.from(symbols).every((symbol) => COLOR_SYMBOLS.has(symbol) && colorSet.has(symbol));
@@ -226,14 +249,14 @@ function matchesIsClause(card: ScryfallOracleCard, rawQuery: string): boolean {
     return colorIdentity.length === 0;
   }
 
-  return getSearchableText(card).includes(query);
+  return true;
 }
 
 function matchesClause(card: ScryfallOracleCard, clause: ParsedClause): boolean {
   const field = clause.field;
 
   if (!field) {
-    return getSearchableText(card).includes(normalize(clause.value));
+    return matchesText(card.name, clause.value)
   }
 
   switch (field) {
@@ -247,8 +270,6 @@ function matchesClause(card: ScryfallOracleCard, clause: ParsedClause): boolean 
     case "o":
       return matchesText((card.oracle_text ?? "").toLowerCase(), clause.value)
         || matchesText(getFaceSearchText(card).toLowerCase(), clause.value);
-    case "text":
-      return getSearchableText(card).includes(normalize(clause.value));
     case "set":
     case "s":
       return matchesText(`${asString(card.set)} ${asString(card.set_name)}`.toLowerCase(), clause.value);
@@ -276,7 +297,7 @@ function matchesClause(card: ScryfallOracleCard, clause: ParsedClause): boolean 
     case "is":
       return matchesIsClause(card, clause.value);
     default:
-      return getSearchableText(card).includes(normalize(clause.value));
+      return true; // make incorrect clauses less punishing
   }
 }
 
@@ -286,7 +307,7 @@ export function createScryfallCardMatcher(query: string): (card: ScryfallOracleC
     return () => true;
   }
 
-  const clauses = tokenizeQuery(trimmedQuery).map(parseClause);
+  const clauses = splitClauses(trimmedQuery).map(parseClause);
 
   return (card) => clauses.every((clause) => {
     const matched = matchesClause(card, clause);
