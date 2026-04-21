@@ -1,14 +1,13 @@
-import { ScryfallOracleCardSchema } from '@mtgit/shared/scryfall';
+import {ScryfallOracleCardSchema} from '@mtgit/shared/scryfall';
 import type {
-  DeckImportDeck,
-  DeckImportResult,
+  Deck,
+  TaggedDeck,
   DeckSectionName,
-  OracleCardIndex,
   TagsMap,
 } from '@mtgit/shared/deckImport';
-import type { ScryfallOracleCard } from '@mtgit/shared/scryfall';
+import type {ScryfallOracleCard} from '@mtgit/shared/scryfall';
 
-import { getMongoService, type MongoService } from '../db/mongo.js';
+import {getMongoService, type MongoService} from '../db/mongo.js';
 
 /**
  * Maps section labels to DeckSectionName values.
@@ -28,20 +27,28 @@ const SECTION_BY_LABEL: Record<string, DeckSectionName> = {
 function normalizeCardName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/\s*\/\/\?\s*/g, ' // ')
-    .replace(/\s+/g, ' ')
+    .replace(/\s*\/\/?\s*/g, ' // ') // fire//ice → fire // ice
+    .replace(/\s+/g, ' ') // normalize whitespaces to a single space
     .trim();
 }
 
-type DeckSections = DeckImportDeck['sections'];
+type DeckSections = Deck['sections'];
+type ParsedDeckEntry = {
+  quantity: number;
+  cardName: string;
+  tags: string[];
+};
 
 /**
  * Ensures the specified section exists in the deck sections object and returns it.
+ *
+ * Analogous to c++ my_map[] = x operator.
+ *
  * @param sections - The deck sections object.
  * @param section - The section name to ensure.
  * @returns The array of cards for the section.
  */
-function ensureSection(sections: DeckSections, section: DeckSectionName): ScryfallOracleCard[] {
+function safeGetSection(sections: DeckSections, section: DeckSectionName): ScryfallOracleCard[] {
   if (section === 'Main') {
     return sections.Main;
   }
@@ -54,101 +61,153 @@ function ensureSection(sections: DeckSections, section: DeckSectionName): Scryfa
 }
 
 /**
- * Parses a raw card line for the card name and tags.
- * @param rawName - The raw card line from the decklist.
- * @returns An object containing the card name and an array of tags.
+ * Parses a deck entry line into quantity, card name, and tags.
+ *
+ * Supports optional quantity prefixes like "3 Lightning Bolt" and "1x Lightning Bolt".
+ * If no quantity prefix is present, quantity defaults to 1.
+ *
+ * @param rawLine - The raw card entry line from the decklist.
+ * @returns Parsed quantity, normalized card name text, and extracted tags.
  */
-function parseCardNameAndTags(rawName: string): { cardName: string; tags: string[] } {
-  const tags = Array.from(rawName.matchAll(/#([^\s#]+)/g), (match) => match[1].toLowerCase());
+function parseDeckEntry(rawLine: string): ParsedDeckEntry {
+  // // separates the quantity from the rest of the line
+  // const quantityMatch = rawLine.match(/^(\d+)\s*x?\s+(.+)$/i);
+  //
+  // const quantity = quantityMatch ? Number.parseInt(quantityMatch[1]) : 1;
+  //
+  // let lineWithoutQuantity = (quantityMatch ? quantityMatch[2] : rawLine).trim();
+  //
+  // const tags = Array.from(rawName.matchAll(/#([^\s#]+)/g), (match) => match[1].toLowerCase());
+  //
+  // const withoutTags = rawName.replace(/\s+#([^\s#]+)/g, '').trim();
+  // const withoutSetAndCollector = withoutTags
+  //   .replace(/\s+\([^)]+\)\s+\S+(?:\s+\*[^*\s]+\*)*$/u, '')
+  //   .trim();
 
-  const withoutTags = rawName.replace(/\s+#([^\s#]+)/g, '').trim();
-  const withoutSetAndCollector = withoutTags
-    .replace(/\s+\([^)]+\)\s+\S+(?:\s+\*[^*\s]+\*)*$/u, '')
-    .trim();
+
+  const lineRegex = /(\d+) ([^#(]+)(.*)?/ // amount, card name, rest of line
+  // rest of line may include set code, collector number and tags
+
+  const match = rawLine.match(lineRegex);
+
+  if (!match) {
+    throw new Error("No match");
+  }
+
+  const [_, rawAmount, rawCardName, rest] = match;
+  const cardName = rawCardName.trim()
+
+
+  const quantity = Number.parseInt(rawAmount);
+
+  const tags = [];
+
+  const tagsRegex = /#([A-Za-z0-9 ]+)/g;
+  if (rest) {
+    const tagMatches = rest.matchAll(tagsRegex);
+
+    for (const tagMatch of tagMatches) {
+      tags.push(tagMatch[1].trim())
+    }
+  }
 
   return {
-    cardName: withoutSetAndCollector,
+    quantity,
+    cardName,
     tags,
   };
 }
 
 /**
- * Builds an index for fast lookup of oracle cards by normalized name.
- * @param cards - The array of ScryfallOracleCard objects.
- * @returns An OracleCardIndex mapping normalized names to cards.
+ * Looks up a single card from the database by normalized name.
+ * Prioritizes playable cards over art-series cards.
+ * @param mongoService - The MongoService instance.
+ * @param normalizedName - The normalized card name to lookup.
+ * @returns The card, or undefined if not found.
  */
-function buildOracleCardIndex(cards: ScryfallOracleCard[]): OracleCardIndex {
-  const index: OracleCardIndex = new Map();
+async function lookupCardByNormalizedName(
+  mongoService: MongoService,
+  normalizedName: string
+): Promise<ScryfallOracleCard | undefined> {
+  const collection = mongoService.getCollection('scryfall_cards'); // todo handle magic constant
+  const cards = await collection
+    .find({normalized_name: normalizedName})
+    .toArray() as unknown[];
 
-  const getLookupPriority = (card: ScryfallOracleCard): number => {
-    const isNonPlayableArtLikeCard = card.layout === 'art_series' || card.type_line === 'Card // Card';
-    return isNonPlayableArtLikeCard ? 0 : 1;
-  };
+  if (cards.length === 0) {
+    return undefined;
+  }
 
-  const addIndexEntry = (name: string | undefined, card: ScryfallOracleCard) => {
-    if (!name) {
-      return;
-    }
-
-    const key = normalizeCardName(name);
-    const current = index.get(key);
-    if (!current || getLookupPriority(card) > getLookupPriority(current)) {
-      index.set(key, card);
-    }
-  };
-
-  for (const card of cards) {
-    if (card?.name) {
-      addIndexEntry(card.name, card);
-
-      if (card.name.includes('//')) {
-        for (const splitNamePart of card.name.split(/\s*\/\/\s*/)) {
-          addIndexEntry(splitNamePart, card);
-        }
-      }
-
-      for (const face of card.card_faces ?? []) {
-        addIndexEntry(face.name, card);
-      }
+  // Parse and prioritize: prefer non-art-series cards
+  const parsedCards: ScryfallOracleCard[] = [];
+  for (const rawCard of cards) {
+    const parsed = ScryfallOracleCardSchema.safeParse(rawCard);
+    if (parsed.success) {
+      parsedCards.push(parsed.data);
     }
   }
 
-  return index;
+  if (parsedCards.length === 0) {
+    return undefined;
+  }
+
+  // Sort by priority: art-series and "Card // Card" are lower priority
+  parsedCards.sort((a, b) => {
+    const aIsArtLike = a.layout === 'art_series' || a.type_line === 'Card // Card' ? 0 : 1;
+    const bIsArtLike = b.layout === 'art_series' || b.type_line === 'Card // Card' ? 0 : 1;
+    return bIsArtLike - aIsArtLike;
+  });
+
+  return parsedCards[0];
 }
 
 /**
- * Parses deck import text into deck sections and tags, using the provided oracle card index.
- * @param importText - The decklist text to import.
- * @param oracleCardIndex - The index of oracle cards for lookup.
+ * Finds the start index of an implicit sideboard section in a decklist without explicit section headers.
+ *
+ * The function scans from the end of the decklist upwards, looking for the first blank line.
+ * If exactly one non-comment, non-blank card line follows that blank line, it is treated as the start of the sideboard.
+ *
+ * @param lines - The decklist lines (already split and trimmed).
+ * @returns The index where the implicit sideboard starts, or -1 if not found.
+ */
+function findImplicitSideboardStart(lines: string[]): number {
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    if (lines[index].trim() !== '') {
+      continue;
+    }
+
+    const trailingCardLines = lines
+      .slice(index + 1)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('//') && !line.startsWith('#'));
+
+    if (trailingCardLines.length === 1) {
+      return index + 1;
+    }
+
+    break;
+  }
+  return -1;
+}
+
+/**
+ * Parses deck import text in the textarea into deck sections and tags, querying the database for card data.
+ * @param importText - The raw imported decklist from the textarea.
+ * @param mongoService - The MongoService instance for database lookups.
  * @returns The parsed DeckImportResult.
  * @throws If any cards are missing from the oracle data.
  */
-function parseDeckImportText(importText: string, oracleCardIndex: OracleCardIndex): DeckImportResult {
+async function parseDeckImportText(importText: string, mongoService: MongoService): Promise<TaggedDeck> {
   const lines = importText.split(/\r?\n/);
   const sectionHeaderPattern = /^(Commander|Main|Sideboard|Considering)\s*:?$/i;
   const hasExplicitSectionHeaders = lines.some((rawLine) => sectionHeaderPattern.test(rawLine.trim()));
 
   let implicitSideboardStart = -1;
   if (!hasExplicitSectionHeaders) {
-    for (let index = lines.length - 1; index >= 0; index -= 1) {
-      if (lines[index].trim() !== '') {
-        continue;
-      }
-
-      const trailingCardLines = lines
-        .slice(index + 1)
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('//') && !line.startsWith('#'));
-
-      if (trailingCardLines.length === 1) {
-        implicitSideboardStart = index + 1;
-      }
-
-      break;
-    }
+    implicitSideboardStart = findImplicitSideboardStart(lines);
   }
 
-  const sections: DeckSections = { Main: [] };
+  const sections: DeckSections = {Main: []};
   let currentSection: DeckSectionName = 'Main';
   const missingCards = new Set<string>();
   const tagsMap: TagsMap = {};
@@ -170,12 +229,13 @@ function parseDeckImportText(importText: string, oracleCardIndex: OracleCardInde
       continue;
     }
 
-    const quantityMatch = line.match(/^(\d+)\s*x?\s+(.+)$/i);
-    const quantity = quantityMatch ? Number.parseInt(quantityMatch[1], 10) : 1;
-    const rawName = quantityMatch ? quantityMatch[2] : line;
-    const entryText = rawName.replace(/^[*-]\s*/, '').trim();
-    const {cardName, tags} = parseCardNameAndTags(entryText);
-    const card = oracleCardIndex.get(normalizeCardName(cardName));
+    const {quantity, cardName, tags} = parseDeckEntry(line);
+
+    if (cardName === "Glasswing Grace / Age-Graced Chapel") {
+      console.log("found him!");
+    }
+
+    const card = await lookupCardByNormalizedName(mongoService, normalizeCardName(cardName));
 
     if (!card) {
       missingCards.add(cardName);
@@ -194,9 +254,9 @@ function parseDeckImportText(importText: string, oracleCardIndex: OracleCardInde
       }
     }
 
-    const targetSection = ensureSection(sections, currentSection);
+    const targetSection = safeGetSection(sections, currentSection);
     for (let i = 0; i < quantity; i += 1) {
-      targetSection.push({ ...card });
+      targetSection.push({...card});
     }
   }
 
@@ -212,7 +272,7 @@ function parseDeckImportText(importText: string, oracleCardIndex: OracleCardInde
     }
 
     sectionCards.splice(index, 1);
-    ensureSection(sections, 'Commander').push(commander);
+    safeGetSection(sections, 'Commander').push(commander);
   }
 
   if (!sections.Commander?.length && sections.Sideboard?.length === 1 && isLegendaryCreature(sections.Sideboard[0])) {
@@ -238,7 +298,6 @@ function parseDeckImportText(importText: string, oracleCardIndex: OracleCardInde
  * Service for importing decks, parsing decklists, and resolving card data from the database.
  */
 export class DeckImportService {
-  private oracleCardIndexPromise: Promise<OracleCardIndex> | null = null;
   private readonly mongoService: MongoService;
 
   /**
@@ -250,54 +309,12 @@ export class DeckImportService {
   }
 
   /**
-   * Parses deck import text, resolving card data from the database.
+   * Parses deck import text, resolving card data from the database on-demand.
    * @param importText - The decklist text to import.
    * @returns The parsed DeckImportResult.
    */
-  async parseDeckImportText(importText: string): Promise<DeckImportResult> {
-    const oracleCardIndex = await this.getOracleCardIndex();
-    return parseDeckImportText(importText, oracleCardIndex);
-  }
-
-  /**
-   * Gets or builds the oracle card index from the database.
-   * @returns The OracleCardIndex.
-   */
-  private async getOracleCardIndex(): Promise<OracleCardIndex> {
-    if (!this.oracleCardIndexPromise) {
-      this.oracleCardIndexPromise = this.buildOracleCardIndex().catch((error) => {
-        this.oracleCardIndexPromise = null;
-        throw error;
-      });
-    }
-
-    return this.oracleCardIndexPromise;
-  }
-
-  /**
-   * Loads all oracle cards from the database and builds the lookup index.
-   * @returns The OracleCardIndex.
-   * @throws If any card documents are invalid or missing.
-   */
-  private async buildOracleCardIndex(): Promise<OracleCardIndex> {
-    const collection = this.mongoService.getCollection('scryfall_cards');
-    const rawCards = await collection.find({}).toArray();
-
-    const cards: ScryfallOracleCard[] = [];
-    for (const [index, rawCard] of rawCards.entries()) {
-      const parsed = ScryfallOracleCardSchema.safeParse(rawCard);
-      if (!parsed.success) {
-        throw new Error(`Invalid oracle card document at index ${index}.`);
-      }
-
-      cards.push(parsed.data);
-    }
-
-    if (cards.length === 0) {
-      throw new Error('Oracle cards data is empty or invalid.');
-    }
-
-    return buildOracleCardIndex(cards);
+  async parseDeckImportText(importText: string): Promise<TaggedDeck> {
+    return parseDeckImportText(importText, this.mongoService);
   }
 }
 

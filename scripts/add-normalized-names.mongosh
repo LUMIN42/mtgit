@@ -1,0 +1,90 @@
+// MongoDB migration script to add normalized_name field and index
+// Run this in mongosh: mongosh < add-normalized-names.mongosh
+
+// 1. Add normalized_name field to all existing cards
+db.scryfall_cards.updateMany({}, [
+  {
+    $set: {
+      normalized_name: {
+        $let: {
+          vars: {
+            names: {
+              $concatArrays: [
+                // Main card name (normalized)
+                [
+                  {
+                    $trim: {
+                      input: {
+                        $replaceAll: {
+                          input: { $toLower: "$name" },
+                          find: " // ",
+                          replacement: " // "
+                        }
+                      }
+                    }
+                  }
+                ],
+                // For split cards, add individual face names
+                {
+                  $cond: [
+                    { $regexMatch: { input: "$name", regex: " // " } },
+                    {
+                      $map: {
+                        input: { $split: [{ $toLower: "$name" }, " // "] },
+                        as: "part",
+                        in: {
+                          $trim: { input: "$$part" }
+                        }
+                      }
+                    },
+                    []
+                  ]
+                },
+                // For multi-face cards, add card_faces names
+                {
+                  $map: {
+                    input: { $ifNull: ["$card_faces", []] },
+                    as: "face",
+                    in: {
+                      $trim: {
+                        input: { $toLower: "$$face.name" }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          in: "$$names"
+        }
+      }
+    }
+  }
+]);
+
+print("✓ Added normalized_name field to all cards");
+
+// 2. Create index on normalized_name for fast lookups
+db.scryfall_cards.createIndex({ normalized_name: 1 });
+
+print("✓ Created index on normalized_name");
+
+// 3. Verify the migration
+const sampleCard = db.scryfall_cards.findOne({ normalized_name: { $exists: true } });
+if (sampleCard) {
+  print("\n✓ Sample card with normalized_name:");
+  print(`  Name: ${sampleCard.name}`);
+  print(`  Normalized names: ${JSON.stringify(sampleCard.normalized_name)}`);
+}
+
+// 4. Check index statistics
+const indexInfo = db.scryfall_cards.getIndexes();
+const normalizedNameIndex = indexInfo.find(idx => idx.key.normalized_name === 1);
+if (normalizedNameIndex) {
+  print("\n✓ Index created successfully:");
+  print(`  Index name: ${normalizedNameIndex.name}`);
+  print(`  Size: ${normalizedNameIndex.size} bytes`);
+}
+
+print("\n✓ Migration complete!");
+

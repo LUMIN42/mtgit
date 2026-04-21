@@ -4,12 +4,13 @@ export type DeckSectionName = 'Main' | 'Commander' | 'Sideboard' | 'Considering'
 export type DeckSections = {
   Main: ScryfallOracleCard[];
 } & Partial<Record<Exclude<DeckSectionName, 'Main'>, ScryfallOracleCard[]>>;
-export interface DeckImportDeck {
+export interface Deck {
   name: string;
   sections: DeckSections;
 }
-export interface DeckImportResult {
-  deck: DeckImportDeck;
+
+// this structure makes it easier to store tags state separately to reduce lag
+export interface TaggedDeck {
+  deck: Deck;
   tagsMap: TagsMap;
 }
-export type OracleCardIndex = Map<string, ScryfallOracleCard>;

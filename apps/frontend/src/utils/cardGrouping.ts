@@ -16,10 +16,12 @@ export const MainCardType = {
   Instant: "Instant",
   Land: "Land",
   Planeswalker: "Planeswalker",
+  Sorcery: "Sorcery"
 } as const;
 
 export type MainCardType = (typeof MainCardType)[keyof typeof MainCardType];
 
+// todo just sort alphabetically
 const MAIN_TYPE_ORDER: MainCardType[] = [
   MainCardType.Artifact,
   MainCardType.Battle,
@@ -27,6 +29,7 @@ const MAIN_TYPE_ORDER: MainCardType[] = [
   MainCardType.Dungeon,
   MainCardType.Enchantment,
   MainCardType.Instant,
+  MainCardType.Sorcery,
   MainCardType.Land,
   MainCardType.Planeswalker,
 ];

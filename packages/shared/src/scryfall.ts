@@ -48,7 +48,7 @@ export const ScryfallOracleCardSchema = z
     oracle_text: z.string().optional(),
     power: z.string().optional(),
     toughness: z.string().optional(),
-    colors: z.array(z.string()),
+    colors: z.array(z.string()).catch([]), // the catch is needed for two-sided cards, which lack colors
     color_identity: z.array(z.string()),
     keywords: z.array(z.string()),
     legalities: ScryfallLegalitiesSchema,

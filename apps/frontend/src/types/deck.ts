@@ -1,4 +1,4 @@
-import type { ScryfallOracleCard } from "./scryfall.ts";
+import type {ScryfallOracleCard} from "./scryfall.ts";
 import type {CardWithTags} from "./cardWithTags.ts";
 
 export type OptionalDeckSectionName =
@@ -13,6 +13,6 @@ export interface Deck {
   sections: {
     Main: ScryfallOracleCard[];
   } & {
-    [K in OptionalDeckSectionName]?: CardWithTags[];
+    [K in OptionalDeckSectionName]?: ScryfallOracleCard[];
   };
 }
