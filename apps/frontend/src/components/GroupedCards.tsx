@@ -8,10 +8,12 @@ import type {CardWithTags} from "../types/cardWithTags.ts";
 import {getGroupHeadingId, groupCardsByMode, sortCardsInGroup} from "../utils/cardGrouping.ts";
 import {CardGroup} from "./CardGroup.tsx";
 import {CardDetailsModal} from "./CardDetailsModal.tsx";
+import {useTagsContext} from "../context/useTagsContext.ts";
 
 export function GroupedCards() {
   const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
-  const [selectedCard, setSelectedCard] = useState<CardWithTags | null>(null);
+  const {tags} = useTagsContext();
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   const {sections, pageCards} = useMemo(() => {
     const sectionEntries = (Object.entries(filteredDeck.sections) as Array<[string, CardWithTags[]]>).sort(
@@ -30,8 +32,16 @@ export function GroupedCards() {
 
     return sectionEntries.reduce(
       (sectionAcc, [sectionName, cards]) => {
+        const cardsWithTags = cards.map((card) => {
+          const cardId = card.oracle_id ?? card.id;
+          return {
+            ...card,
+            tags: tags[cardId] ?? [],
+          };
+        });
+
         const sectionGroupingMode = sectionName === "Commander" ? "none" : groupingMode;
-        const groupResult = groupCardsByMode(cards, sectionGroupingMode).reduce(
+        const groupResult = groupCardsByMode(cardsWithTags, sectionGroupingMode).reduce(
           (groupAcc, group) => {
             const sortedCards = sortingMode ? sortCardsInGroup(group.cards, sortingMode) : group.cards;
             const startIndex = sectionAcc.pageCards.length + groupAcc.pageCards.length;
@@ -56,7 +66,7 @@ export function GroupedCards() {
             ...sectionAcc.sections,
             {
               sectionName,
-              cards,
+              cards: cardsWithTags,
               sectionGroupingMode,
               groups: groupResult.groups,
             },
@@ -66,9 +76,9 @@ export function GroupedCards() {
       },
       {sections: [], pageCards: [] as CardWithTags[]},
     );
-  }, [filteredDeck.sections, groupingMode, sortingMode]);
+  }, [filteredDeck.sections, groupingMode, sortingMode, tags]);
 
-  const safeSelection = selectedCard ? pageCards.indexOf(selectedCard) : -1;
+  const safeSelection = selectedCardId ? pageCards.findIndex((card) => card.id === selectedCardId) : -1;
   const hasSelection = safeSelection >= 0;
 
   return (
@@ -111,7 +121,10 @@ export function GroupedCards() {
                       displayMode={displayMode}
                       sortingMode={sortingMode}
                       groupKey={`${section.sectionName}-${group.heading}`}
-                      onCardSelect={(_, index) => setSelectedCard(pageCards[group.startIndex + index] ?? null)}
+                      onCardSelect={(_, index) => {
+                        const selected = pageCards[group.startIndex + index] ?? null;
+                        setSelectedCardId(selected?.id ?? null);
+                      }}
                       onCardHover={setHoveredCardImageUrl}
                     />
                   </Stack>
@@ -126,8 +139,8 @@ export function GroupedCards() {
         cards={pageCards}
         index={hasSelection ? safeSelection : 0}
         opened={hasSelection}
-        onClose={() => setSelectedCard(null)}
-        onIndexChange={(nextIndex) => setSelectedCard(pageCards[nextIndex] ?? null)}
+        onClose={() => setSelectedCardId(null)}
+        onIndexChange={(nextIndex) => setSelectedCardId(pageCards[nextIndex]?.id ?? null)}
       />
     </>
   );
