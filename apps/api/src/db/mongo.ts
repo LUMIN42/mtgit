@@ -1,72 +1,82 @@
-import { MongoClient, Db } from 'mongodb';
+import type {Collection, Db, Document, MongoClient} from 'mongodb';
+import {MongoClient as MongoClientImpl} from 'mongodb';
+
+const DEFAULT_DATABASE_NAME = 'mtgit';
 
 /**
- * Singleton MongoDB service for dependency injection.
- * Manages connection pooling and provides query methods.
+ * Valid collection names in the mtgit database.
  */
-export class MongoService {
-  private static instance: MongoService;
-  private client: MongoClient | null = null;
-  private db: Db | null = null;
-  private readonly mongoUri: string;
+export type CollectionName = 'scryfall_cards';
 
-  private constructor(mongoUri: string) {
-    this.mongoUri = mongoUri;
+let cachedMongoUri: string | null = null;
+let cachedMongoClient: MongoClient | null = null;
+let cachedMongoDb: Db | null = null;
+
+/**
+ * Resolves the MongoDB connection string from an explicit argument or the environment.
+ * @param mongoUri - Optional connection string override.
+ * @returns The MongoDB connection string.
+ */
+function resolveMongoUri(mongoUri?: string): string {
+  const uriFromGlobal = (globalThis as { process?: { env?: Record<string, string | undefined> } })
+    .process?.env?.MONGODB_URI;
+  const resolvedUri = mongoUri ?? uriFromGlobal;
+
+  if (!resolvedUri) {
+    throw new Error('MONGODB_URI is not set in the environment.');
   }
 
-  static getInstance(mongoUri?: string): MongoService {
-    if (!MongoService.instance) {
-      const uriFromGlobal = (globalThis as { process?: { env?: Record<string, string | undefined> } })
-        .process?.env?.MONGODB_URI;
-      const uri = mongoUri ?? uriFromGlobal;
-      if (!uri) {
-        throw new Error('MONGODB_URI is not set in the environment.');
-      }
-      MongoService.instance = new MongoService(uri);
-    }
-    return MongoService.instance;
-  }
-
-  async connect(): Promise<void> {
-    if (this.client) {
-      return;
-    }
-    this.client = new MongoClient(this.mongoUri);
-    await this.client.connect();
-    this.db = this.client.db('mtgit');
-  }
-
-  async disconnect(): Promise<void> {
-    if (this.client) {
-      await this.client.close();
-      this.client = null;
-      this.db = null;
-    }
-  }
-
-  async ping(): Promise<boolean> {
-    if (!this.client) {
-      await this.connect();
-    }
-    try {
-      await this.client!.db().admin().ping();
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  getCollection(name: string) {
-    if (!this.db) {
-      throw new Error('Database not connected. Call connect() first.');
-    }
-    return this.db.collection(name);
-  }
+  return resolvedUri;
 }
 
-export async function getMongoService(mongoUri?: string): Promise<MongoService> {
-  const service = MongoService.getInstance(mongoUri);
-  await service.connect();
-  return service;
+/**
+ * Connects to MongoDB once and caches the resulting database handle.
+ * Call this during application startup.
+ * @param mongoUri - Optional connection string override.
+ * @param databaseName - The database name to use.
+ * @returns The connected database handle.
+ */
+export async function initMongo(mongoUri?: string, databaseName = DEFAULT_DATABASE_NAME): Promise<Db> {
+  const resolvedUri = resolveMongoUri(mongoUri);
+
+  if (cachedMongoDb) {
+    if (cachedMongoUri !== resolvedUri) {
+      throw new Error('MongoDB has already been initialized with a different URI.');
+    }
+
+    return cachedMongoDb;
+  }
+
+  cachedMongoUri = resolvedUri;
+  cachedMongoClient = new MongoClientImpl(resolvedUri);
+  await cachedMongoClient.connect();
+  cachedMongoDb = cachedMongoClient.db(databaseName);
+
+  return cachedMongoDb;
 }
+
+/**
+ * Returns the initialized MongoDB database handle.
+ * @returns The connected database handle.
+ */
+export function getMongoDb(): Db {
+  if (!cachedMongoDb) {
+    throw new Error('MongoDB has not been initialized. Call initMongo() during startup first.');
+  }
+
+  return cachedMongoDb;
+}
+
+/**
+ * Returns a typed collection by name from the initialized database.
+ * @param collectionName - The name of the collection to access.
+ * @returns The collection handle.
+ * @throws If MongoDB has not been initialized.
+ */
+export function getCollection<TSchema extends Document = Document>(
+  collectionName: CollectionName
+): Collection<TSchema> {
+  return getMongoDb().collection<TSchema>(collectionName);
+}
+
 

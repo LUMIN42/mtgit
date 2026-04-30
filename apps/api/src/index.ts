@@ -6,6 +6,7 @@ import express from 'express';
 import * as trpcExpress from '@trpc/server/adapters/express';
 
 import { appRouter } from './router/index.js';
+import { initMongo } from './db/mongo.js';
 
 const envPaths = [
   path.resolve(process.cwd(), 'apps/api/.env'),
@@ -37,7 +38,16 @@ app.use(
   }),
 );
 
-app.listen(port, () => {
-  console.log(`API server running on http://localhost:${port}`);
+async function main(): Promise<void> {
+  await initMongo();
+
+  app.listen(port, () => {
+    console.log(`API server running on http://localhost:${port}`);
+  });
+}
+
+void main().catch((error: unknown) => {
+  console.error('Failed to start API server:', error);
+  process.exit(1);
 });
 

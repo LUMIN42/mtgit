@@ -1,23 +1,9 @@
 import {ScryfallOracleCardSchema} from '@mtgit/shared/scryfall';
-import type {
-  Deck,
-  TaggedDeck,
-  DeckSectionName,
-  TagsMap,
-} from '@mtgit/shared/deckImport';
+import type {Deck, DeckSectionName, TaggedDeck, TagsMap} from '@mtgit/shared';
+import { SECTION_BY_LABEL } from '@mtgit/shared';
 import type {ScryfallOracleCard} from '@mtgit/shared/scryfall';
 
-import {getMongoService, type MongoService} from '../db/mongo.js';
-
-/**
- * Maps section labels to DeckSectionName values.
- */
-const SECTION_BY_LABEL: Record<string, DeckSectionName> = {
-  commander: 'Commander',
-  main: 'Main',
-  sideboard: 'Sideboard',
-  considering: 'Considering',
-};
+import { getCollection } from '../db/mongo.js';
 
 /**
  * Normalizes a card name for lookup by lowercasing, trimming, and standardizing split card separators.
@@ -70,21 +56,6 @@ function safeGetSection(sections: DeckSections, section: DeckSectionName): Scryf
  * @returns Parsed quantity, normalized card name text, and extracted tags.
  */
 function parseDeckEntry(rawLine: string): ParsedDeckEntry {
-  // // separates the quantity from the rest of the line
-  // const quantityMatch = rawLine.match(/^(\d+)\s*x?\s+(.+)$/i);
-  //
-  // const quantity = quantityMatch ? Number.parseInt(quantityMatch[1]) : 1;
-  //
-  // let lineWithoutQuantity = (quantityMatch ? quantityMatch[2] : rawLine).trim();
-  //
-  // const tags = Array.from(rawName.matchAll(/#([^\s#]+)/g), (match) => match[1].toLowerCase());
-  //
-  // const withoutTags = rawName.replace(/\s+#([^\s#]+)/g, '').trim();
-  // const withoutSetAndCollector = withoutTags
-  //   .replace(/\s+\([^)]+\)\s+\S+(?:\s+\*[^*\s]+\*)*$/u, '')
-  //   .trim();
-
-
   const lineRegex = /(\d+) ([^#(]+)(.*)?/ // amount, card name, rest of line
   // rest of line may include set code, collector number and tags
 
@@ -119,18 +90,16 @@ function parseDeckEntry(rawLine: string): ParsedDeckEntry {
 }
 
 /**
- * Looks up a single card from the database by normalized name.
+ * Looks up a single card from the scryfall_cards collection by normalized name.
  * Prioritizes playable cards over art-series cards.
- * @param mongoService - The MongoService instance.
  * @param normalizedName - The normalized card name to lookup.
  * @returns The card, or undefined if not found.
  */
 async function lookupCardByNormalizedName(
-  mongoService: MongoService,
   normalizedName: string
 ): Promise<ScryfallOracleCard | undefined> {
-  const collection = mongoService.getCollection('scryfall_cards'); // todo handle magic constant
-  const cards = await collection
+  const scryfallCards = getCollection('scryfall_cards');
+  const cards = await scryfallCards
     .find({normalized_name: normalizedName})
     .toArray() as unknown[];
 
@@ -191,13 +160,12 @@ function findImplicitSideboardStart(lines: string[]): number {
 }
 
 /**
- * Parses deck import text in the textarea into deck sections and tags, querying the database for card data.
+ * Parses deck import text into deck sections and tags, querying the scryfall_cards collection.
  * @param importText - The raw imported decklist from the textarea.
- * @param mongoService - The MongoService instance for database lookups.
  * @returns The parsed DeckImportResult.
  * @throws If any cards are missing from the oracle data.
  */
-async function parseDeckImportText(importText: string, mongoService: MongoService): Promise<TaggedDeck> {
+export async function parseDeckImportText(importText: string): Promise<TaggedDeck> {
   const lines = importText.split(/\r?\n/);
   const sectionHeaderPattern = /^(Commander|Main|Sideboard|Considering)\s*:?$/i;
   const hasExplicitSectionHeaders = lines.some((rawLine) => sectionHeaderPattern.test(rawLine.trim()));
@@ -235,7 +203,7 @@ async function parseDeckImportText(importText: string, mongoService: MongoServic
       console.log("found him!");
     }
 
-    const card = await lookupCardByNormalizedName(mongoService, normalizeCardName(cardName));
+    const card = await lookupCardByNormalizedName(normalizeCardName(cardName));
 
     if (!card) {
       missingCards.add(cardName);
@@ -294,35 +262,5 @@ async function parseDeckImportText(importText: string, mongoService: MongoServic
   };
 }
 
-/**
- * Service for importing decks, parsing decklists, and resolving card data from the database.
- */
-export class DeckImportService {
-  private readonly mongoService: MongoService;
-
-  /**
-   * Constructs a DeckImportService.
-   * @param mongoService - The MongoService instance for database access.
-   */
-  constructor(mongoService: MongoService) {
-    this.mongoService = mongoService;
-  }
-
-  /**
-   * Parses deck import text, resolving card data from the database on-demand.
-   * @param importText - The decklist text to import.
-   * @returns The parsed DeckImportResult.
-   */
-  async parseDeckImportText(importText: string): Promise<TaggedDeck> {
-    return parseDeckImportText(importText, this.mongoService);
-  }
-}
-
-/**
- * Gets a DeckImportService instance with a connected MongoService.
- * @returns A promise resolving to a DeckImportService.
- */
-export async function getDeckImportService(): Promise<DeckImportService> {
-  const mongoService = await getMongoService();
-  return new DeckImportService(mongoService);
-}
+// The deck parser is now exposed as a plain function so callers can inject the
+// Mongo adapter directly at the boundary where composition happens.

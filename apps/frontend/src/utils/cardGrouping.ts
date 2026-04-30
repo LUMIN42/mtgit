@@ -2,6 +2,9 @@ import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 import type {CardWithTags} from "../types/cardWithTags.ts";
 import type {ScryfallOracleCard} from "@mtgit/shared";
 
+/**
+ * Represents a group of cards with a heading and the associated cards.
+ */
 export type GroupedCards = {
   heading: string;
   cards: CardWithTags[];
@@ -47,15 +50,30 @@ const RARITY_ORDER: Record<string, number> = {
   bonus: 5,
 };
 
+/**
+ * Parses a Scryfall type line into its main and subtype parts.
+ * @param typeLine The type line string from a card.
+ * @returns An object with mainPart and subtypePart.
+ */
 function parseTypeLineParts(typeLine: string): { mainPart: string; subtypePart: string } {
   const [mainPart = "", subtypePart = ""] = typeLine.split(/\s[-—]\s/, 2);
   return {mainPart, subtypePart};
 }
 
+/**
+ * Converts a word to title case (first letter uppercase, rest lowercase).
+ * @param word The word to convert.
+ * @returns The word in title case.
+ */
 function toTitleCase(word: string): string {
   return word.slice(0, 1).toUpperCase() + word.slice(1).toLowerCase();
 }
 
+/**
+ * Returns the main type group keys for a Scryfall card, e.g. ["Artifact", "Creature"].
+ * @param card The ScryfallOracleCard to analyze.
+ * @returns An array of type group keys, or ["Other"] if none found.
+ */
 export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
   const {mainPart} = parseTypeLineParts(card.type_line);
   const words = mainPart.match(/[A-Za-z]+/g) ?? [];
@@ -71,6 +89,11 @@ export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
   return keys.size > 0 ? Array.from(keys) : ["Other"];
 }
 
+/**
+ * Returns the mana value group key for a card (e.g. "2", "10+", or "Lands").
+ * @param card The ScryfallOracleCard to analyze.
+ * @returns The group key as a string.
+ */
 export function getManaValueGroupKey(card: ScryfallOracleCard): string {
   if (card.type_line.toLowerCase().includes("land")) {
     return MANA_VALUE_LANDS_GROUP;
@@ -80,6 +103,11 @@ export function getManaValueGroupKey(card: ScryfallOracleCard): string {
   return manaValue >= 10 ? MANA_VALUE_TEN_PLUS_GROUP : `${manaValue}`;
 }
 
+/**
+ * Returns the tag group keys for a card, or ["Untagged"] if none.
+ * @param card The CardWithTags to analyze.
+ * @returns An array of tag group keys.
+ */
 export function getTagGroupKeys(card: CardWithTags): string[] {
   if (!card.tags?.length) {
     return ["Untagged"];
@@ -88,6 +116,12 @@ export function getTagGroupKeys(card: CardWithTags): string[] {
   return Array.from(new Set(card.tags));
 }
 
+/**
+ * Returns a unique HTML id for a group heading, if needed for accessibility.
+ * @param groupingMode The grouping mode (e.g. "manaValue").
+ * @param heading The heading string.
+ * @returns The id string or undefined.
+ */
 export function getGroupHeadingId(groupingMode: CardGroupingMode, heading: string): string | undefined {
   if (groupingMode === "manaValue") {
     return `mana-value-heading-${heading.replace(/\+/g, "plus")}`;
@@ -96,6 +130,12 @@ export function getGroupHeadingId(groupingMode: CardGroupingMode, heading: strin
   return undefined;
 }
 
+/**
+ * Sorts group headings according to the grouping mode (e.g. mana value, type, or alphabetically).
+ * @param headings The array of heading strings.
+ * @param mode The grouping mode.
+ * @returns The sorted array of headings.
+ */
 function sortGroupedHeadings(headings: string[], mode: CardGroupingMode): string[] {
   return headings.sort((left, right) => {
     if (mode === "manaValue") {
@@ -133,6 +173,12 @@ function sortGroupedHeadings(headings: string[], mode: CardGroupingMode): string
   });
 }
 
+/**
+ * Groups cards by the selected grouping mode (type, mana value, tag, or none).
+ * @param cards The array of CardWithTags to group.
+ * @param mode The grouping mode.
+ * @returns An array of GroupedCards objects.
+ */
 export function groupCardsByMode(cards: CardWithTags[], mode: CardGroupingMode): GroupedCards[] {
   if (mode === "none") {
     return [{heading: "", cards}];
@@ -163,6 +209,11 @@ export function groupCardsByMode(cards: CardWithTags[], mode: CardGroupingMode):
   }));
 }
 
+/**
+ * Returns the USD price of a card, or -1 if unavailable or invalid.
+ * @param card The CardWithTags to analyze.
+ * @returns The price as a number, or -1 if not available.
+ */
 function getUsdPrice(card: CardWithTags): number {
   const rawUsd = card.prices?.usd;
   if (!rawUsd) {
@@ -173,11 +224,22 @@ function getUsdPrice(card: CardWithTags): number {
   return Number.isFinite(parsedValue) ? parsedValue : -1;
 }
 
+/**
+ * Returns the rarity rank of a card for sorting, or MAX_SAFE_INTEGER if unknown.
+ * @param card The CardWithTags to analyze.
+ * @returns The rarity rank as a number.
+ */
 function getRarityRank(card: CardWithTags): number {
   const rarityKey = card.rarity.toLowerCase();
   return RARITY_ORDER[rarityKey] ?? Number.MAX_SAFE_INTEGER;
 }
 
+/**
+ * Sorts cards within a group according to the selected sort mode (price, mana value, rarity, or name).
+ * @param cards The array of CardWithTags to sort.
+ * @param mode The sorting mode.
+ * @returns The sorted array of cards.
+ */
 export function sortCardsInGroup(cards: CardWithTags[], mode: CardSortMode): CardWithTags[] {
   return [...cards].sort((left, right) => {
     if (mode === "priceUsd") {
@@ -200,7 +262,3 @@ export function sortCardsInGroup(cards: CardWithTags[], mode: CardSortMode): Car
     return left.name.localeCompare(right.name);
   });
 }
-
-
-
-

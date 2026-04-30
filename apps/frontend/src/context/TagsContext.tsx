@@ -1,5 +1,5 @@
 import React, {useState, type ReactNode} from 'react';
-import type {TagsMap} from '@mtgit/shared/deckImport';
+import type {TagsMap} from '@mtgit/shared';
 
 import {TagsContext} from './tagsContextShared.ts';
 

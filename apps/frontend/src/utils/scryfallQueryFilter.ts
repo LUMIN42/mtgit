@@ -1,4 +1,4 @@
-import type {Deck} from "../types/deck.ts";
+import type {Deck} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "../types/scryfall";
 
 // todo move file to shared code

@@ -1,7 +1,7 @@
 import {createContext} from 'react';
 
 import type React from 'react';
-import type {TagsMap} from '@mtgit/shared/deckImport';
+import type {TagsMap} from '@mtgit/shared';
 
 export interface TagsContextType {
   tags: TagsMap;

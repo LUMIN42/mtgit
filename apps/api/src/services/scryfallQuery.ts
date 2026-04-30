@@ -1,12 +1,9 @@
-import type { ScryfallOracleCard } from '@mtgit/shared/scryfall';
-import {
-  ScryfallSearchQuerySchema,
-  searchScryfallCards,
-  type ScryfallSearchResult,
-} from '@mtgit/shared/scryfallSearch';
+import type {ScryfallOracleCard} from '@mtgit/shared/scryfall';
+import {ScryfallSearchQuerySchema, type ScryfallSearchResult, searchScryfallCards,} from '@mtgit/shared/scryfallSearch';
 
 export { ScryfallSearchQuerySchema };
 
+// todo actually implement it one day
 export class ScryfallQueryService {
   constructor(_legacyDependency?: unknown) {}
 
@@ -16,7 +13,6 @@ export class ScryfallQueryService {
     cards: ScryfallOracleCard[];
     total: number;
   }> {
-    const result: ScryfallSearchResult = await searchScryfallCards(query, limit, skip);
-    return result;
+    return await searchScryfallCards(query, limit, skip);
   }
 }

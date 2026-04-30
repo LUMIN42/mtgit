@@ -1,6 +1,6 @@
 import type {ScryfallOracleCard} from "../types/scryfall.ts";
 import type {CardWithTags} from "../types/cardWithTags.ts";
-import type {Deck} from "../types/deck.ts";
+import type {Deck} from "@mtgit/shared";
 
 const ORACLE_CARDS: ScryfallOracleCard[] = [
   {

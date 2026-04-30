@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import {createContext, useContext, useMemo, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
-import type {Deck, DeckSectionName} from "../types/deck.ts";
+import type {Deck, DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 import {DeckDataProvider, useDeckDataContext} from "./DeckDataContext.tsx";
 import type {DeckDataContextValue} from "./DeckDataContext.tsx";

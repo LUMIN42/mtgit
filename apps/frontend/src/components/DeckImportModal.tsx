@@ -2,9 +2,9 @@ import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {useTagsContext} from "../context/useTagsContext.ts";
-import type {TagsMap} from "@mtgit/shared/deckImport";
+import type {TagsMap} from "@mtgit/shared";
 import {trpcClient} from "../trpcClient.ts";
-import type {Deck} from "../types/deck.ts";
+import type {Deck} from "@mtgit/shared";
 
 export function DeckImportModal() {
   const {setDeck} = useDeckContext();
