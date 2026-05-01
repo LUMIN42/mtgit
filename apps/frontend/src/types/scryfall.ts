@@ -8,6 +8,6 @@ export {
   type ScryfallImageUris,
   type ScryfallLegalities,
   type ScryfallOracleCard,
-  type ScryfallPrices,
-} from '@mtgit/shared/scryfall';
+  type ScryfallPrices
+} from "@mtgit/shared/scryfall";
 

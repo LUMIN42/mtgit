@@ -53,11 +53,11 @@ function DeckUIProvider({children}: {children: ReactNode}) {
   const [cardFilterQuery, setCardFilterQuery] = useState("");
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [submittedSearch, setSubmittedSearch] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState("");
 
   const filteredDeck = useMemo(
     () => filterDeckByScryfallQuery(deck, cardFilterQuery),
-    [deck, cardFilterQuery],
+    [deck, cardFilterQuery]
   );
 
   const value: DeckUIContextValue = {
@@ -76,7 +76,7 @@ function DeckUIProvider({children}: {children: ReactNode}) {
     isSearching,
     setIsSearching,
     submittedSearch,
-    setSubmittedSearch,
+    setSubmittedSearch
   };
 
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;
@@ -105,7 +105,7 @@ export function useDeckContext(): DeckContextValue {
   const uiContext = useDeckUIContext();
   return {
     ...dataContext,
-    ...uiContext,
+    ...uiContext
   };
 }
 

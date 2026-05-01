@@ -64,7 +64,6 @@ export default defineConfig([
       'no-eval': ['error'],
       'no-warning-comments': 'off',
       'curly': ['warn', 'all'],
-      'erasablesyntaxonly': 'off',
 
       // Replaced by the @typescript-eslint rules.
       'no-unused-vars': 'off',

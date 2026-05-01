@@ -15,12 +15,12 @@ export function DeckGroupingSection({value, onChange}: DeckGroupingSectionProps)
         fullWidth
         size="xs"
         value={value}
-        onChange={(nextValue) => onChange(nextValue as CardGroupingMode)}
+        onChange={nextValue => onChange(nextValue as CardGroupingMode)}
         data={[
           {label: "None", value: "none"},
           {label: "Type", value: "type"},
           {label: "Mana Value", value: "manaValue"},
-          {label: "Tags", value: "tags"},
+          {label: "Tags", value: "tags"}
         ]}
       />
     </FieldSection>

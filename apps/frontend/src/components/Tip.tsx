@@ -1,6 +1,6 @@
 import {Badge, HoverCard, Text} from "@mantine/core";
 
-export function Tip({children}: { children: React.ReactNode }) {
+export function Tip({children}: {children: React.ReactNode}) {
   return <HoverCard shadow="md" position={"top"}>
     <HoverCard.Target>
       <Badge
@@ -16,5 +16,5 @@ export function Tip({children}: { children: React.ReactNode }) {
         {children}
       </Text>
     </HoverCard.Dropdown>
-  </HoverCard>
+  </HoverCard>;
 }

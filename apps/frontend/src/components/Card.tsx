@@ -10,7 +10,7 @@ type CardProps = {
   className?: string;
   onSelect?: (card: ScryfallOracleCard) => void;
   onHoverImage?: (imageUrl: string | null) => void;
-}
+};
 
 
 export function Card({
@@ -18,7 +18,7 @@ export function Card({
   displayMode = "Images",
   className,
   onSelect,
-  onHoverImage,
+  onHoverImage
 }: CardProps) {
   const imageUrl = getCardImageUrl(card);
 
@@ -41,7 +41,7 @@ export function Card({
 
   return (
     <Box style={{position: "relative", width: "100%"}}>
-      <Overlay color="black" opacity={1} zIndex={0} style={{ backgroundColor: "black" }} />
+      <Overlay color="black" opacity={1} zIndex={0} style={{backgroundColor: "black"}} />
       <Image
         src={imageUrl}
         alt={card.name}
@@ -49,7 +49,7 @@ export function Card({
         onClick={() => onSelect?.(card)}
         pos={"relative"}
         style={{
-          cursor: onSelect ? "pointer" : undefined,
+          cursor: onSelect ? "pointer" : undefined
         }}
         radius="lg"
       />

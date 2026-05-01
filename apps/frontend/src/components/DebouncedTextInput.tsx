@@ -20,8 +20,8 @@ export function DebouncedTextInput({
   label,
   size = "sm",
   debounceMs = 200,
-  clearable=false,
-  setValue=()=>{}
+  clearable = false,
+  setValue = ()=>{}
 }: DebouncedTextInputProps) {
   const [draftValue, setDraftValue] = useState(value);
   const [debouncedValue] = useDebouncedValue(draftValue, debounceMs);
@@ -40,9 +40,9 @@ export function DebouncedTextInput({
       size={size}
       placeholder={placeholder}
       aria-label={label}
-      onChange={(event) => setDraftValue(event.currentTarget.value)}
+      onChange={event => setDraftValue(event.currentTarget.value)}
 
-      rightSection={(clearable && value !== "") ? <Input.ClearButton onClick={() => setValue('')} /> : undefined}
+      rightSection={(clearable && value !== "") ? <Input.ClearButton onClick={() => setValue("")} /> : undefined}
     />
   );
 }

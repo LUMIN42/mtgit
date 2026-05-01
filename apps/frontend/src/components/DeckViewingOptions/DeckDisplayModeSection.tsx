@@ -17,7 +17,7 @@ export function DeckDisplayModeSection({value, onToggle}: DeckDisplayModeSection
           value={value}
           data={[
             {label: "Images", value: "Images"},
-            {label: "Text", value: "Text"},
+            {label: "Text", value: "Text"}
           ]}
         />
       </Box>

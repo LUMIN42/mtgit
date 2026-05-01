@@ -47,7 +47,7 @@ const RARITY_ORDER: Record<string, number> = {
   rare: 2,
   mythic: 3,
   special: 4,
-  bonus: 5,
+  bonus: 5
 };
 
 /**
@@ -55,7 +55,7 @@ const RARITY_ORDER: Record<string, number> = {
  * @param typeLine The type line string from a card.
  * @returns An object with mainPart and subtypePart.
  */
-function parseTypeLineParts(typeLine: string): { mainPart: string; subtypePart: string } {
+function parseTypeLineParts(typeLine: string): {mainPart: string, subtypePart: string} {
   const [mainPart = "", subtypePart = ""] = typeLine.split(/\s[-—]\s/, 2);
   return {mainPart, subtypePart};
 }
@@ -153,8 +153,8 @@ function sortGroupedHeadings(headings: string[], mode: CardGroupingMode): string
     }
 
     if (mode === "type") {
-      const leftIndex = MAIN_TYPE_ORDER.findIndex((type) => type === left);
-      const rightIndex = MAIN_TYPE_ORDER.findIndex((type) => type === right);
+      const leftIndex = MAIN_TYPE_ORDER.findIndex(type => type === left);
+      const rightIndex = MAIN_TYPE_ORDER.findIndex(type => type === right);
 
       if (leftIndex >= 0 && rightIndex >= 0) {
         return leftIndex - rightIndex;
@@ -203,9 +203,9 @@ export function groupCardsByMode(cards: CardWithTags[], mode: CardGroupingMode):
 
   const sortedHeadings = sortGroupedHeadings(Array.from(groups.keys()), mode);
 
-  return sortedHeadings.map((heading) => ({
+  return sortedHeadings.map(heading => ({
     heading,
-    cards: groups.get(heading) ?? [],
+    cards: groups.get(heading) ?? []
   }));
 }
 
@@ -247,12 +247,14 @@ export function sortCardsInGroup(cards: CardWithTags[], mode: CardSortMode): Car
       if (priceDelta !== 0) {
         return priceDelta;
       }
-    } else if (mode === "manaValue") {
+    }
+    else if (mode === "manaValue") {
       const manaDelta = left.cmc - right.cmc;
       if (manaDelta !== 0) {
         return manaDelta;
       }
-    } else if (mode === "rarity") {
+    }
+    else if (mode === "rarity") {
       const rarityDelta = getRarityRank(right) - getRarityRank(left);
       if (rarityDelta !== 0) {
         return rarityDelta;

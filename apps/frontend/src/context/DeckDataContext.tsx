@@ -25,7 +25,7 @@ function isDeckLike(value: unknown): value is Deck {
   return typeof deck.name === "string"
     && !!deck.sections
     && typeof deck.sections === "object"
-    && Array.isArray((deck.sections as { Main?: unknown }).Main);
+    && Array.isArray((deck.sections as {Main?: unknown}).Main);
 }
 
 export function DeckDataProvider({deck: initialDeck, children}: DeckDataProviderProps) {
@@ -38,7 +38,8 @@ export function DeckDataProvider({deck: initialDeck, children}: DeckDataProvider
 
       const parsedDeck = JSON.parse(rawDeck) as unknown;
       return isDeckLike(parsedDeck) ? parsedDeck : initialDeck;
-    } catch {
+    }
+    catch {
       return initialDeck;
     }
   });
@@ -46,7 +47,8 @@ export function DeckDataProvider({deck: initialDeck, children}: DeckDataProvider
   useEffect(() => {
     try {
       localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
-    } catch {
+    }
+    catch {
       // Ignore storage failures to keep app usable in restricted environments.
     }
   }, [deck]);

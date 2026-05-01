@@ -1,7 +1,7 @@
-import {ActionIcon, Box, Checkbox, Group, Input, Stack, Text, TextInput, useMantineTheme} from '@mantine/core';
-import {IconPlus} from '@tabler/icons-react';
-import {useEffect, useState} from 'react';
-import {useTagsContext} from '../context/useTagsContext.ts';
+import {ActionIcon, Box, Checkbox, Group, Input, Stack, Text, TextInput, useMantineTheme} from "@mantine/core";
+import {IconPlus} from "@tabler/icons-react";
+import {useEffect, useState} from "react";
+import {useTagsContext} from "../context/useTagsContext.ts";
 
 interface CardDetailsTagsPanelProps {
   cardId: string | null;
@@ -13,16 +13,17 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
   const theme = useMantineTheme();
   const {setTags, allTags} = useTagsContext();
 
-  const [tagSearch, setTagSearch] = useState('');
+  const [tagSearch, setTagSearch] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const filteredTags = allTags.filter((tag) => tag.toLowerCase().includes(tagSearch.toLowerCase()));
+  const filteredTags = allTags.filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()));
 
   useEffect(() => {
     if (tagSearch && filteredTags.length > 0) {
-      setHighlightedIndex((prev) => (prev === 0 ? prev : 0));
-    } else if (highlightedIndex !== null) {
+      setHighlightedIndex(prev => (prev === 0 ? prev : 0));
+    }
+    else if (highlightedIndex !== null) {
       setHighlightedIndex(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -33,10 +34,10 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
       return;
     }
 
-    setTags((previousTags) => {
+    setTags(previousTags => {
       const existing = previousTags[cardId] ?? [];
       const nextCardTags = existing.includes(tag)
-        ? existing.filter((existingTag) => existingTag !== tag)
+        ? existing.filter(existingTag => existingTag !== tag)
         : [...existing, tag];
 
       if (nextCardTags.length === 0) {
@@ -47,7 +48,7 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
 
       return {
         ...previousTags,
-        [cardId]: nextCardTags,
+        [cardId]: nextCardTags
       };
     });
   };
@@ -59,32 +60,39 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
   };
 
   const createTag = () => {
-    if (!cardId || !tagSearch.trim()) return;
+    if (!cardId || !tagSearch.trim()) {
+      return;
+    }
 
-    setTags((previousTags) => {
+    setTags(previousTags => {
       const existing = previousTags[cardId] ?? [];
-      if (existing.includes(tagSearch.trim())) return previousTags;
+      if (existing.includes(tagSearch.trim())) {
+        return previousTags;
+      }
 
       return {
         ...previousTags,
-        [cardId]: [...existing, tagSearch.trim()],
+        [cardId]: [...existing, tagSearch.trim()]
       };
     });
 
-    setTagSearch('');
+    setTagSearch("");
   };
 
   const handleTagSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       if (filteredTags.length > 0 && highlightedIndex !== null) {
         handleTagToggle(filteredTags[highlightedIndex]);
-      } else if (tagSearch.trim() && filteredTags.length === 0 && cardId) {
+      }
+      else if (tagSearch.trim() && filteredTags.length === 0 && cardId) {
         createTag();
       }
-    } else if (e.key === 'ArrowDown' && filteredTags.length > 0) {
-      setHighlightedIndex((i) => (i === null ? 0 : Math.min(i + 1, filteredTags.length - 1)));
-    } else if (e.key === 'ArrowUp' && filteredTags.length > 0) {
-      setHighlightedIndex((i) => (i === null ? 0 : Math.max(i - 1, 0)));
+    }
+    else if (e.key === "ArrowDown" && filteredTags.length > 0) {
+      setHighlightedIndex(i => (i === null ? 0 : Math.min(i + 1, filteredTags.length - 1)));
+    }
+    else if (e.key === "ArrowUp" && filteredTags.length > 0) {
+      setHighlightedIndex(i => (i === null ? 0 : Math.max(i - 1, 0)));
     }
   };
 
@@ -96,12 +104,12 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
           value={tagSearch}
           placeholder="Search or add tag..."
           aria-label="Tag search"
-          onChange={(e) => setTagSearch(e.currentTarget.value)}
+          onChange={e => setTagSearch(e.currentTarget.value)}
           onKeyDown={handleTagSearchKeyDown}
           size="sm"
           style={{flex: 1}}
-          rightSection={tagSearch !== '' ? (
-            <Input.ClearButton onClick={() => setTagSearch('')} />
+          rightSection={tagSearch !== "" ? (
+            <Input.ClearButton onClick={() => setTagSearch("")} />
           ) : undefined}
         />
         <ActionIcon
@@ -122,29 +130,29 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
           key={tag}
           component="label"
           onMouseEnter={() => setHoveredIndex(idx)}
-          onMouseLeave={() => setHoveredIndex((current) => (current === idx ? null : current))}
+          onMouseLeave={() => setHoveredIndex(current => (current === idx ? null : current))}
           style={{
-            width: '100%',
+            width: "100%",
             margin: 0,
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 8,
-            cursor: 'pointer',
+            cursor: "pointer",
             borderRadius: 4,
-            padding: '0.3em',
+            padding: "0.3em",
             backgroundColor: highlightedIndex === idx || hoveredIndex === idx ? theme.colors[theme.primaryColor][0] : undefined,
-            transition: 'background-color 0.1s',
+            transition: "background-color 0.1s"
           }}
         >
           <Checkbox
             checked={currentTags.includes(tag)}
-            onChange={(event) => handleTagCheckboxChange(tag, event)}
+            onChange={event => handleTagCheckboxChange(tag, event)}
             disabled={!cardId}
             aria-label={tag}
             tabIndex={-1}
             style={{flexShrink: 0}}
           />
-          <Text style={{flex: 1, cursor: 'pointer'}}>{tag}</Text>
+          <Text style={{flex: 1, cursor: "pointer"}}>{tag}</Text>
         </Box>
       ))}
     </Stack>
