@@ -16,7 +16,9 @@ export function GroupedCards() {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   const {sections, pageCards} = useMemo(() => {
-    const sectionEntries = (Object.entries(filteredDeck.sections) as Array<[string, CardWithTags[]]>).sort(
+    const sectionEntries = (Object.entries(filteredDeck.sections) as Array<[string, any]>).map(
+      ([name, section]) => [name, section.toArray ? section.toArray() : section]
+    ).sort(
       ([leftSection], [rightSection]) => {
         if (leftSection === "Commander") {
           return -1;

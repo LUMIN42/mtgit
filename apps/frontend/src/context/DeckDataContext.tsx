@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import {createContext, useContext, useEffect, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
-import type {Deck} from "@mtgit/shared";
+import type {Deck, DeckSectionName, DeckCard} from "@mtgit/shared";
+import {DeckSection} from "@mtgit/shared";
 
 export interface DeckDataContextValue {
   deck: Deck;
@@ -22,10 +23,28 @@ function isDeckLike(value: unknown): value is Deck {
   }
 
   const deck = value as Partial<Deck>;
+  const mainSection = (deck.sections as {Main?: unknown}).Main;
+
   return typeof deck.name === "string"
     && !!deck.sections
     && typeof deck.sections === "object"
-    && Array.isArray((deck.sections as {Main?: unknown}).Main);
+    && (mainSection instanceof DeckSection || (Array.isArray(mainSection) && mainSection.length >= 0));
+}
+
+function reconstructDeckSections(sections: Deck["sections"]): Deck["sections"] {
+  const reconstructed: Deck["sections"] = {
+    Main: sections.Main instanceof DeckSection ? sections.Main : new DeckSection("Main", (sections.Main as unknown as DeckCard[]) ?? [])
+  };
+
+  const sectionNames: DeckSectionName[] = ["Commander", "Sideboard", "Considering"];
+  for (const sectionName of sectionNames) {
+    const section = sections[sectionName];
+    if (section) {
+      reconstructed[sectionName] = section instanceof DeckSection ? section : new DeckSection(sectionName, (section as unknown as DeckCard[]) ?? []);
+    }
+  }
+
+  return reconstructed;
 }
 
 export function DeckDataProvider({deck: initialDeck, children}: DeckDataProviderProps) {
@@ -37,7 +56,14 @@ export function DeckDataProvider({deck: initialDeck, children}: DeckDataProvider
       }
 
       const parsedDeck = JSON.parse(rawDeck) as unknown;
-      return isDeckLike(parsedDeck) ? parsedDeck : initialDeck;
+      if (!isDeckLike(parsedDeck)) {
+        return initialDeck;
+      }
+
+      return {
+        ...parsedDeck,
+        sections: reconstructDeckSections(parsedDeck.sections)
+      };
     }
     catch {
       return initialDeck;

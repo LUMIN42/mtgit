@@ -1,6 +1,6 @@
 import {ScryfallOracleCardSchema} from "@mtgit/shared/scryfall";
 import type {Deck, DeckSectionName, TaggedDeck, TagsMap} from "@mtgit/shared";
-import {SECTION_BY_LABEL} from "@mtgit/shared";
+import {SECTION_BY_LABEL, DeckSection} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 
 import {getCollection} from "../db/mongo.js";
@@ -32,15 +32,11 @@ type ParsedDeckEntry = {
  *
  * @param sections - The deck sections object.
  * @param section - The section name to ensure.
- * @returns The array of cards for the section.
+ * @returns The DeckSection
  */
-function safeGetSection(sections: DeckSections, section: DeckSectionName): ScryfallOracleCard[] {
-  if (section === "Main") {
-    return sections.Main;
-  }
-
+function safeGetSection(sections: DeckSections, section: DeckSectionName): DeckSection {
   if (!sections[section]) {
-    sections[section] = [];
+    sections[section] = new DeckSection(section);
   }
 
   return sections[section];
@@ -175,7 +171,7 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
     implicitSideboardStart = findImplicitSideboardStart(lines);
   }
 
-  const sections: DeckSections = {Main: []};
+  const sections: DeckSections = {Main: new DeckSection("Main")};
   let currentSection: DeckSectionName = "Main";
   const missingCards = new Set<string>();
   const tagsMap: TagsMap = {};
@@ -224,7 +220,11 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
 
     const targetSection = safeGetSection(sections, currentSection);
     for (let i = 0; i < quantity; i += 1) {
-      targetSection.push({...card});
+      const cardWithCount = {
+        ...card,
+        count: 1
+      };
+      targetSection.addCard(cardWithCount);
     }
   }
 
@@ -233,18 +233,24 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
     return typeLine.includes("legendary") && typeLine.includes("creature");
   }
 
-  function promoteCardToCommander(sectionCards: ScryfallOracleCard[], index: number): void {
-    const commander = sectionCards[index];
+  function promoteCardToCommander(sourceSection: DeckSection, cardOracleId: string): void {
+    const commander = sourceSection.getById(cardOracleId);
     if (!commander) {
       return;
     }
 
-    sectionCards.splice(index, 1);
-    safeGetSection(sections, "Commander").push(commander);
+    sourceSection.removeById(cardOracleId);
+    safeGetSection(sections, "Commander").addCard(commander);
   }
 
-  if (!sections.Commander?.length && sections.Sideboard?.length === 1 && isLegendaryCreature(sections.Sideboard[0])) {
-    promoteCardToCommander(sections.Sideboard, 0);
+  if (!sections.Commander?.length && sections.Sideboard?.length === 1) {
+    const sideboardCard = sections.Sideboard.toArray()[0];
+    if (sideboardCard && isLegendaryCreature(sideboardCard)) {
+      const cardOracleId = sideboardCard.oracle_id;
+      if (cardOracleId) {
+        promoteCardToCommander(sections.Sideboard, cardOracleId);
+      }
+    }
   }
 
   if (missingCards.size > 0) {

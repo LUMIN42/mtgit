@@ -5,6 +5,7 @@ import {useTagsContext} from "../context/useTagsContext.ts";
 import type {TagsMap} from "@mtgit/shared";
 import {trpcClient} from "../trpcClient.ts";
 import type {Deck} from "@mtgit/shared";
+import {DeckSection} from "@mtgit/shared";
 
 export function DeckImportModal() {
   const {setDeck} = useDeckContext();
@@ -14,21 +15,68 @@ export function DeckImportModal() {
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const mergeDecks = (currentDeck: Deck, importedDeck: Deck): Deck => ({
-    ...currentDeck,
-    sections: {
-      Main: [...currentDeck.sections.Main, ...importedDeck.sections.Main],
-      ...(currentDeck.sections.Commander || importedDeck.sections.Commander
-        ? {Commander: [...(currentDeck.sections.Commander ?? []), ...(importedDeck.sections.Commander ?? [])]}
-        : {}),
-      ...(currentDeck.sections.Sideboard || importedDeck.sections.Sideboard
-        ? {Sideboard: [...(currentDeck.sections.Sideboard ?? []), ...(importedDeck.sections.Sideboard ?? [])]}
-        : {}),
-      ...(currentDeck.sections.Considering || importedDeck.sections.Considering
-        ? {Considering: [...(currentDeck.sections.Considering ?? []), ...(importedDeck.sections.Considering ?? [])]}
-        : {})
+  const reconstructDeck = (deck: any): Deck => {
+    const sections: Deck["sections"] = {
+      Main: deck.sections?.Main instanceof DeckSection
+        ? deck.sections.Main
+        : new DeckSection("Main", deck.sections?.Main ?? [])
+    };
+
+    if (deck.sections?.Commander) {
+      sections.Commander = deck.sections.Commander instanceof DeckSection
+        ? deck.sections.Commander
+        : new DeckSection("Commander", deck.sections.Commander);
     }
-  });
+
+    if (deck.sections?.Sideboard) {
+      sections.Sideboard = deck.sections.Sideboard instanceof DeckSection
+        ? deck.sections.Sideboard
+        : new DeckSection("Sideboard", deck.sections.Sideboard);
+    }
+
+    if (deck.sections?.Considering) {
+      sections.Considering = deck.sections.Considering instanceof DeckSection
+        ? deck.sections.Considering
+        : new DeckSection("Considering", deck.sections.Considering);
+    }
+
+    return {
+      name: deck.name,
+      sections
+    };
+  };
+
+  const mergeDecks = (currentDeck: Deck, importedDeck: Deck): Deck => {
+    const mergedSections: typeof currentDeck.sections = {
+      Main: new DeckSection("Main", [
+        ...currentDeck.sections.Main.toArray(),
+        ...importedDeck.sections.Main.toArray()
+      ])
+    };
+
+    if (currentDeck.sections.Commander || importedDeck.sections.Commander) {
+      const currentCommander = currentDeck.sections.Commander?.toArray() ?? [];
+      const importedCommander = importedDeck.sections.Commander?.toArray() ?? [];
+      mergedSections.Commander = new DeckSection("Commander", [...currentCommander, ...importedCommander]);
+    }
+
+    if (currentDeck.sections.Sideboard || importedDeck.sections.Sideboard) {
+      const currentSideboard = currentDeck.sections.Sideboard?.toArray() ?? [];
+      const importedSideboard = importedDeck.sections.Sideboard?.toArray() ?? [];
+      mergedSections.Sideboard = new DeckSection("Sideboard", [...currentSideboard, ...importedSideboard]);
+    }
+
+    if (currentDeck.sections.Considering || importedDeck.sections.Considering) {
+      const currentConsidering = currentDeck.sections.Considering?.toArray() ?? [];
+      const importedConsidering = importedDeck.sections.Considering?.toArray() ?? [];
+      mergedSections.Considering = new DeckSection("Considering", [...currentConsidering, ...importedConsidering]);
+    }
+
+    return {
+      ...currentDeck,
+      sections: mergedSections
+    };
+  };
 
   const mergeTagsMaps = (currentTags: TagsMap, importedTags: TagsMap): TagsMap => {
     const merged: TagsMap = {...currentTags};
@@ -51,14 +99,16 @@ export function DeckImportModal() {
     setImportError(null);
 
     try {
-      const {deck: parsedDeck, tagsMap} = await trpcClient.deckImport.parse.mutate({text: importDeckText});
+      const result = await trpcClient.deckImport.parse.mutate({text: importDeckText});
+      const reconstructed = reconstructDeck(result.deck);
+      
       if (mode === "replace") {
-        setDeck(parsedDeck as Deck);
-        setTags(tagsMap);
+        setDeck(reconstructed);
+        setTags(result.tagsMap);
       }
       else {
-        setDeck(currentDeck => mergeDecks(currentDeck, parsedDeck as Deck));
-        setTags(currentTags => mergeTagsMaps(currentTags, tagsMap));
+        setDeck(currentDeck => mergeDecks(currentDeck, reconstructed));
+        setTags(currentTags => mergeTagsMaps(currentTags, result.tagsMap));
       }
       closeModal();
     }
