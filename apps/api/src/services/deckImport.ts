@@ -1,6 +1,5 @@
-import {ScryfallOracleCardSchema} from "@mtgit/shared/scryfall";
-import type {Deck, DeckSectionName, TaggedDeck, TagsMap} from "@mtgit/shared";
-import {SECTION_BY_LABEL, DeckSection} from "@mtgit/shared";
+import {ScryfallOracleCardSchema, Deck, SECTION_BY_LABEL, DeckSection} from "@mtgit/shared";
+import type {DeckSectionName, TaggedDeck, TagsMap} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 
 import {getCollection} from "../db/mongo.js";
@@ -260,10 +259,7 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
   }
 
   return {
-    deck: {
-      name: "Imported Deck",
-      sections
-    },
+    deck: new Deck("Imported Deck", sections),
     tagsMap
   };
 }

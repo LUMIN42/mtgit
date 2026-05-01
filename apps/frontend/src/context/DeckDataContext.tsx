@@ -1,8 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import {createContext, useContext, useEffect, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
-import type {Deck, DeckSectionName, DeckCard} from "@mtgit/shared";
-import {DeckSection} from "@mtgit/shared";
+import {Deck, DeckSection} from "@mtgit/shared";
 
 export interface DeckDataContextValue {
   deck: Deck;
@@ -31,42 +30,23 @@ function isDeckLike(value: unknown): value is Deck {
     && (mainSection instanceof DeckSection || (Array.isArray(mainSection) && mainSection.length >= 0));
 }
 
-function reconstructDeckSections(sections: Deck["sections"]): Deck["sections"] {
-  const reconstructed: Deck["sections"] = {
-    Main: sections.Main instanceof DeckSection ? sections.Main : new DeckSection("Main", (sections.Main as unknown as DeckCard[]) ?? [])
-  };
-
-  const sectionNames: DeckSectionName[] = ["Commander", "Sideboard", "Considering"];
-  for (const sectionName of sectionNames) {
-    const section = sections[sectionName];
-    if (section) {
-      reconstructed[sectionName] = section instanceof DeckSection ? section : new DeckSection(sectionName, (section as unknown as DeckCard[]) ?? []);
-    }
-  }
-
-  return reconstructed;
-}
-
 export function DeckDataProvider({deck: initialDeck, children}: DeckDataProviderProps) {
   const [deck, setDeck] = useState<Deck>(() => {
     try {
       const rawDeck = localStorage.getItem(DECK_STORAGE_KEY);
       if (!rawDeck) {
-        return initialDeck;
+        return Deck.reconstruct(initialDeck);
       }
 
       const parsedDeck = JSON.parse(rawDeck) as unknown;
       if (!isDeckLike(parsedDeck)) {
-        return initialDeck;
+        return Deck.reconstruct(initialDeck);
       }
 
-      return {
-        ...parsedDeck,
-        sections: reconstructDeckSections(parsedDeck.sections)
-      };
+      return Deck.reconstruct(parsedDeck);
     }
     catch {
-      return initialDeck;
+      return Deck.reconstruct(initialDeck);
     }
   });
 

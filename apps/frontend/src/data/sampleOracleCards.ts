@@ -1,6 +1,6 @@
 import type {ScryfallOracleCard} from "../types/scryfall.ts";
 import type {CardWithTags} from "../types/cardWithTags.ts";
-import type {Deck} from "@mtgit/shared";
+import {Deck} from "@mtgit/shared";
 
 const ORACLE_CARDS: ScryfallOracleCard[] = [
   {
@@ -329,11 +329,11 @@ const repeatToLength = (pool: ScryfallOracleCard[], count: number): CardWithTags
   Array.from({length: count}, (_, index) => ({...pool[index % pool.length], tags: []}))
 );
 
-export const SAMPLE_ORACLE_CARDS: Deck = {
+export const SAMPLE_ORACLE_CARDS: Deck = Deck.reconstruct({
   name: "Sample Oracle Deck",
   sections: {
     Commander: [{...ORACLE_CARDS[7], tags: []}],
     Main: repeatToLength(MAIN_POOL, 100),
     Considering: repeatToLength(CONSIDERING_POOL, 100)
   }
-};
+});
