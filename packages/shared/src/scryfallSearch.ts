@@ -1,17 +1,17 @@
-import { z } from 'zod';
+import {z} from "zod";
 import {
   ScryfallSearchResponseSchema,
   type ScryfallApiOracleCard,
-  type ScryfallOracleCard,
-} from './scryfall.js';
+  type ScryfallOracleCard
+} from "./scryfall.js";
 
 export const ScryfallSearchQuerySchema = z.object({
   query: z.string(),
   limit: z.number().int().positive().max(100).default(20),
-  skip: z.number().int().nonnegative().default(0),
+  skip: z.number().int().nonnegative().default(0)
 });
 
-const SCRYFALL_API_BASE_URL = 'https://api.scryfall.com';
+const SCRYFALL_API_BASE_URL = "https://api.scryfall.com";
 
 interface ScryfallSearchSuccess {
   ok: true;
@@ -40,9 +40,9 @@ function toOracleCards(cards: ScryfallApiOracleCard[]): ScryfallOracleCard[] {
 }
 
 function buildSearchUrl(query: string, page: number): URL {
-  const url = new URL('/cards/search', SCRYFALL_API_BASE_URL);
-  url.searchParams.set('q', query);
-  url.searchParams.set('page', String(page));
+  const url = new URL("/cards/search", SCRYFALL_API_BASE_URL);
+  url.searchParams.set("q", query);
+  url.searchParams.set("page", String(page));
   return url;
 }
 
@@ -51,8 +51,8 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
     const url = buildSearchUrl(query, page);
     const response = await fetch(url, {
       headers: {
-        Accept: 'application/json',
-      },
+        Accept: "application/json"
+      }
     });
 
     const payload: unknown = await response.json();
@@ -61,24 +61,24 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
     if (!parsed.success) {
       return {
         ok: false,
-        message: 'Scryfall returned an unexpected response format.',
+        message: "Scryfall returned an unexpected response format."
       };
     }
 
-    if (parsed.data.object === 'error') {
-      if (parsed.data.status === 404 || parsed.data.code === 'not_found') {
+    if (parsed.data.object === "error") {
+      if (parsed.data.status === 404 || parsed.data.code === "not_found") {
         return {
           ok: true,
           cards: [],
           totalCards: 0,
           hasMore: false,
-          message: 'No cards found for the provided query.',
+          message: "No cards found for the provided query."
         };
       }
 
       return {
         ok: false,
-        message: parsed.data.details,
+        message: parsed.data.details
       };
     }
 
@@ -87,12 +87,13 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
       cards: parsed.data.data,
       totalCards: parsed.data.total_cards,
       hasMore: parsed.data.has_more,
-      message: parsed.data.warnings?.join(' '),
+      message: parsed.data.warnings?.join(" ")
     };
-  } catch {
+  }
+  catch {
     return {
       ok: false,
-      message: 'Failed to fetch cards from Scryfall API.',
+      message: "Failed to fetch cards from Scryfall API."
     };
   }
 }
@@ -100,15 +101,15 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
 export async function searchScryfallCards(
   query: string,
   limit: number = 20,
-  skip: number = 0,
+  skip: number = 0
 ): Promise<ScryfallSearchResult> {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return {
       ok: true,
-      message: 'Found 0 card(s) matching the query.',
+      message: "Found 0 card(s) matching the query.",
       cards: [],
-      total: 0,
+      total: 0
     };
   }
 
@@ -126,7 +127,7 @@ export async function searchScryfallCards(
         ok: false,
         message: pageResult.message,
         cards: [],
-        total: 0,
+        total: 0
       };
     }
 
@@ -160,6 +161,6 @@ export async function searchScryfallCards(
     ok: true,
     message: `Found ${cards.length} card(s) matching the query.`,
     cards,
-    total,
+    total
   };
 }

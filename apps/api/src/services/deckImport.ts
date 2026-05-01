@@ -1,9 +1,9 @@
-import {ScryfallOracleCardSchema} from '@mtgit/shared/scryfall';
-import type {Deck, DeckSectionName, TaggedDeck, TagsMap} from '@mtgit/shared';
-import { SECTION_BY_LABEL } from '@mtgit/shared';
-import type {ScryfallOracleCard} from '@mtgit/shared/scryfall';
+import {ScryfallOracleCardSchema} from "@mtgit/shared/scryfall";
+import type {Deck, DeckSectionName, TaggedDeck, TagsMap} from "@mtgit/shared";
+import {SECTION_BY_LABEL} from "@mtgit/shared";
+import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 
-import { getCollection } from '../db/mongo.js';
+import {getCollection} from "../db/mongo.js";
 
 /**
  * Normalizes a card name for lookup by lowercasing, trimming, and standardizing split card separators.
@@ -13,12 +13,12 @@ import { getCollection } from '../db/mongo.js';
 function normalizeCardName(name: string): string {
   return name
     .toLowerCase()
-    .replace(/\s*\/\/?\s*/g, ' // ') // fire//ice → fire // ice
-    .replace(/\s+/g, ' ') // normalize whitespaces to a single space
+    .replace(/\s*\/\/?\s*/g, " // ") // fire//ice → fire // ice
+    .replace(/\s+/g, " ") // normalize whitespaces to a single space
     .trim();
 }
 
-type DeckSections = Deck['sections'];
+type DeckSections = Deck["sections"];
 type ParsedDeckEntry = {
   quantity: number;
   cardName: string;
@@ -35,7 +35,7 @@ type ParsedDeckEntry = {
  * @returns The array of cards for the section.
  */
 function safeGetSection(sections: DeckSections, section: DeckSectionName): ScryfallOracleCard[] {
-  if (section === 'Main') {
+  if (section === "Main") {
     return sections.Main;
   }
 
@@ -56,7 +56,7 @@ function safeGetSection(sections: DeckSections, section: DeckSectionName): Scryf
  * @returns Parsed quantity, normalized card name text, and extracted tags.
  */
 function parseDeckEntry(rawLine: string): ParsedDeckEntry {
-  const lineRegex = /(\d+) ([^#(]+)(.*)?/ // amount, card name, rest of line
+  const lineRegex = /(\d+) ([^#(]+)(.*)?/; // amount, card name, rest of line
   // rest of line may include set code, collector number and tags
 
   const match = rawLine.match(lineRegex);
@@ -66,7 +66,7 @@ function parseDeckEntry(rawLine: string): ParsedDeckEntry {
   }
 
   const [_, rawAmount, rawCardName, rest] = match;
-  const cardName = rawCardName.trim()
+  const cardName = rawCardName.trim();
 
 
   const quantity = Number.parseInt(rawAmount);
@@ -78,14 +78,14 @@ function parseDeckEntry(rawLine: string): ParsedDeckEntry {
     const tagMatches = rest.matchAll(tagsRegex);
 
     for (const tagMatch of tagMatches) {
-      tags.push(tagMatch[1].trim())
+      tags.push(tagMatch[1].trim());
     }
   }
 
   return {
     quantity,
     cardName,
-    tags,
+    tags
   };
 }
 
@@ -98,7 +98,7 @@ function parseDeckEntry(rawLine: string): ParsedDeckEntry {
 async function lookupCardByNormalizedName(
   normalizedName: string
 ): Promise<ScryfallOracleCard | undefined> {
-  const scryfallCards = getCollection('scryfall_cards');
+  const scryfallCards = getCollection("scryfall_cards");
   const cards = await scryfallCards
     .find({normalized_name: normalizedName})
     .toArray() as unknown[];
@@ -122,8 +122,8 @@ async function lookupCardByNormalizedName(
 
   // Sort by priority: art-series and "Card // Card" are lower priority
   parsedCards.sort((a, b) => {
-    const aIsArtLike = a.layout === 'art_series' || a.type_line === 'Card // Card' ? 0 : 1;
-    const bIsArtLike = b.layout === 'art_series' || b.type_line === 'Card // Card' ? 0 : 1;
+    const aIsArtLike = a.layout === "art_series" || a.type_line === "Card // Card" ? 0 : 1;
+    const bIsArtLike = b.layout === "art_series" || b.type_line === "Card // Card" ? 0 : 1;
     return bIsArtLike - aIsArtLike;
   });
 
@@ -141,14 +141,14 @@ async function lookupCardByNormalizedName(
  */
 function findImplicitSideboardStart(lines: string[]): number {
   for (let index = lines.length - 1; index >= 0; index -= 1) {
-    if (lines[index].trim() !== '') {
+    if (lines[index].trim() !== "") {
       continue;
     }
 
     const trailingCardLines = lines
       .slice(index + 1)
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith('//') && !line.startsWith('#'));
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith("//") && !line.startsWith("#"));
 
     if (trailingCardLines.length === 1) {
       return index + 1;
@@ -168,7 +168,7 @@ function findImplicitSideboardStart(lines: string[]): number {
 export async function parseDeckImportText(importText: string): Promise<TaggedDeck> {
   const lines = importText.split(/\r?\n/);
   const sectionHeaderPattern = /^(Commander|Main|Sideboard|Considering)\s*:?$/i;
-  const hasExplicitSectionHeaders = lines.some((rawLine) => sectionHeaderPattern.test(rawLine.trim()));
+  const hasExplicitSectionHeaders = lines.some(rawLine => sectionHeaderPattern.test(rawLine.trim()));
 
   let implicitSideboardStart = -1;
   if (!hasExplicitSectionHeaders) {
@@ -176,7 +176,7 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
   }
 
   const sections: DeckSections = {Main: []};
-  let currentSection: DeckSectionName = 'Main';
+  let currentSection: DeckSectionName = "Main";
   const missingCards = new Set<string>();
   const tagsMap: TagsMap = {};
 
@@ -184,10 +184,10 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
     const line = rawLine.trim();
 
     if (!hasExplicitSectionHeaders && implicitSideboardStart >= 0 && index >= implicitSideboardStart) {
-      currentSection = 'Sideboard';
+      currentSection = "Sideboard";
     }
 
-    if (!line || line.startsWith('//') || line.startsWith('#')) {
+    if (!line || line.startsWith("//") || line.startsWith("#")) {
       continue;
     }
 
@@ -230,7 +230,7 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
 
   function isLegendaryCreature(card: ScryfallOracleCard): boolean {
     const typeLine = card.type_line.toLowerCase();
-    return typeLine.includes('legendary') && typeLine.includes('creature');
+    return typeLine.includes("legendary") && typeLine.includes("creature");
   }
 
   function promoteCardToCommander(sectionCards: ScryfallOracleCard[], index: number): void {
@@ -240,7 +240,7 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
     }
 
     sectionCards.splice(index, 1);
-    safeGetSection(sections, 'Commander').push(commander);
+    safeGetSection(sections, "Commander").push(commander);
   }
 
   if (!sections.Commander?.length && sections.Sideboard?.length === 1 && isLegendaryCreature(sections.Sideboard[0])) {
@@ -248,17 +248,17 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
   }
 
   if (missingCards.size > 0) {
-    const missingList = Array.from(missingCards).slice(0, 8).join(', ');
-    const suffix = missingCards.size > 8 ? '...' : '';
+    const missingList = Array.from(missingCards).slice(0, 8).join(", ");
+    const suffix = missingCards.size > 8 ? "..." : "";
     throw new Error(`Could not find these cards in oracle data: ${missingList}${suffix}`);
   }
 
   return {
     deck: {
-      name: 'Imported Deck',
-      sections,
+      name: "Imported Deck",
+      sections
     },
-    tagsMap,
+    tagsMap
   };
 }
 

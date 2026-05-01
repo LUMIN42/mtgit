@@ -317,12 +317,12 @@ const MAIN_POOL = [
   ORACLE_CARDS[3],
   ORACLE_CARDS[4],
   ORACLE_CARDS[5],
-  ORACLE_CARDS[9],
+  ORACLE_CARDS[9]
 ];
 
 const CONSIDERING_POOL = [
   ORACLE_CARDS[6],
-  ORACLE_CARDS[8],
+  ORACLE_CARDS[8]
 ];
 
 const repeatToLength = (pool: ScryfallOracleCard[], count: number): CardWithTags[] => (
@@ -334,6 +334,6 @@ export const SAMPLE_ORACLE_CARDS: Deck = {
   sections: {
     Commander: [{...ORACLE_CARDS[7], tags: []}],
     Main: repeatToLength(MAIN_POOL, 100),
-    Considering: repeatToLength(CONSIDERING_POOL, 100),
-  },
+    Considering: repeatToLength(CONSIDERING_POOL, 100)
+  }
 };

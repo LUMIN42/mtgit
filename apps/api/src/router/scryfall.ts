@@ -1,5 +1,5 @@
-import { publicProcedure, router } from '../trpc.js';
-import { ScryfallSearchQuerySchema, searchScryfallCards } from '@mtgit/shared/scryfallSearch';
+import {publicProcedure, router} from "../trpc.js";
+import {ScryfallSearchQuerySchema, searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
 /**
  * tRPC router for Scryfall card queries.
@@ -11,5 +11,5 @@ export const scryfallRouter = router({
    */
   search: publicProcedure
     .input(ScryfallSearchQuerySchema)
-    .query(async ({ input }) => searchScryfallCards(input.query, input.limit, input.skip)),
+    .query(async ({input}) => searchScryfallCards(input.query, input.limit, input.skip))
 });

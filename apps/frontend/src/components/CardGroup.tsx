@@ -21,7 +21,7 @@ export function CardGroup({
   sortingMode,
   groupKey,
   onCardSelect = () => {},
-  onCardHover = () => {},
+  onCardHover = () => {}
 }: CardGroupProps) {
   const sortedCards = sortingMode ? sortCardsInGroup(cards, sortingMode) : cards;
 

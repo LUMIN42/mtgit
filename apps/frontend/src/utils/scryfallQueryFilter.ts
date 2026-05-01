@@ -26,7 +26,7 @@ const MAIN_TYPE_KEYWORDS = new Set([
   "instant",
   "land",
   "planeswalker",
-  "sorcery",
+  "sorcery"
 ]);
 
 function normalize(value: string): string {
@@ -70,7 +70,7 @@ function splitClauses(query: string): string[] {
       continue;
     }
 
-    if (char === '"') {
+    if (char === "\"") {
       inQuotes = !inQuotes;
       continue;
     }
@@ -104,7 +104,7 @@ function parseClause(clauseString: string): ParsedClause {
       negated,
       field: null,
       operator: ":",
-      value: trimmedToken,
+      value: trimmedToken
     };
   }
 
@@ -112,13 +112,13 @@ function parseClause(clauseString: string): ParsedClause {
     negated,
     field: match[1].toLowerCase(),
     operator: match[2] as ComparisonOperator,
-    value: match[3].trim(),
+    value: match[3].trim()
   };
 }
 
 function getFaceSearchText(card: ScryfallOracleCard): string {
   return card.card_faces
-    ?.map((face) => [face.name, face.type_line, face.oracle_text ?? ""].join(" "))
+    ?.map(face => [face.name, face.type_line, face.oracle_text ?? ""].join(" "))
     .join(" ") ?? "";
 }
 
@@ -221,7 +221,7 @@ function matchesColorClause(card: ScryfallOracleCard, rawQuery: string): boolean
   const symbols = query.replace(/[^wubrgc]/g, "");
 
   const colorSet = new Set([...colors, ...colorIdentity].map(normalize));
-  return Array.from(symbols).every((symbol) => COLOR_SYMBOLS.has(symbol) && colorSet.has(symbol));
+  return Array.from(symbols).every(symbol => COLOR_SYMBOLS.has(symbol) && colorSet.has(symbol));
 }
 
 function matchesIsClause(card: ScryfallOracleCard, rawQuery: string): boolean {
@@ -256,7 +256,7 @@ function matchesClause(card: ScryfallOracleCard, clause: ParsedClause): boolean 
   const field = clause.field;
 
   if (!field) {
-    return matchesText(card.name, clause.value)
+    return matchesText(card.name, clause.value);
   }
 
   switch (field) {
@@ -293,7 +293,7 @@ function matchesClause(card: ScryfallOracleCard, clause: ParsedClause): boolean 
       return matchesColorClause(card, clause.value);
     case "kw":
     case "keyword":
-      return asStringArray(card.keywords).some((keyword) => matchesText(keyword.toLowerCase(), clause.value));
+      return asStringArray(card.keywords).some(keyword => matchesText(keyword.toLowerCase(), clause.value));
     case "is":
       return matchesIsClause(card, clause.value);
     default:
@@ -309,7 +309,7 @@ export function createScryfallCardMatcher(query: string): (card: ScryfallOracleC
 
   const clauses = splitClauses(trimmedQuery).map(parseClause);
 
-  return (card) => clauses.every((clause) => {
+  return card => clauses.every(clause => {
     const matched = matchesClause(card, clause);
     return clause.negated ? !matched : matched;
   });
@@ -329,8 +329,8 @@ export function filterDeckByScryfallQuery(deck: Deck, query: string): Deck {
   return {
     ...deck,
     sections: Object.fromEntries(
-      Object.entries(deck.sections).map(([sectionName, cards]) => [sectionName, filterCardsByScryfallQuery(cards, trimmedQuery)]),
-    ) as Deck["sections"],
+      Object.entries(deck.sections).map(([sectionName, cards]) => [sectionName, filterCardsByScryfallQuery(cards, trimmedQuery)])
+    ) as Deck["sections"]
   };
 }
 

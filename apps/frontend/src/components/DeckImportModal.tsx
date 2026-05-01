@@ -26,8 +26,8 @@ export function DeckImportModal() {
         : {}),
       ...(currentDeck.sections.Considering || importedDeck.sections.Considering
         ? {Considering: [...(currentDeck.sections.Considering ?? []), ...(importedDeck.sections.Considering ?? [])]}
-        : {}),
-    },
+        : {})
+    }
   });
 
   const mergeTagsMaps = (currentTags: TagsMap, importedTags: TagsMap): TagsMap => {
@@ -51,19 +51,22 @@ export function DeckImportModal() {
     setImportError(null);
 
     try {
-      const {deck: parsedDeck, tagsMap} = await trpcClient.deckImport.parse.mutate({ text: importDeckText });
+      const {deck: parsedDeck, tagsMap} = await trpcClient.deckImport.parse.mutate({text: importDeckText});
       if (mode === "replace") {
         setDeck(parsedDeck as Deck);
         setTags(tagsMap);
-      } else {
-        setDeck((currentDeck) => mergeDecks(currentDeck, parsedDeck as Deck));
-        setTags((currentTags) => mergeTagsMaps(currentTags, tagsMap));
+      }
+      else {
+        setDeck(currentDeck => mergeDecks(currentDeck, parsedDeck as Deck));
+        setTags(currentTags => mergeTagsMaps(currentTags, tagsMap));
       }
       closeModal();
-    } catch (error) {
+    }
+    catch (error) {
       const message = error instanceof Error ? error.message : "Deck import failed.";
       setImportError(message);
-    } finally {
+    }
+    finally {
       setIsImporting(false);
     }
   };
@@ -83,8 +86,8 @@ export function DeckImportModal() {
             height: "calc(100vh - 70px)",
             overflow: "hidden",
             display: "flex",
-            flexDirection: "column",
-          },
+            flexDirection: "column"
+          }
         }}
       >
         <Box style={{flex: 1, minHeight: 0}}>
@@ -92,12 +95,12 @@ export function DeckImportModal() {
             label="Paste deck list"
             placeholder="1 Sol Ring\n1 Arcane Signet\n1 Command Tower"
             value={importDeckText}
-            onChange={(event) => setImportDeckText(event.currentTarget.value)}
+            onChange={event => setImportDeckText(event.currentTarget.value)}
             style={{height: "100%"}}
             styles={{
               root: {height: "100%"},
               wrapper: {height: "calc(100% - 24px)"},
-              input: {height: "100%", overflowY: "auto", resize: "none"},
+              input: {height: "100%", overflowY: "auto", resize: "none"}
             }}
           />
         </Box>

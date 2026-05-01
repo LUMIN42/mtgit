@@ -7,7 +7,7 @@ export function ManaCurvePlot() {
 
   const {filteredDeck, groupingMode} = useDeckContext();
 
-  const countsPerCMC: { [key: number]: number } = {};
+  const countsPerCMC: {[key: number]: number} = {};
 
   for (const card of filteredDeck.sections.Main) {
     if (card.type_line.toLowerCase().includes("land")) {
@@ -20,7 +20,7 @@ export function ManaCurvePlot() {
 
   const manaCurveData = Object.entries(countsPerCMC).map(([cmc, count]) => ({
     cmc: cmc === "10" ? "10+" : cmc, // Label 10 as "10+"
-    cards: count,
+    cards: count
   }));
 
   const handleChartClick = (data: {activeLabel?: string | number}) => {
@@ -40,7 +40,7 @@ export function ManaCurvePlot() {
 
     document.getElementById(headingId)?.scrollIntoView({
       behavior: "smooth",
-      block: "start",
+      block: "start"
     });
   };
 
@@ -52,17 +52,17 @@ export function ManaCurvePlot() {
       dataKey="cmc"
       series={[{name: "cards", color: "orange.6"}]}
       withLegend={false}
-        barChartProps={{
-          onClick: handleChartClick,
-          style: {cursor: groupingMode === "manaValue" ? "pointer" : "default"},
-        }}
+      barChartProps={{
+        onClick: handleChartClick,
+        style: {cursor: groupingMode === "manaValue" ? "pointer" : "default"}
+      }}
       tooltipProps={{
         contentStyle: {fontSize: 11, padding: 0},
         itemStyle: {fontSize: 11, padding: 0},
-        labelStyle: {fontSize: 10, marginBottom: 0},
+        labelStyle: {fontSize: 10, marginBottom: 0}
       }}
     />
-  </Stack>
+  </Stack>;
 
 
 }

@@ -1,7 +1,7 @@
-import type {ScryfallOracleCard} from '@mtgit/shared/scryfall';
-import {ScryfallSearchQuerySchema, type ScryfallSearchResult, searchScryfallCards,} from '@mtgit/shared/scryfallSearch';
+import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
+import {ScryfallSearchQuerySchema, type ScryfallSearchResult, searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
-export { ScryfallSearchQuerySchema };
+export {ScryfallSearchQuerySchema};
 
 // todo actually implement it one day
 export class ScryfallQueryService {

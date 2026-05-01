@@ -15,12 +15,12 @@ export function DeckSectionsToc() {
         mt="xs"
         variant="light"
         scrollSpyOptions={{
-          selector: "[data-deck-heading='true']",
+          selector: "[data-deck-heading='true']"
         }}
         getControlProps={({data}) => ({
           component: "a",
           href: `#${data.id}`,
-          children: data.value,
+          children: data.value
         })}
       />
     </FieldSection>

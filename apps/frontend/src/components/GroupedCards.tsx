@@ -1,7 +1,7 @@
 import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {
   Stack,
-  Text,
+  Text
 } from "@mantine/core";
 import {useMemo, useState} from "react";
 import type {CardWithTags} from "../types/cardWithTags.ts";
@@ -27,16 +27,16 @@ export function GroupedCards() {
         }
 
         return 0;
-      },
+      }
     );
 
     return sectionEntries.reduce(
       (sectionAcc, [sectionName, cards]) => {
-        const cardsWithTags = cards.map((card) => {
+        const cardsWithTags = cards.map(card => {
           const cardId = card.oracle_id ?? card.id;
           return {
             ...card,
-            tags: tags[cardId] ?? [],
+            tags: tags[cardId] ?? []
           };
         });
 
@@ -52,13 +52,13 @@ export function GroupedCards() {
                 {
                   heading: group.heading,
                   cards: sortedCards,
-                  startIndex,
-                },
+                  startIndex
+                }
               ],
-              pageCards: [...groupAcc.pageCards, ...sortedCards],
+              pageCards: [...groupAcc.pageCards, ...sortedCards]
             };
           },
-          {groups: [], pageCards: [] as CardWithTags[]},
+          {groups: [], pageCards: [] as CardWithTags[]}
         );
 
         return {
@@ -68,23 +68,23 @@ export function GroupedCards() {
               sectionName,
               cards: cardsWithTags,
               sectionGroupingMode,
-              groups: groupResult.groups,
-            },
+              groups: groupResult.groups
+            }
           ],
-          pageCards: [...sectionAcc.pageCards, ...groupResult.pageCards],
+          pageCards: [...sectionAcc.pageCards, ...groupResult.pageCards]
         };
       },
-      {sections: [], pageCards: [] as CardWithTags[]},
+      {sections: [], pageCards: [] as CardWithTags[]}
     );
   }, [filteredDeck.sections, groupingMode, sortingMode, tags]);
 
-  const safeSelection = selectedCardId ? pageCards.findIndex((card) => card.id === selectedCardId) : -1;
+  const safeSelection = selectedCardId ? pageCards.findIndex(card => card.id === selectedCardId) : -1;
   const hasSelection = safeSelection >= 0;
 
   return (
     <>
       <Stack gap="md">
-        {sections.map((section) => {
+        {sections.map(section => {
           if (section.cards.length === 0) {
             return null;
           }
@@ -101,7 +101,7 @@ export function GroupedCards() {
                 {section.sectionName} ({section.cards.length})
               </Text>
 
-              {section.groups.map((group) => {
+              {section.groups.map(group => {
                 return (
                   <Stack key={`${section.sectionName}-${group.heading || "all"}`} gap="xs">
                     {section.sectionGroupingMode !== "none" ? (
@@ -140,7 +140,7 @@ export function GroupedCards() {
         index={hasSelection ? safeSelection : 0}
         opened={hasSelection}
         onClose={() => setSelectedCardId(null)}
-        onIndexChange={(nextIndex) => setSelectedCardId(pageCards[nextIndex]?.id ?? null)}
+        onIndexChange={nextIndex => setSelectedCardId(pageCards[nextIndex]?.id ?? null)}
       />
     </>
   );

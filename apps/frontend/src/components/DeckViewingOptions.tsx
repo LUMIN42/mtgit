@@ -20,7 +20,7 @@ export function DeckViewingOptions() {
     setGroupingMode,
     sortingMode,
     setSortingMode,
-    filteredDeck,
+    filteredDeck
   } = deckContext;
 
   const mainDeckCount = filteredDeck.sections.Main.length;
@@ -35,8 +35,8 @@ export function DeckViewingOptions() {
           <DeckPreviewImage visible={displayMode !== "Images"} imageUrl={hoveredCardImageUrl}/>
           <CardSearchSection/>
           <DeckFilterSection />
-          <DeckGroupingSection value={groupingMode} onChange={(value) => setGroupingMode(value)}/>
-          <DeckSortingSection value={sortingMode} onChange={(value) => setSortingMode(value)}/>
+          <DeckGroupingSection value={groupingMode} onChange={value => setGroupingMode(value)}/>
+          <DeckSortingSection value={sortingMode} onChange={value => setSortingMode(value)}/>
           <DeckSectionsToc/>
           <DeckMainCountBadge count={mainDeckCount}/>
           <ManaCurvePlot/>

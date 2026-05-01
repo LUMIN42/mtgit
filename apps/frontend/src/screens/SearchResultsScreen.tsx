@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from "react";
 import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
 import {useDeckContext} from "../context/DeckUiContext.tsx";
@@ -12,11 +12,11 @@ function hasScryfallOrderClause(query: string): boolean {
     .trim()
     .toLowerCase()
     .split(/\s+/)
-    .some((token) =>
-      token.startsWith('order:')
-      || token.startsWith('order=')
-      || token.startsWith('sort:')
-      || token.startsWith('sort='),
+    .some(token =>
+      token.startsWith("order:")
+      || token.startsWith("order=")
+      || token.startsWith("sort:")
+      || token.startsWith("sort=")
     );
 }
 
@@ -34,22 +34,22 @@ function SearchResultsScreen() {
   const usesServerOrder = hasScryfallOrderClause(submittedSearch);
 
   const searchQuery = useQuery({
-    queryKey: ['scryfall', 'search', submittedSearch, 50, 0],
+    queryKey: ["scryfall", "search", submittedSearch, 50, 0],
     enabled: submittedSearch.trim().length > 0,
-    queryFn: async () => searchScryfallCards(submittedSearch, 50, 0),
+    queryFn: async () => searchScryfallCards(submittedSearch, 50, 0)
   });
 
   const cards = useMemo(
     () => (searchQuery.data?.ok ? searchQuery.data.cards : []),
-    [searchQuery.data],
+    [searchQuery.data]
   );
 
   const showInitialLoading = searchQuery.isPending && submittedSearch.trim().length > 0 && cards.length === 0;
   const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
 
   const cardsWithTags = useMemo(
-    () => cards.map((card) => ({...card, tags: []})),
-    [cards],
+    () => cards.map(card => ({...card, tags: []})),
+    [cards]
   );
 
   const safeSelection = selection !== null && selection < cardsWithTags.length ? selection : null;
@@ -75,7 +75,7 @@ function SearchResultsScreen() {
       <Text size="sm" c="dimmed">
         {submittedSearch
           ? `Showing ${cards.length} result(s) for: ${submittedSearch}`
-          : 'Type a search and press Enter or click the search icon.'}
+          : "Type a search and press Enter or click the search icon."}
       </Text>
 
       {showRefreshLoading ? (
@@ -95,7 +95,7 @@ function SearchResultsScreen() {
 
       {searchQuery.isError ? (
         <Alert color="red" title="Search failed">
-          {searchQuery.error instanceof Error ? searchQuery.error.message : 'Unknown error'}
+          {searchQuery.error instanceof Error ? searchQuery.error.message : "Unknown error"}
         </Alert>
       ) : null}
 
@@ -110,7 +110,7 @@ function SearchResultsScreen() {
           cards={cardsWithTags}
           displayMode={deck.displayMode}
           sortingMode={usesServerOrder ? undefined : deck.sortingMode}
-          groupKey={submittedSearch || 'search-results'}
+          groupKey={submittedSearch || "search-results"}
           onCardSelect={(_, index) => setSelection(index)}
         />
       ) : null}

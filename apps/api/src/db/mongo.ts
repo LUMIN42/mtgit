@@ -1,12 +1,12 @@
-import type {Collection, Db, Document, MongoClient} from 'mongodb';
-import {MongoClient as MongoClientImpl} from 'mongodb';
+import type {Collection, Db, Document, MongoClient} from "mongodb";
+import {MongoClient as MongoClientImpl} from "mongodb";
 
-const DEFAULT_DATABASE_NAME = 'mtgit';
+const DEFAULT_DATABASE_NAME = "mtgit";
 
 /**
  * Valid collection names in the mtgit database.
  */
-export type CollectionName = 'scryfall_cards';
+export type CollectionName = "scryfall_cards";
 
 let cachedMongoUri: string | null = null;
 let cachedMongoClient: MongoClient | null = null;
@@ -18,12 +18,12 @@ let cachedMongoDb: Db | null = null;
  * @returns The MongoDB connection string.
  */
 function resolveMongoUri(mongoUri?: string): string {
-  const uriFromGlobal = (globalThis as { process?: { env?: Record<string, string | undefined> } })
+  const uriFromGlobal = (globalThis as {process?: {env?: Record<string, string | undefined>}})
     .process?.env?.MONGODB_URI;
   const resolvedUri = mongoUri ?? uriFromGlobal;
 
   if (!resolvedUri) {
-    throw new Error('MONGODB_URI is not set in the environment.');
+    throw new Error("MONGODB_URI is not set in the environment.");
   }
 
   return resolvedUri;
@@ -41,7 +41,7 @@ export async function initMongo(mongoUri?: string, databaseName = DEFAULT_DATABA
 
   if (cachedMongoDb) {
     if (cachedMongoUri !== resolvedUri) {
-      throw new Error('MongoDB has already been initialized with a different URI.');
+      throw new Error("MongoDB has already been initialized with a different URI.");
     }
 
     return cachedMongoDb;
@@ -61,7 +61,7 @@ export async function initMongo(mongoUri?: string, databaseName = DEFAULT_DATABA
  */
 export function getMongoDb(): Db {
   if (!cachedMongoDb) {
-    throw new Error('MongoDB has not been initialized. Call initMongo() during startup first.');
+    throw new Error("MongoDB has not been initialized. Call initMongo() during startup first.");
   }
 
   return cachedMongoDb;

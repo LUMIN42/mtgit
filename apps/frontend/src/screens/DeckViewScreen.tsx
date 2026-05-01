@@ -12,7 +12,7 @@ export function DeckViewScreen() {
   const deck = useDeckContext();
 
   const toggleDisplayMode = () => {
-    deck.setDisplayMode((currentMode) => (currentMode === "Images" ? "Text" : "Images"));
+    deck.setDisplayMode(currentMode => (currentMode === "Images" ? "Text" : "Images"));
   };
 
   return <Stack>
@@ -33,5 +33,5 @@ export function DeckViewScreen() {
       </Grid.Col>
     </Grid>
   </Stack>
-    ;
+  ;
 }

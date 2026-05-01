@@ -7,7 +7,7 @@ import {useDeckContext} from "../../context/DeckUiContext.tsx";
 
 export function CardSearchSection() {
   const deck = useDeckContext();
-  const [searchString, setSearchString] = useState('');
+  const [searchString, setSearchString] = useState("");
 
   function startSearch(rawValue: string) {
     const trimmedValue = rawValue.trim();

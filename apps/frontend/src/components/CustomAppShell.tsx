@@ -1,11 +1,11 @@
 import type {ReactNode} from "react";
-import {Text} from '@mantine/core';
+import {Text} from "@mantine/core";
 
 import {Button, Group, Menu, Paper, Select} from "@mantine/core";
 
 // import style from "./assets/index.module.css"
 
-export function CustomAppShell({children}: { children: ReactNode }) {
+export function CustomAppShell({children}: {children: ReactNode}) {
 
   return <>
     <Paper withBorder>
@@ -14,7 +14,7 @@ export function CustomAppShell({children}: { children: ReactNode }) {
           (App logo)
         </Paper>
         <Select label={"Branch:"} p={"xs"} data={["long-term", "experimental", "owned"]} defaultValue={"long-term"}
-                searchable/>
+          searchable/>
 
         <Menu variant={"gradient"}>
 
@@ -24,12 +24,12 @@ export function CustomAppShell({children}: { children: ReactNode }) {
         <Group align={"center"}>
           <Text>Logged in as: LUMIN42</Text>
           <Button variant="filled"
-                  color={"red"}>Logout</Button>
+            color={"red"}>Logout</Button>
         </Group>
       </Group>
     </Paper>
     <Paper p={"md"}>
       {children}
     </Paper>
-  </>
+  </>;
 }

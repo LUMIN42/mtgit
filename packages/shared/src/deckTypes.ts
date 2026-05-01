@@ -1,19 +1,19 @@
 // Deck-related shared types.
 
-import type {ScryfallOracleCard} from './scryfall.js';
+import type {ScryfallOracleCard} from "./scryfall.js";
 
 export type TagsMap = Record<string, string[]>;
 
-export type DeckSectionName = 'Main' | 'Commander' | 'Sideboard' | 'Considering';
+export type DeckSectionName = "Main" | "Commander" | "Sideboard" | "Considering";
 
 /**
  * Maps section labels (as they appear in decklists) to their canonical DeckSectionName.
  */
 export const SECTION_BY_LABEL: Record<string, DeckSectionName> = {
-  commander: 'Commander',
-  main: 'Main',
-  sideboard: 'Sideboard',
-  considering: 'Considering',
+  commander: "Commander",
+  main: "Main",
+  sideboard: "Sideboard",
+  considering: "Considering"
 };
 
 // Card with count property, count is part of the card object itself
