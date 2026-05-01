@@ -6,17 +6,17 @@ import type {ScryfallOracleCard} from "./scryfall.js";
 
 export type TagsMap = Record<string, string[]>;
 
-export type DeckSectionName = "Main" | "Commander" | "Sideboard" | "Considering";
+
+export const DECK_SECTION_NAMES = ["Main", "Commander", "Sideboard", "Considering"] as const;
+export type DeckSectionName = typeof DECK_SECTION_NAMES[number];
 
 /**
  * Maps section labels (as they appear in decklists) to their canonical DeckSectionName.
  */
-export const SECTION_BY_LABEL: Record<string, DeckSectionName> = {
-  commander: "Commander",
-  main: "Main",
-  sideboard: "Sideboard",
-  considering: "Considering"
-};
+export const SECTION_BY_LABEL: Record<string, DeckSectionName> =
+  Object.fromEntries(
+    DECK_SECTION_NAMES.map(name => [name.toLowerCase(), name])
+  );
 
 // Card with count property, count is part of the card object itself
 export interface DeckCard extends ScryfallOracleCard {
@@ -35,26 +35,27 @@ const RawSectionItemSchema = z.union([
 
 const RawSectionsSchema = z.record(z.string(), RawSectionItemSchema).optional().transform(raw => {
   const sections: Partial<Record<DeckSectionName, DeckSection>> = {};
-
-  for (const canonical of Object.values(SECTION_BY_LABEL) as DeckSectionName[]) {
+  
+  for (const canonical of DECK_SECTION_NAMES) {
     const item = raw?.[canonical as string];
     if (item == null) {
       continue;
     }
-
+    
     if (Array.isArray(item)) {
       sections[canonical] = new DeckSection(canonical, item as DeckCard[]);
-    } else {
+    }
+    else {
       // record map oracleId -> DeckCard
       sections[canonical] = new DeckSection(canonical, item as Record<OracleId, DeckCard>);
     }
   }
-
+  
   // ensure Main exists
   if (!sections.Main) {
     sections.Main = new DeckSection("Main");
   }
-
+  
   return sections as DeckSections;
 });
 
@@ -65,12 +66,12 @@ const DeckSchema = z.object({
   const name = raw.name ?? "Imported Deck";
   // RawSectionsSchema already converts present sections into DeckSection instances
   const sections = (raw.sections ?? {}) as DeckSections;
-
+  
   // Guarantee Main exists
   if (!sections.Main) {
     sections.Main = new DeckSection("Main");
   }
-
+  
   return new Deck(name, sections as DeckSections);
 });
 
@@ -99,10 +100,6 @@ export class DeckSection implements Iterable<DeckCard> {
   
   get length(): number {
     return Object.keys(this.cardsMap).length;
-  }
-  
-  get(index: number): DeckCard | undefined {
-    return Object.values(this.cardsMap)[index];
   }
   
   getById(oracleId: OracleId): DeckCard | undefined {
@@ -150,7 +147,7 @@ export class Deck {
     public sections: DeckSections
   ) {
   }
-
+  
   /**
    * Merge this deck with another deck and return a new Deck.
    * Main section cards are concatenated; optional sections are merged if present.
@@ -162,24 +159,24 @@ export class Deck {
         ...other.sections.Main.toArray()
       ])
     };
-
+    
     // Iterate over optional section names derived from SECTION_BY_LABEL and merge them
     for (const canonical of Object.values(SECTION_BY_LABEL) as DeckSectionName[]) {
       if (canonical === "Main") {
         continue; // already handled
       }
-
+      
       const currentArr = this.sections[canonical as Exclude<DeckSectionName, "Main">]?.toArray() ?? [];
       const otherArr = other.sections[canonical as Exclude<DeckSectionName, "Main">]?.toArray() ?? [];
-
+      
       if (currentArr.length || otherArr.length) {
         mergedSections[canonical] = new DeckSection(canonical, [...currentArr, ...otherArr]);
       }
     }
-
+    
     return new Deck(this.name, mergedSections);
   }
-
+  
   /** Convenience static wrapper for merging two decks. */
   static merge(current: Deck, other: Deck): Deck {
     return current.merge(other);
