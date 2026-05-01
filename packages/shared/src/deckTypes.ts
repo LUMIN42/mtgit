@@ -24,16 +24,74 @@ export interface DeckCard extends ScryfallOracleCard {
 // todo add proper compile-time enforcement
 type OracleId = string;
 
-export interface DeckSection {
-  name: DeckSectionName,
-  cards: Record<OracleId, DeckCard>
+// DeckSection is an object with internal map (oracle_id -> DeckCard), but behaves like an array externally
+export class DeckSection implements Iterable<DeckCard> {
+  private readonly cardsMap: Record<OracleId, DeckCard>;
+
+  constructor(public name: DeckSectionName, cards?: DeckCard[] | Record<OracleId, DeckCard>) {
+    // this.name = name;
+    if (Array.isArray(cards)) {
+      this.cardsMap = {};
+      for (const card of cards) {
+        this.cardsMap[card.oracle_id] = card;
+      }
+    }
+    else if (cards) {
+      this.cardsMap = {...cards};
+    }
+    else {
+      this.cardsMap = {};
+    }
+  }
+  
+  get length(): number {
+    return Object.keys(this.cardsMap).length;
+  }
+  
+  get(index: number): DeckCard | undefined {
+    return Object.values(this.cardsMap)[index];
+  }
+  
+  getById(oracleId: OracleId): DeckCard | undefined {
+    return this.cardsMap[oracleId];
+  }
+  
+  push(card: DeckCard): void {
+    this.cardsMap[card.oracle_id] = card;
+  }
+  
+  addCard(card: DeckCard, amount = 1): void {
+    const existing = this.cardsMap[card.oracle_id];
+    if (existing) {
+      existing.count += amount;
+    }
+    else {
+      this.cardsMap[card.oracle_id] = {...card, count: amount};
+    }
+  }
+  
+  removeById(oracleId: OracleId): void {
+    delete this.cardsMap[oracleId];
+  }
+  
+  toArray(): DeckCard[] {
+    return Object.values(this.cardsMap);
+  }
+  
+  [Symbol.iterator](): Iterator<DeckCard> {
+    return this.toArray()[Symbol.iterator]();
+  }
+  
+  toJSON(): DeckCard[] {
+    return this.toArray();
+  }
 }
 
 export interface Deck {
   name: string;
   sections: {
-    Main: DeckCard[];
-  } & Partial<Record<Exclude<DeckSectionName, 'Main'>, DeckCard[]>>;
+    Main: DeckSection;
+  } & Partial<Record<Exclude<DeckSectionName, "Main">, DeckSection>>;
 }
 
 // This structure makes it easier to store tags state separately to reduce frontend lag.
