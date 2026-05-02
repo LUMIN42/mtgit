@@ -12,13 +12,13 @@ interface CardDetailsTagsPanelProps {
 export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: CardDetailsTagsPanelProps) {
   const theme = useMantineTheme();
   const {setTags, allTags} = useTagsContext();
-
+  
   const [tagSearch, setTagSearch] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
+  
   const filteredTags = allTags.filter(tag => tag.toLowerCase().includes(tagSearch.toLowerCase()));
-
+  
   useEffect(() => {
     if (tagSearch && filteredTags.length > 0) {
       setHighlightedIndex(prev => (prev === 0 ? prev : 0));
@@ -28,57 +28,57 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tagSearch, filteredTags.length]);
-
+  
   const handleTagToggle = (tag: string) => {
     if (!cardId) {
       return;
     }
-
+    
     setTags(previousTags => {
       const existing = previousTags[cardId] ?? [];
       const nextCardTags = existing.includes(tag)
         ? existing.filter(existingTag => existingTag !== tag)
         : [...existing, tag];
-
+      
       if (nextCardTags.length === 0) {
         const nextTags = {...previousTags};
         delete nextTags[cardId];
         return nextTags;
       }
-
+      
       return {
         ...previousTags,
         [cardId]: nextCardTags
       };
     });
   };
-
+  
   const handleTagCheckboxChange = (tag: string, event: React.ChangeEvent<HTMLInputElement>) => {
     handleTagToggle(tag);
     // Prevent checkbox focus from blocking global A/D navigation.
     event.currentTarget.blur();
   };
-
+  
   const createTag = () => {
     if (!cardId || !tagSearch.trim()) {
       return;
     }
-
+    
     setTags(previousTags => {
       const existing = previousTags[cardId] ?? [];
       if (existing.includes(tagSearch.trim())) {
         return previousTags;
       }
-
+      
       return {
         ...previousTags,
         [cardId]: [...existing, tagSearch.trim()]
       };
     });
-
+    
     setTagSearch("");
   };
-
+  
   const handleTagSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       if (filteredTags.length > 0 && highlightedIndex !== null) {
@@ -95,7 +95,7 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
       setHighlightedIndex(i => (i === null ? 0 : Math.max(i - 1, 0)));
     }
   };
-
+  
   return (
     <Stack gap={0}>
       <Group>
@@ -109,7 +109,7 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
           size="sm"
           style={{flex: 1}}
           rightSection={tagSearch !== "" ? (
-            <Input.ClearButton onClick={() => setTagSearch("")} />
+            <Input.ClearButton onClick={() => setTagSearch("")}/>
           ) : undefined}
         />
         <ActionIcon
@@ -117,14 +117,14 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
           onClick={createTag}
           disabled={!tagSearch.trim() || !cardId}
         >
-          <IconPlus size={18} />
+          <IconPlus size={18}/>
         </ActionIcon>
       </Group>
-
+      
       {filteredTags.length === 0 && tagSearch.trim() && (
-        <Text c="dimmed" size="sm">Press Enter or click + to add "{tagSearch.trim()}" as a new tag</Text>
+        <Text c="dimmed" size="sm">Press Enter or click + to add &quot{tagSearch.trim()}&quot as a new tag</Text>
       )}
-
+      
       {filteredTags.map((tag, idx) => (
         <Box
           key={tag}

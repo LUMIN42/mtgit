@@ -17,8 +17,7 @@ interface SearchBoxProps {
 export function SearchBox({
   value,
   onChange,
-  onSearch = () => {
-  },
+  onSearch = () => {},
   placeholder,
   label,
   size = "sm",

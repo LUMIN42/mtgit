@@ -1,5 +1,5 @@
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
-import {ScryfallSearchQuerySchema, type ScryfallSearchResult, searchScryfallCards} from "@mtgit/shared/scryfallSearch";
+import {ScryfallSearchQuerySchema, searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
 export {ScryfallSearchQuerySchema};
 

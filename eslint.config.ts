@@ -9,6 +9,10 @@ import stylistic from '@stylistic/eslint-plugin';
 import * as react from 'eslint-plugin-react';
 import * as reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+// import frontend-specific config so it can remain a separate file
+import frontendEslintConfig from './apps/frontend/eslint.config';
+// @ts-ignore
+import unusedImportsPlugin from "eslint-plugin-unused-imports";
 
 // A lightweight config with mostly inexpensive rules and without type-aware lintig. Ideal for everyday usage in IDE.
 
@@ -49,6 +53,7 @@ export default defineConfig([
       '@stylistic': stylistic,
       '@typescript-eslint': tseslint.plugin,
       'react-refresh': reactRefresh,
+      "unused-imports": unusedImportsPlugin
     },
 
     extends: [
@@ -99,12 +104,18 @@ export default defineConfig([
         },
       }],
       '@stylistic/space-infix-ops': ['warn'],
-
-      // TypeScript
-      '@typescript-eslint/no-unused-vars': ['warn', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }],
+      
+      "unused-imports/no-unused-imports": "error",
+      
+      "unused-imports/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+        },
+      ],
       '@typescript-eslint/no-empty-function': ['warn', {
         allow: ['private-constructors'],
       }],
@@ -114,4 +125,6 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': ['warn'],
     },
   },
+  // include frontend-specific config (keeps frontend rules in a separate file)
+  ...(frontendEslintConfig as any),
 ]);
