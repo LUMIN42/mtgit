@@ -1,146 +1,128 @@
 import {useDeckContext} from "../context/DeckUiContext.tsx";
-import {
-  Stack,
-  Text
-} from "@mantine/core";
+import {Stack, Text} from "@mantine/core";
 import {useMemo, useState} from "react";
 import type {CardWithTags} from "../types/cardWithTags.ts";
-import {getGroupHeadingId, groupCardsByMode, sortCardsInGroup} from "../utils/cardGrouping.ts";
+import {
+  getGroupHeadingId,
+  groupCardsByMode,
+  performGrouping,
+  flatten,
+  groupCardCount,
+  sectionCardCount, type CardWithLocation, type CardLocation
+} from "../utils/cardGrouping.ts";
 import {CardGroup} from "./CardGroup.tsx";
 import {CardDetailsModal} from "./CardDetailsModal.tsx";
 import {useTagsContext} from "../context/useTagsContext.ts";
+import {DeckSection, type DeckSectionName, withTags} from "@mtgit/shared";
+import type {TaggedDeckCard} from "@mtgit/shared";
 
 export function GroupedCards() {
   const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
   const {tags} = useTagsContext();
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-
-  const {sections, pageCards} = useMemo(() => {
-    const sectionEntries = (Object.entries(filteredDeck.sections) as Array<[string, CardWithTags[]]>).sort(
-      ([leftSection], [rightSection]) => {
-        if (leftSection === "Commander") {
-          return -1;
-        }
-
-        if (rightSection === "Commander") {
-          return 1;
-        }
-
-        return 0;
-      }
+  // Track currently selected card for the modal
+  
+  /**
+   * Memoized preparation of deck sections and a flat card list for the modal.
+   */
+  const {sections, pageCards} = useMemo(
+    () => {
+      
+      const tagged = withTags(filteredDeck, tags);
+      const groups = performGrouping(tagged.deck, groupingMode, sortingMode);
+      return {sections: groups, pageCards: flatten(groups)};
+    },
+    [filteredDeck, groupingMode, sortingMode, tags]
+  );
+  
+  
+  const [selectedCardLocation, setSelectedCardLocation] = useState<CardLocation | undefined>(undefined);
+  
+  
+  function sameLocation(a: CardLocation, b: CardLocation | undefined): boolean {
+    return (
+      b !== undefined &&
+      a.sectionName === b.sectionName &&
+      a.groupName === b.groupName &&
+      a.oracleId === b.oracleId
     );
-
-    return sectionEntries.reduce(
-      (sectionAcc, [sectionName, cards]) => {
-        const cardsWithTags = cards.map(card => {
-          const cardId = card.oracle_id ?? card.id;
-          return {
-            ...card,
-            tags: tags[cardId] ?? []
-          };
-        });
-
-        const sectionGroupingMode = sectionName === "Commander" ? "none" : groupingMode;
-        const groupResult = groupCardsByMode(cardsWithTags, sectionGroupingMode).reduce(
-          (groupAcc, group) => {
-            const sortedCards = sortingMode ? sortCardsInGroup(group.cards, sortingMode) : group.cards;
-            const startIndex = sectionAcc.pageCards.length + groupAcc.pageCards.length;
-
-            return {
-              groups: [
-                ...groupAcc.groups,
-                {
-                  heading: group.heading,
-                  cards: sortedCards,
-                  startIndex
-                }
-              ],
-              pageCards: [...groupAcc.pageCards, ...sortedCards]
-            };
-          },
-          {groups: [], pageCards: [] as CardWithTags[]}
-        );
-
-        return {
-          sections: [
-            ...sectionAcc.sections,
-            {
-              sectionName,
-              cards: cardsWithTags,
-              sectionGroupingMode,
-              groups: groupResult.groups
-            }
-          ],
-          pageCards: [...sectionAcc.pageCards, ...groupResult.pageCards]
-        };
-      },
-      {sections: [], pageCards: [] as CardWithTags[]}
-    );
-  }, [filteredDeck.sections, groupingMode, sortingMode, tags]);
-
-  const safeSelection = selectedCardId ? pageCards.findIndex(card => card.id === selectedCardId) : -1;
-  const hasSelection = safeSelection >= 0;
-
+  }
+  
+  
+  const selectedCardIndex: number = pageCards
+    .findIndex(card => sameLocation(card.location, selectedCardLocation));
+  
+  // todo try removing the null coalescence in the end
+  const selectedCard: CardWithLocation | undefined =
+    selectedCardIndex === -1 ? undefined : pageCards[selectedCardIndex] ?? undefined;
+  
   return (
     <>
+      {/* Render all deck sections */}
       <Stack gap="md">
         {sections.map(section => {
-          if (section.cards.length === 0) {
-            return null;
-          }
-
+          // Skip empty sections
+          // if (section.cards.length === 0) {
+          //   return null;
+          // }
+          
           return (
-            <Stack key={section.sectionName} gap="xs">
+            <Stack key={section.name} gap="xs">
+              {/* Section heading with card count */}
               <Text
                 component="h3"
                 fw={700}
                 size="lg"
-                id={`deck-section-${section.sectionName.toLowerCase()}`}
+                id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading="true"
               >
-                {section.sectionName} ({section.cards.length})
+                {section.name} ({filteredDeck.sections[section.name].getCardCount()})
               </Text>
-
-              {section.groups.map(group => {
-                return (
-                  <Stack key={`${section.sectionName}-${group.heading || "all"}`} gap="xs">
-                    {section.sectionGroupingMode !== "none" ? (
-                      <Text
-                        fw={600}
-                        id={getGroupHeadingId(section.sectionGroupingMode, group.heading)}
-                        style={section.sectionGroupingMode === "manaValue" ? {scrollMarginTop: "1rem"} : undefined}
-                      >
-                        {section.sectionGroupingMode === "manaValue" && group.heading !== "Lands"
-                          ? `Mana Value ${group.heading}`
-                          : group.heading} ({group.cards.length})
-                      </Text>
-                    ) : null}
-
-                    <CardGroup
-                      cards={group.cards}
-                      displayMode={displayMode}
-                      sortingMode={sortingMode}
-                      groupKey={`${section.sectionName}-${group.heading}`}
-                      onCardSelect={(_, index) => {
-                        const selected = pageCards[group.startIndex + index] ?? null;
-                        setSelectedCardId(selected?.id ?? null);
-                      }}
-                      onCardHover={setHoveredCardImageUrl}
-                    />
-                  </Stack>
-                );
-              })}
+              
+              {/* Render groups within the section */}
+              {section.groups.map(group => (
+                <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
+                  {/* Group heading if grouping is enabled */}
+                  {groupingMode !== "none" ? (
+                    <Text
+                      fw={600}
+                      id={getGroupHeadingId(groupingMode, group.heading)}
+                      style={groupingMode === "manaValue" ? {scrollMarginTop: "1rem"} : undefined}
+                    >
+                      {groupingMode === "manaValue" && group.heading !== "Lands"
+                        ? `Mana Value ${group.heading}`
+                        : group.heading} ({group.cards.length})
+                    </Text>
+                  ) : null}
+                  
+                  {/* Render cards in the group */}
+                  <CardGroup
+                    group={group}
+                    displayMode={displayMode}
+                    sortingMode={sortingMode}
+                    groupKey={`${section.name}-${group.heading}`}
+                    onCardSelect={card => {
+                      setSelectedCardLocation(card);
+                    }}
+                    onCardHover={setHoveredCardImageUrl}
+                    sectionName={section.name}/>
+                </Stack>
+              ))}
             </Stack>
           );
         })}
       </Stack>
-
+      
+      {/* Card details modal for selected card, supports navigation */}
       <CardDetailsModal
         cards={pageCards}
-        index={hasSelection ? safeSelection : 0}
-        opened={hasSelection}
-        onClose={() => setSelectedCardId(null)}
-        onIndexChange={nextIndex => setSelectedCardId(pageCards[nextIndex]?.id ?? null)}
+        index={selectedCardIndex}
+        opened={selectedCard !== undefined}
+        onClose={() => {
+          setSelectedCardLocation(undefined);
+        }}
+        onIndexChange={nextIndex => {
+          setSelectedCardLocation(pageCards[nextIndex].location);
+        }}
       />
     </>
   );

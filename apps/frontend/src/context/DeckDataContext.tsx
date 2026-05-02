@@ -1,7 +1,7 @@
-/* eslint-disable react-refresh/only-export-components */
+ 
 import {createContext, useContext, useEffect, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
-import type {Deck} from "@mtgit/shared";
+import {Deck, DeckSection} from "@mtgit/shared";
 
 export interface DeckDataContextValue {
   deck: Deck;
@@ -22,10 +22,12 @@ function isDeckLike(value: unknown): value is Deck {
   }
 
   const deck = value as Partial<Deck>;
+  const mainSection = (deck.sections as {Main?: unknown}).Main;
+
   return typeof deck.name === "string"
     && !!deck.sections
     && typeof deck.sections === "object"
-    && Array.isArray((deck.sections as {Main?: unknown}).Main);
+    && (mainSection instanceof DeckSection || (Array.isArray(mainSection) && mainSection.length >= 0));
 }
 
 export function DeckDataProvider({deck: initialDeck, children}: DeckDataProviderProps) {
@@ -33,14 +35,18 @@ export function DeckDataProvider({deck: initialDeck, children}: DeckDataProvider
     try {
       const rawDeck = localStorage.getItem(DECK_STORAGE_KEY);
       if (!rawDeck) {
-        return initialDeck;
+        return Deck.reconstruct(initialDeck);
       }
 
       const parsedDeck = JSON.parse(rawDeck) as unknown;
-      return isDeckLike(parsedDeck) ? parsedDeck : initialDeck;
+      if (!isDeckLike(parsedDeck)) {
+        return Deck.reconstruct(initialDeck);
+      }
+
+      return Deck.reconstruct(parsedDeck);
     }
     catch {
-      return initialDeck;
+      return Deck.reconstruct(initialDeck);
     }
   });
 

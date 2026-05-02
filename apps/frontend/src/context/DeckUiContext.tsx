@@ -1,7 +1,7 @@
-/* eslint-disable react-refresh/only-export-components */
+ 
 import {createContext, useContext, useMemo, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
-import type {Deck, DeckSectionName} from "@mtgit/shared";
+import {Deck, type DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 import {DeckDataProvider, useDeckDataContext} from "./DeckDataContext.tsx";
 import type {DeckDataContextValue} from "./DeckDataContext.tsx";
@@ -41,7 +41,6 @@ const DeckUIContext = createContext<DeckUIContextValue | undefined>(undefined);
 const SECTION_ORDER: DeckSectionName[] = ["Commander", "Main", "Considering"];
 
 interface DeckProviderProps {
-  deck: Deck;
   children: ReactNode;
 }
 
@@ -82,9 +81,9 @@ function DeckUIProvider({children}: {children: ReactNode}) {
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;
 }
 
-export function DeckProvider({deck: initialDeck, children}: DeckProviderProps) {
+export function DeckProvider({children}: DeckProviderProps) {
   return (
-    <DeckDataProvider deck={initialDeck}>
+    <DeckDataProvider deck={Deck.empty("Sample deck")}>
       <DeckUIProvider>{children}</DeckUIProvider>
     </DeckDataProvider>
   );

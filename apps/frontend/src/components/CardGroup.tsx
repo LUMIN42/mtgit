@@ -1,55 +1,58 @@
 import {Box, Stack} from "@mantine/core";
 import style from "../assets/index.module.css";
-import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
-import type {CardWithTags} from "../types/cardWithTags.ts";
-import type {CardSortMode} from "../types/grouping.ts";
-import {sortCardsInGroup} from "../utils/cardGrouping.ts";
+// import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import {Card} from "./Card.tsx";
+import type {CardLocation, SortedGroup} from "../utils/cardGrouping.ts";
+import type {DeckSectionName} from "@mtgit/shared";
+import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
+import type {CardSortMode} from "../types/grouping.ts";
 
 interface CardGroupProps {
-  cards: CardWithTags[];
+  group: SortedGroup;
+  sectionName: DeckSectionName;
   displayMode: CardDisplayMode;
   sortingMode?: CardSortMode;
   groupKey: string;
-  onCardSelect?: (card: CardWithTags, index: number, cards: CardWithTags[]) => void;
+  onCardSelect?: (location: CardLocation) => void;
   onCardHover?: (imageUrl: string | null) => void;
 }
 
 export function CardGroup({
-  cards,
+  group,
+  sectionName,
   displayMode,
-  sortingMode,
   groupKey,
-  onCardSelect = () => {},
-  onCardHover = () => {}
+  onCardSelect = () => {
+  },
+  onCardHover = () => {
+  }
 }: CardGroupProps) {
-  const sortedCards = sortingMode ? sortCardsInGroup(cards, sortingMode) : cards;
-
+  
   if (displayMode === "Text") {
     return (
       <Stack className={style.cardNameList} gap="xs">
-        {sortedCards.map((card, index) => (
+        {group.cards.map((card, index) => (
           <Card
             key={`${groupKey}-${card.id}-${index}`}
             card={card}
             displayMode={displayMode}
             className={style.cardNameItem}
-            onSelect={() => onCardSelect(card, index, sortedCards)}
+            onSelect={() => onCardSelect({oracleId: card.oracle_id, groupName: group.heading, sectionName})}
             onHoverImage={onCardHover}
           />
         ))}
       </Stack>
     );
   }
-
+  
   return (
     <Box className={style.grid}>
-      {sortedCards.map((card, index) => (
+      {group.cards.map((card, index) => (
         <Card
           key={`${groupKey}-${card.id}-${index}`}
           card={card}
           displayMode={displayMode}
-          onSelect={() => onCardSelect(card, index, sortedCards)}
+          onSelect={() => onCardSelect({oracleId: card.oracle_id, groupName: group.heading, sectionName})}
         />
       ))}
     </Box>

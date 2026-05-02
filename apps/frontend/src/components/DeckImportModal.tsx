@@ -2,9 +2,8 @@ import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {useTagsContext} from "../context/useTagsContext.ts";
-import type {TagsMap} from "@mtgit/shared";
+import {Deck, type TagsMap} from "@mtgit/shared";
 import {trpcClient} from "../trpcClient.ts";
-import type {Deck} from "@mtgit/shared";
 
 export function DeckImportModal() {
   const {setDeck} = useDeckContext();
@@ -14,21 +13,7 @@ export function DeckImportModal() {
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const mergeDecks = (currentDeck: Deck, importedDeck: Deck): Deck => ({
-    ...currentDeck,
-    sections: {
-      Main: [...currentDeck.sections.Main, ...importedDeck.sections.Main],
-      ...(currentDeck.sections.Commander || importedDeck.sections.Commander
-        ? {Commander: [...(currentDeck.sections.Commander ?? []), ...(importedDeck.sections.Commander ?? [])]}
-        : {}),
-      ...(currentDeck.sections.Sideboard || importedDeck.sections.Sideboard
-        ? {Sideboard: [...(currentDeck.sections.Sideboard ?? []), ...(importedDeck.sections.Sideboard ?? [])]}
-        : {}),
-      ...(currentDeck.sections.Considering || importedDeck.sections.Considering
-        ? {Considering: [...(currentDeck.sections.Considering ?? []), ...(importedDeck.sections.Considering ?? [])]}
-        : {})
-    }
-  });
+  // používáme `Deck.merge` metodu z shared balíčku
 
   const mergeTagsMaps = (currentTags: TagsMap, importedTags: TagsMap): TagsMap => {
     const merged: TagsMap = {...currentTags};
@@ -51,14 +36,16 @@ export function DeckImportModal() {
     setImportError(null);
 
     try {
-      const {deck: parsedDeck, tagsMap} = await trpcClient.deckImport.parse.mutate({text: importDeckText});
+      const result = await trpcClient.deckImport.parse.mutate({text: importDeckText});
+      const reconstructed = Deck.reconstruct(result.deck);
+      
       if (mode === "replace") {
-        setDeck(parsedDeck as Deck);
-        setTags(tagsMap);
+        setDeck(reconstructed);
+        setTags(result.tagsMap);
       }
       else {
-        setDeck(currentDeck => mergeDecks(currentDeck, parsedDeck as Deck));
-        setTags(currentTags => mergeTagsMaps(currentTags, tagsMap));
+        setDeck(currentDeck => Deck.merge(currentDeck, reconstructed));
+        setTags(currentTags => mergeTagsMaps(currentTags, result.tagsMap));
       }
       closeModal();
     }

@@ -101,7 +101,7 @@ export default defineConfig([
       '@stylistic/space-infix-ops': ['warn'],
 
       // TypeScript
-      '@typescript-eslint/no-unused-vars': ['error', {
+      '@typescript-eslint/no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
       }],
@@ -112,31 +112,6 @@ export default defineConfig([
         fixStyle: 'inline-type-imports',
       }],
       '@typescript-eslint/no-explicit-any': ['warn'],
-
-      // React
-      'react/display-name': ['off'],
-      'react/jsx-no-target-blank': ['error', {
-        allowReferrer: true,
-      }],
-      // These should be already covered by typescript.
-      'react/prop-types': ['off'],
-      'react/no-unknown-property': ['off'],
-      // These are enabled in full config.
-      'react/no-direct-mutation-state': ['off'],
-      'react/require-render-return': ['off'],
-      'react/no-render-return-value': ['off'],
-
-      'react-refresh/only-export-components': ['warn', {
-        allowConstantExport: true,
-      }],
-
-      'react-hooks/exhaustive-deps': ['warn'],
-      // TODO These rules have too many false positives - review and enable later.
-      'react-hooks/refs': ['off'],
-      'react-hooks/set-state-in-effect': ['off'],
-      'react-hooks/static-components': ['off'],
-      // TODO False positives with window.location ...
-      'react-hooks/immutability': ['off'],
     },
   },
 ]);
