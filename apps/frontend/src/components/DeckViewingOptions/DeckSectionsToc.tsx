@@ -1,7 +1,7 @@
 import {TableOfContents} from "@mantine/core";
 import {useDeckContext} from "../../context/DeckUiContext.tsx";
 import {FieldSection} from "./FieldSection.tsx";
-import {DeckSection} from "@mtgit/shared";
+import {type DeckSection} from "@mtgit/shared";
 
 export function DeckSectionsToc() {
   const {filteredDeck} = useDeckContext();

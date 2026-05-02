@@ -42,10 +42,10 @@ function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
-// todo handle **or** clauses
+// todo handle or clauses
 /**
  * Splits the string s. t. each item is a string containing a single clause.
- * a clause is E.g. '-oracle:"foo \"bar\""' without the outer ''
+ * a clause is E.g. '-oracle:"foo \"bar\"' without the outer ''
  */
 function splitClauses(query: string): string[] {
   const tokens: string[] = [];

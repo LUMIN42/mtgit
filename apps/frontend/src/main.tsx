@@ -8,7 +8,6 @@ import App from "./App.tsx";
 
 import {createTheme, MantineProvider} from "@mantine/core";
 import {DeckProvider} from "./context/DeckUiContext.tsx";
-import {SAMPLE_ORACLE_CARDS} from "./data/sampleOracleCards.ts";
 import {TagsProvider} from "./context/TagsContext.tsx";
 
 const queryClient = new QueryClient();
@@ -34,7 +33,7 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
         <TagsProvider>
-          <DeckProvider deck={SAMPLE_ORACLE_CARDS}>
+          <DeckProvider>
             <App/>
           </DeckProvider>
         </TagsProvider>

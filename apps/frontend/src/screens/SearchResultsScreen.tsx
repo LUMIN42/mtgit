@@ -107,7 +107,7 @@ function SearchResultsScreen() {
 
       {!showInitialLoading ? (
         <CardGroup
-          cards={cardsWithTags}
+          group={cardsWithTags}
           displayMode={deck.displayMode}
           sortingMode={usesServerOrder ? undefined : deck.sortingMode}
           groupKey={submittedSearch || "search-results"}
