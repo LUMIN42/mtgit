@@ -5,7 +5,7 @@ import {
   getGroupHeadingId,
   performGrouping,
   flatten,
-  type CardWithLocation, type CardLocation
+  type CardWithLocation, type CardLocation, groupCardCount
 } from "../utils/cardGrouping.ts";
 import {CardGroup} from "./CardGroup.tsx";
 import {CardDetailsModal} from "./CardDetailsModal.tsx";
@@ -71,7 +71,9 @@ export function GroupedCards() {
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading="true"
               >
-                {section.name} ({filteredDeck.sections[section.name].getCardCount()})
+                {section.name} ({filteredDeck.sections[section.name].getCardCount()
+                
+              })
               </Text>
               
               {/* Render groups within the section */}
@@ -86,7 +88,7 @@ export function GroupedCards() {
                     >
                       {groupingMode === "manaValue" && group.heading !== "Lands"
                         ? `Mana Value ${group.heading}`
-                        : group.heading} ({group.cards.length})
+                        : group.heading} ({groupCardCount(group)})
                     </Text>
                   ) : null}
                   
