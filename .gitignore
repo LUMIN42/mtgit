@@ -12,14 +12,9 @@ apps/frontend/src/assets/sample_card.json
 
 # Frontend package-manager leftovers
 apps/frontend/package-lock.json
-apps/frontend/yarn.lock
-apps/frontend/.yarnrc.yml
-apps/frontend/.yarn/
 
 # API environment files
 apps/api/.env*
 !apps/api/.env.example
 
-package-lock.json
-apps/frontend/src/assets/oracle-cards-20260420090251.json
 package-lock.json
