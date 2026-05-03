@@ -57,7 +57,7 @@ export function Card({
         radius="lg"
       />
       
-      // display card amount if there's more than one of it
+      {/*// display card amount if there's more than one of it*/}
       {(isDeckCard(card) && cardAmount !== 1) && (
         <Box
           style={{
