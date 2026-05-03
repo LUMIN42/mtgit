@@ -3,14 +3,14 @@ import {CustomAppShell} from "./components/CustomAppShell.tsx";
 
 import {useDeckContext} from "./context/DeckUiContext.tsx";
 import {trpcClient} from "./trpcClient.ts";
-import {DeckViewScreen} from "./screens/DeckViewScreen.tsx";
-import SearchResultsScreen from "./screens/SearchResultsScreen.tsx";
+import BranchViewingScreen from "./screens/BranchViewingScreen.tsx";
 
 
 function AppBody() {
   const deck = useDeckContext();
 
-  return deck.isSearching ? <SearchResultsScreen/> : <DeckViewScreen />;
+  // return deck.isSearching ? <SearchResultsScreen/> : <DeckViewScreen />;
+  return <BranchViewingScreen/>;
 }
 
 function App() {
