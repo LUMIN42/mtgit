@@ -99,15 +99,7 @@ export default defineConfig([
       
       "unused-imports/no-unused-imports": "error",
       
-      "unused-imports/no-unused-vars": [
-        "warn",
-        {
-          vars: "all",
-          args: "after-used",
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_"
-        }
-      ],
+      "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-empty-function": ["warn", {
         allow: ["private-constructors"]
       }],

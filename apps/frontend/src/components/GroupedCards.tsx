@@ -54,7 +54,7 @@ export function GroupedCards() {
   return (
     <>
       {/* Render all deck sections */}
-      <Stack gap="md">
+      <Stack gap="md" maw={"1000px"} m={"auto"}>
         {sections.map(section => {
           // Skip empty sections
           // if (section.cards.length === 0) {

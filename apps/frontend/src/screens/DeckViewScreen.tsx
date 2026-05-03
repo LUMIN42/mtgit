@@ -28,7 +28,7 @@ export function DeckViewScreen() {
         <DeckViewingOptions/>
       </Grid.Col>
 
-      <Grid.Col span={8}>
+      <Grid.Col span={9}>
         <GroupedCards/>
       </Grid.Col>
     </Grid>
