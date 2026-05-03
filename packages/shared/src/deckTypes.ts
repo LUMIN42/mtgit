@@ -26,6 +26,11 @@ export interface DeckCard extends ScryfallOracleCard {
 }
 
 
+export function isDeckCard(x: ScryfallOracleCard): x is DeckCard {
+  return typeof (x as DeckCard).count === "number";
+}
+
+
 // Zod schemas to validate and hydrate deck data into Deck/DeckSection instances
 const DeckCardSchema = ScryfallOracleCardSchema.extend({
   count: z.number().int().default(1)
