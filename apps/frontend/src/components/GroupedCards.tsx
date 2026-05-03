@@ -73,7 +73,7 @@ export function GroupedCards() {
               >
                 {section.name} ({filteredDeck.sections[section.name].getCardCount()
                 
-              })
+                })
               </Text>
               
               {/* Render groups within the section */}
