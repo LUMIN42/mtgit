@@ -1,7 +1,9 @@
- 
 import {createContext, useContext, useEffect, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
 import {Deck, DeckSection} from "@mtgit/shared";
+import type {CardCounts, DeckCard, DeckCardAmounts, DeckSectionName, DeckSections} from "@mtgit/shared";
+import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
+import {useScryfallCache} from "./ScryfallCacheContext";
 
 export interface DeckDataContextValue {
   deck: Deck;
@@ -9,57 +11,59 @@ export interface DeckDataContextValue {
 }
 
 interface DeckDataProviderProps {
-  deck: Deck;
+  sections?: DeckCardAmounts | null;
   children: ReactNode;
 }
 
 const DeckDataContext = createContext<DeckDataContextValue | undefined>(undefined);
-const DECK_STORAGE_KEY = "mtgit.deck";
 
-function isDeckLike(value: unknown): value is Deck {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const deck = value as Partial<Deck>;
-  const mainSection = (deck.sections as {Main?: unknown}).Main;
-
-  return typeof deck.name === "string"
-    && !!deck.sections
-    && typeof deck.sections === "object"
-    && (mainSection instanceof DeckSection || (Array.isArray(mainSection) && mainSection.length >= 0));
-}
-
-export function DeckDataProvider({deck: initialDeck, children}: DeckDataProviderProps) {
-  const [deck, setDeck] = useState<Deck>(() => {
-    try {
-      const rawDeck = localStorage.getItem(DECK_STORAGE_KEY);
-      if (!rawDeck) {
-        return Deck.reconstruct(initialDeck);
-      }
-
-      const parsedDeck = JSON.parse(rawDeck) as unknown;
-      if (!isDeckLike(parsedDeck)) {
-        return Deck.reconstruct(initialDeck);
-      }
-
-      return Deck.reconstruct(parsedDeck);
-    }
-    catch {
-      return Deck.reconstruct(initialDeck);
-    }
-  });
+export function DeckDataProvider({sections, children}: DeckDataProviderProps) {
+  const {getCard} = useScryfallCache();
+  const [deck, setDeck] = useState<Deck>(() => Deck.empty("Sample deck"));
 
   useEffect(() => {
-    try {
-      localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
+    if (!sections) {
+      setDeck(Deck.empty("Sample deck"));
+      return;
     }
-    catch {
-      // Ignore storage failures to keep app usable in restricted environments.
-    }
-  }, [deck]);
+
+    const built = buildSections(sections, getCard);
+    setDeck(new Deck("Imported", built));
+  }, [sections, getCard]);
 
   return <DeckDataContext.Provider value={{deck, setDeck}}>{children}</DeckDataContext.Provider>;
+}
+
+function buildSections(
+  sections: DeckCardAmounts,
+  getCard: (oracleId: string) => ScryfallOracleCard | undefined
+): DeckSections {
+  const built: Partial<Record<DeckSectionName, DeckSection>> = {};
+
+  for (const [sectionName, counts] of Object.entries(sections)) {
+    const items = buildCards(counts as CardCounts, getCard);
+    built[sectionName as DeckSectionName] = new DeckSection(sectionName as DeckSectionName, items);
+  }
+
+  if (!built.Main) {
+    built.Main = new DeckSection("Main", []);
+  }
+
+  return built as DeckSections;
+}
+
+function buildCards(
+  counts: CardCounts,
+  getCard: (oracleId: string) => ScryfallOracleCard | undefined
+): DeckCard[] {
+  const out: DeckCard[] = [];
+  for (const [oracleId, count] of Object.entries(counts)) {
+    const base = getCard(oracleId);
+    if (base) {
+      out.push({...base, count});
+    }
+  }
+  return out;
 }
 
 export function useDeckDataContext(): DeckDataContextValue {

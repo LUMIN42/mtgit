@@ -1,30 +1,45 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
-import {useDeckContext} from "../context/DeckUiContext.tsx";
-import {useTagsContext} from "../context/useTagsContext.ts";
-import {Deck, type TagsMap} from "@mtgit/shared";
+import {useRepositoryContext} from "../context/RepositoryContext.tsx";
+import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {Deck, DeckSection, appendRepositoryVersion, mergeDecks, mergeTagsMaps} from "@mtgit/shared";
+import type {CardCounts, DeckCardAmounts, DeckSectionName} from "@mtgit/shared";
+import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 import {trpcClient} from "../trpcClient.ts";
 
+/**
+ * Collect oracle cards from a deck for cache hydration.
+ */
+const collectDeckCards = (deck: Deck): ScryfallOracleCard[] => {
+  const out: ScryfallOracleCard[] = [];
+  for (const section of Object.values(deck.sections)) {
+    for (const card of (section as DeckSection).toArray()) {
+      out.push(card as ScryfallOracleCard);
+    }
+  }
+  return out;
+};
+
+const mergeDeckCardAmounts = (base: DeckCardAmounts, incoming: DeckCardAmounts): DeckCardAmounts => {
+  const merged: Partial<Record<DeckSectionName, CardCounts>> = {...base};
+  for (const [sectionName, counts] of Object.entries(incoming)) {
+    const name = sectionName as DeckSectionName;
+    merged[name] = merged[name] ? mergeDecks(merged[name], counts as CardCounts) : (counts as CardCounts);
+  }
+
+  return merged as DeckCardAmounts;
+};
+
+/**
+ * Modal UI for importing a deck list into the repository.
+ */
 export function DeckImportModal() {
-  const {setDeck} = useDeckContext();
-  const {setTags} = useTagsContext();
+  const {repository, selectedBranchName, setRepository} = useRepositoryContext();
+  const {setCards} = useScryfallCache();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importDeckText, setImportDeckText] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-
-  // používáme `Deck.merge` metodu z shared balíčku
-
-  const mergeTagsMaps = (currentTags: TagsMap, importedTags: TagsMap): TagsMap => {
-    const merged: TagsMap = {...currentTags};
-
-    for (const [cardId, tags] of Object.entries(importedTags)) {
-      const existingTags = merged[cardId] ?? [];
-      merged[cardId] = Array.from(new Set([...existingTags, ...tags]));
-    }
-
-    return merged;
-  };
 
   const closeModal = () => {
     setIsImportModalOpen(false);
@@ -38,22 +53,32 @@ export function DeckImportModal() {
     try {
       const result = await trpcClient.deckImport.parse.mutate({text: importDeckText});
       const reconstructed = Deck.reconstruct(result.deck);
-      
-      if (mode === "replace") {
-        setDeck(reconstructed);
-        setTags(result.tagsMap);
+
+      const branch = repository?.branches.find(b => b.name === selectedBranchName)
+        ?? repository?.branches?.[0];
+      const baseSections: DeckCardAmounts = mode === "replace"
+        ? {}
+        : branch?.versions[branch.versions.length - 1]?.sections ?? {};
+
+      const importedSections = reconstructed.toDeckCardAmounts();
+      const nextSections = mode === "replace"
+        ? importedSections
+        : mergeDeckCardAmounts(baseSections, importedSections);
+
+      const nextTags = mode === "replace"
+        ? result.tagsMap
+        : mergeTagsMaps(repository?.tags ?? {}, result.tagsMap);
+
+      if (repository) {
+        const branchName = selectedBranchName ?? repository.branches?.[0]?.name ?? "main";
+        setRepository(appendRepositoryVersion(repository, branchName, nextSections, nextTags));
       }
-      else {
-        setDeck(currentDeck => Deck.merge(currentDeck, reconstructed));
-        setTags(currentTags => mergeTagsMaps(currentTags, result.tagsMap));
-      }
+      setCards(collectDeckCards(reconstructed));
       closeModal();
-    }
-    catch (error) {
+    } catch (error) {
       const message = error instanceof Error ? error.message : "Deck import failed.";
       setImportError(message);
-    }
-    finally {
+    } finally {
       setIsImporting(false);
     }
   };
@@ -97,7 +122,8 @@ export function DeckImportModal() {
         <Box pt="sm" pb="md" mt="md" style={{borderTop: "1px solid var(--mantine-color-gray-3)"}}>
           <Group justify="flex-end">
             <Button variant="default" onClick={closeModal} disabled={isImporting}>Cancel</Button>
-            <Button variant="default" onClick={() => handleConfirmImport("append")} loading={isImporting}>Add to deck</Button>
+            <Button variant="default" onClick={() => handleConfirmImport("append")} loading={isImporting}>Add to
+              deck</Button>
             <Button onClick={() => handleConfirmImport("replace")} loading={isImporting}>Replace deck</Button>
           </Group>
         </Box>

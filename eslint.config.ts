@@ -103,9 +103,6 @@ export default defineConfig([
       "@typescript-eslint/no-empty-function": ["warn", {
         allow: ["private-constructors"]
       }],
-      "@typescript-eslint/consistent-type-imports": ["error", {
-        fixStyle: "inline-type-imports"
-      }],
       "@typescript-eslint/no-explicit-any": ["warn"]
     }
   },

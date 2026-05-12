@@ -1,9 +1,12 @@
  
 import {createContext, useContext, useMemo, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
-import {Deck, type DeckSectionName} from "@mtgit/shared";
+import {type Deck} from "@mtgit/shared";
+import type {DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 import {DeckDataProvider, useDeckDataContext} from "./DeckDataContext.tsx";
+import type {DeckCardAmounts} from "@mtgit/shared";
+import {useRepositoryContext} from "./RepositoryContext.tsx";
 import type {DeckDataContextValue} from "./DeckDataContext.tsx";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 
@@ -82,8 +85,14 @@ function DeckUIProvider({children}: {children: ReactNode}) {
 }
 
 export function DeckProvider({children}: DeckProviderProps) {
+  const {repository, selectedBranchName} = useRepositoryContext();
+  const branch = repository?.branches.find(b => b.name === selectedBranchName) ?? null;
+  const sections: DeckCardAmounts | null = branch?.versions.length
+    ? branch.versions[branch.versions.length - 1].sections
+    : null;
+
   return (
-    <DeckDataProvider deck={Deck.empty("Sample deck")}>
+    <DeckDataProvider sections={sections}>
       <DeckUIProvider>{children}</DeckUIProvider>
     </DeckDataProvider>
   );

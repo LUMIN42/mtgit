@@ -9,12 +9,13 @@ import {
 } from "../utils/cardGrouping.ts";
 import {CardGroup} from "./CardGroup.tsx";
 import {CardDetailsModal} from "./CardDetailsModal.tsx";
-import {useTagsContext} from "../context/useTagsContext.ts";
+import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {withTags} from "@mtgit/shared";
 
 export function GroupedCards() {
   const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
-  const {tags} = useTagsContext();
+  const {repository} = useRepositoryContext();
+  const tags = repository?.tags ?? {};
   // Track currently selected card for the modal
   
   /**
