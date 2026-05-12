@@ -1,5 +1,5 @@
-import {createContext, useContext, useEffect, useState} from "react";
-import type {Dispatch, ReactNode, SetStateAction} from "react";
+import {createContext, useContext} from "react";
+import type {ReactNode} from "react";
 import {Deck, DeckSection} from "@mtgit/shared";
 import type {CardCounts, DeckCard, DeckCardAmounts, DeckSectionName, DeckSections} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
@@ -7,7 +7,6 @@ import {useScryfallCache} from "./ScryfallCacheContext";
 
 export interface DeckDataContextValue {
   deck: Deck;
-  setDeck: Dispatch<SetStateAction<Deck>>;
 }
 
 interface DeckDataProviderProps {
@@ -19,19 +18,12 @@ const DeckDataContext = createContext<DeckDataContextValue | undefined>(undefine
 
 export function DeckDataProvider({sections, children}: DeckDataProviderProps) {
   const {getCard} = useScryfallCache();
-  const [deck, setDeck] = useState<Deck>(() => Deck.empty("Sample deck"));
 
-  useEffect(() => {
-    if (!sections) {
-      setDeck(Deck.empty("Sample deck"));
-      return;
-    }
+  const deck = !sections
+    ? Deck.empty("Sample deck")
+    : new Deck("Imported", buildSections(sections, getCard));
 
-    const built = buildSections(sections, getCard);
-    setDeck(new Deck("Imported", built));
-  }, [sections, getCard]);
-
-  return <DeckDataContext.Provider value={{deck, setDeck}}>{children}</DeckDataContext.Provider>;
+  return <DeckDataContext.Provider value={{deck}}>{children}</DeckDataContext.Provider>;
 }
 
 function buildSections(
