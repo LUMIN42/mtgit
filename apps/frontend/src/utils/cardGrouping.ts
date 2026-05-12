@@ -3,7 +3,8 @@ import {
   type Deck,
   type DeckSection,
   type DeckSectionName,
-  type ScryfallOracleCard
+  type ScryfallOracleCard,
+  type TaggedDeck
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
 
@@ -321,11 +322,11 @@ export function performGrouping(deck: Deck<TaggedDeckCard>, groupingMode: CardGr
   return outputSections;
 }
 
-export function groupCardCount(group: SortedGroup) {
+export function groupCardCount<T extends TaggedDeckCard>(group: SortedGroup) {
   return group.cards.reduce((sum, card) => sum + card.count, 0);
 }
 
-export function sectionCardCount(section: SortedSection) {
+export function sectionCardCount<T extends TaggedDeckCard>(section: SortedSection) {
   return section.groups.reduce(
     (sum, group) => sum + groupCardCount(group), 0
   );

@@ -1,16 +1,20 @@
 import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {Stack, Text} from "@mantine/core";
 import {useMemo, useState} from "react";
+import type {CardWithTags} from "../types/cardWithTags.ts";
 import {
   getGroupHeadingId,
+  groupCardsByMode,
   performGrouping,
   flatten,
-  type CardWithLocation, type CardLocation, groupCardCount
+  groupCardCount,
+  sectionCardCount, type CardWithLocation, type CardLocation
 } from "../utils/cardGrouping.ts";
 import {CardGroup} from "./CardGroup.tsx";
 import {CardDetailsModal} from "./CardDetailsModal.tsx";
 import {useTagsContext} from "../context/useTagsContext.ts";
-import {withTags} from "@mtgit/shared";
+import {DeckSection, type DeckSectionName, withTags} from "@mtgit/shared";
+import type {TaggedDeckCard} from "@mtgit/shared";
 
 export function GroupedCards() {
   const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
@@ -54,7 +58,7 @@ export function GroupedCards() {
   return (
     <>
       {/* Render all deck sections */}
-      <Stack gap="md" maw={"1000px"} m={"auto"}>
+      <Stack gap="md">
         {sections.map(section => {
           // Skip empty sections
           // if (section.cards.length === 0) {
@@ -71,9 +75,7 @@ export function GroupedCards() {
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading="true"
               >
-                {section.name} ({filteredDeck.sections[section.name].getCardCount()
-                
-                })
+                {section.name} ({filteredDeck.sections[section.name].getCardCount()})
               </Text>
               
               {/* Render groups within the section */}
@@ -88,7 +90,7 @@ export function GroupedCards() {
                     >
                       {groupingMode === "manaValue" && group.heading !== "Lands"
                         ? `Mana Value ${group.heading}`
-                        : group.heading} ({groupCardCount(group)})
+                        : group.heading} ({group.cards.length})
                     </Text>
                   ) : null}
                   
