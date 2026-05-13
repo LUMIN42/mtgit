@@ -1,4 +1,3 @@
- 
 import {createContext, useContext, useMemo, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
 import {type Deck} from "@mtgit/shared";
@@ -11,9 +10,13 @@ import type {DeckDataContextValue} from "./DeckDataContext.tsx";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 
 export type CardDisplayMode = "Images" | "Text";
+export type DeckViewMode = "Deck" | "Branches";
 
 interface DeckUIContextValue {
   sectionOrder: DeckSectionName[];
+
+  viewMode: DeckViewMode;
+  setViewMode: Dispatch<SetStateAction<DeckViewMode>>;
 
   displayMode: CardDisplayMode;
   setDisplayMode: Dispatch<SetStateAction<CardDisplayMode>>;
@@ -49,6 +52,7 @@ interface DeckProviderProps {
 
 function DeckUIProvider({children}: {children: ReactNode}) {
   const {deck} = useDeckDataContext();
+  const [viewMode, setViewMode] = useState<DeckViewMode>("Deck");
   const [displayMode, setDisplayMode] = useState<CardDisplayMode>("Images");
   const [groupingMode, setGroupingMode] = useState<CardGroupingMode>("none");
   const [sortingMode, setSortingMode] = useState<CardSortMode>("name");
@@ -64,6 +68,8 @@ function DeckUIProvider({children}: {children: ReactNode}) {
 
   const value: DeckUIContextValue = {
     sectionOrder: SECTION_ORDER,
+    viewMode,
+    setViewMode,
     displayMode,
     setDisplayMode,
     groupingMode,

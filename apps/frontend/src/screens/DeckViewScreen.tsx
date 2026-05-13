@@ -1,6 +1,6 @@
 import {GroupedCards} from "../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../components/DeckViewingOptions.tsx";
-import {Grid, Group, Stack} from "@mantine/core";
+import {Button, Grid, Group, Stack} from "@mantine/core";
 
 import style from "../assets/index.module.css";
 import {DeckImportModal} from "../components/DeckImportModal.tsx";
@@ -19,6 +19,7 @@ export function DeckViewScreen() {
     <Group>
       <DeckImportModal/>
       <DeckDisplayModeSection value={deck.displayMode} onToggle={toggleDisplayMode}/>
+      <Button variant="default" onClick={() => deck.setViewMode("Branches")}>View branches</Button>
 
     </Group>
     <Grid className={style.stretchChildren}>

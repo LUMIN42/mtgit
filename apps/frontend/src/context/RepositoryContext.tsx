@@ -32,7 +32,10 @@ export function RepositoryProvider({children,initialRepository}:{children:ReactN
 
   function setRepository(r: Repository) {
     setRepositoryState(r);
-    setSelectedBranchName(r.branches?.[0]?.name ?? null);
+    const nextSelected = r.branches.find(branch => branch.name === selectedBranchName)?.name
+      ?? r.branches?.[0]?.name
+      ?? null;
+    setSelectedBranchName(nextSelected);
   }
 
   return (
@@ -75,4 +78,3 @@ function createEmptyRepository(): Repository {
     ]
   };
 }
-
