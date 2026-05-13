@@ -39,6 +39,9 @@ interface DeckUIContextValue {
 
   submittedSearch: string;
   setSubmittedSearch: Dispatch<SetStateAction<string>>;
+
+  comparisonBranchName: string | null;
+  setComparisonBranchName: Dispatch<SetStateAction<string | null>>;
 }
 
 type DeckContextValue = DeckDataContextValue & DeckUIContextValue;
@@ -50,7 +53,7 @@ interface DeckProviderProps {
   children: ReactNode;
 }
 
-function DeckUIProvider({children}: {children: ReactNode}) {
+function DeckUIProvider({children}: { children: ReactNode }) {
   const {deck} = useDeckDataContext();
   const [viewMode, setViewMode] = useState<DeckViewMode>("Deck");
   const [displayMode, setDisplayMode] = useState<CardDisplayMode>("Images");
@@ -60,6 +63,8 @@ function DeckUIProvider({children}: {children: ReactNode}) {
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [submittedSearch, setSubmittedSearch] = useState("");
+  const [comparisonBranchName, setComparisonBranchName] = useState(undefined);
+
 
   const filteredDeck = useMemo(
     () => filterDeckByScryfallQuery(deck, cardFilterQuery),
@@ -84,7 +89,9 @@ function DeckUIProvider({children}: {children: ReactNode}) {
     isSearching,
     setIsSearching,
     submittedSearch,
-    setSubmittedSearch
+    setSubmittedSearch,
+    comparisonBranchName,
+    setComparisonBranchName
   };
 
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;

@@ -7,7 +7,6 @@ export type OracleId = string;
 export type CardCounts = Record<OracleId, number>;
 
 
-
 export type TimeStamp = number;
 
 
@@ -29,6 +28,18 @@ export interface Repository {
   name: string;
   tags: TagsMap;
   branches: Branch[];
+}
+
+export function createDeckVersion(sections: DeckCardAmounts): DeckVersion {
+  return {
+    id: crypto.randomUUID(),
+    sections,
+    timestamp: Date.now()
+  };
+}
+
+export function copyDeckCardAmounts(cardAmounts: DeckCardAmounts) {
+  return {...cardAmounts};
 }
 
 /**
@@ -56,8 +67,7 @@ export function appendRepositoryVersion(
 ): Repository {
   // todo consider cleaning the clutter in the method
 
-  const id: string = crypto.randomUUID();
-  const newVersion: DeckVersion = {id, timestamp: Date.now(), sections};
+  const newVersion: DeckVersion = createDeckVersion(sections);
 
   let hasBranch = false;
   const branches = repository.branches.map(branch => {

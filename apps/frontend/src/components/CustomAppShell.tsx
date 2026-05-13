@@ -1,7 +1,7 @@
 import type {ReactNode} from "react";
 import {Text} from "@mantine/core";
 
-import {Button, Group, Menu, Paper, Select} from "@mantine/core";
+import {Button, Group, Menu, Paper} from "@mantine/core";
 
 // import style from "./assets/index.module.css"
 
@@ -13,11 +13,9 @@ export function CustomAppShell({children}: {children: ReactNode}) {
         <Paper>
           (App logo)
         </Paper>
-        <Select label={"Branch:"} p={"xs"} data={["long-term", "experimental", "owned"]} defaultValue={"long-term"}
-          searchable/>
 
         <Menu variant={"gradient"}>
-
+          {/*todo what does this element do?*/}
         </Menu>
 
 

@@ -1,6 +1,6 @@
-import {createContext,useContext,useEffect,useState} from "react";
-import type{ReactNode} from "react";
-import type{DeckCardAmounts, Repository} from "@mtgit/shared";
+import {createContext, useContext, useEffect, useState} from "react";
+import type {ReactNode} from "react";
+import type {Branch, DeckCardAmounts, Repository} from "@mtgit/shared";
 
 /**
  * Repository state plus active branch selection.
@@ -10,6 +10,8 @@ type RepositoryContextValue = {
   setRepository: (r: Repository) => void;
   selectedBranchName: string | null;
   setSelectedBranchName: (n: string | null) => void;
+  selectedBranch: Branch;
+  currentDeckVersion: DeckCardAmounts;
 };
 
 const RepositoryContext = createContext<RepositoryContextValue | undefined>(undefined);
@@ -17,12 +19,15 @@ const RepositoryContext = createContext<RepositoryContextValue | undefined>(unde
 /**
  * Provides repository state and active branch selection.
  */
-export function RepositoryProvider({children,initialRepository}:{children:ReactNode, initialRepository?: Repository | null}){
+export function RepositoryProvider({children, initialRepository}: {
+  children: ReactNode;
+  initialRepository?: Repository | null;
+}) {
   const [repository, setRepositoryState] = useState<Repository | null>(() => {
     return initialRepository ?? createEmptyRepository();
   });
 
-  const [selectedBranchName,setSelectedBranchName] = useState<string | null>(repository?.branches?.[0]?.name ?? null);
+  const [selectedBranchName, setSelectedBranchName] = useState<string | null>(repository?.branches?.[0]?.name ?? null);
 
   useEffect(() => {
     if (repository && !selectedBranchName) {
@@ -38,8 +43,19 @@ export function RepositoryProvider({children,initialRepository}:{children:ReactN
     setSelectedBranchName(nextSelected);
   }
 
+  const selectedBranch = repository.branches.find(branch => branch.name === selectedBranchName);
+
+  const currentDeckVersion = selectedBranch.versions[selectedBranch.versions.length - 1].sections;
+
   return (
-    <RepositoryContext.Provider value={{repository,setRepository,selectedBranchName,setSelectedBranchName}}>
+    <RepositoryContext.Provider value={{
+      repository,
+      setRepository,
+      selectedBranchName,
+      setSelectedBranchName,
+      selectedBranch,
+      currentDeckVersion
+    }}>
       {children}
     </RepositoryContext.Provider>
   );
