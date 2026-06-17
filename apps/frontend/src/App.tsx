@@ -13,7 +13,7 @@ function AppBody() {
   const deck = useDeckContext();
   const uiState = useDeckUIContext();
 
-  if (uiState.comparisonBranchName !== null) {
+  if (uiState.comparisonBranchName !== undefined) {
     return <DeckComparisonScreen/>;
   }
 

@@ -3,15 +3,16 @@
 import {z} from "zod";
 import {ScryfallOracleCardSchema} from "./scryfall.js";
 import type {ScryfallOracleCard} from "./scryfall.js";
-import {CardCounts, DeckCardAmounts} from "./repositoryTypes.js";
+import {
+  CardCounts,
+  DECK_SECTION_NAMES,
+  DeckCardCounts,
+  DeckSectionName,
+  emptyDeckCardCounts, OptionalDeckSectionName, TagsMap
+} from "./repositoryTypes.js";
 
-export type TagsMap = Record<string, string[]>;
 
 
-export const DECK_SECTION_NAMES = ["Main", "Commander", "Sideboard", "Considering"] as const;
-export type DeckSectionName = typeof DECK_SECTION_NAMES[number];
-
-export type OptionalDeckSectionName = Exclude<DeckSectionName, "Main">;
 
 /**
  * Maps section labels (as they appear in decklists) to their canonical DeckSectionName.
@@ -53,7 +54,8 @@ const RawSectionsSchema = z.record(z.string(), RawSectionItemSchema).optional().
 
     if (Array.isArray(item)) {
       sections[canonical] = new DeckSection(canonical, item as DeckCard[]);
-    } else {
+    }
+    else {
       // record map oracleId -> DeckCard
       sections[canonical] = new DeckSection(canonical, item as Record<OracleId, DeckCard>);
     }
@@ -97,9 +99,11 @@ export class DeckSection<T extends DeckCard = DeckCard> implements Iterable<T> {
       for (const card of cards) {
         this.cardsMap[card.oracle_id] = card;
       }
-    } else if (cards) {
+    }
+    else if (cards) {
       this.cardsMap = {...cards};
-    } else {
+    }
+    else {
       this.cardsMap = {};
     }
   }
@@ -120,7 +124,8 @@ export class DeckSection<T extends DeckCard = DeckCard> implements Iterable<T> {
     const existing = this.cardsMap[card.oracle_id];
     if (existing) {
       existing.count += amount;
-    } else {
+    }
+    else {
       this.cardsMap[card.oracle_id] = {...card, count: amount};
     }
   }
@@ -164,8 +169,8 @@ export class Deck<T extends DeckCard = DeckCard> {
   }
 
 
-  toDeckCardAmounts(): DeckCardAmounts {
-    const sections: DeckCardAmounts = {};
+  toDeckCardAmounts(): DeckCardCounts {
+    const sections: DeckCardCounts = emptyDeckCardCounts();
     for (const sectionName of DECK_SECTION_NAMES) {
       const section = this.sections[sectionName as DeckSectionName];
       if (!section) {
@@ -178,7 +183,7 @@ export class Deck<T extends DeckCard = DeckCard> {
       sections[sectionName as DeckSectionName] = counts;
     }
 
-    return sections as DeckCardAmounts;
+    return sections as DeckCardCounts;
   }
 
   /**

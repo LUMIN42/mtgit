@@ -1,17 +1,20 @@
-import {createContext, useContext, useEffect, useState} from "react";
+import {createContext, useContext, useState} from "react";
 import type {ReactNode} from "react";
-import type {Branch, DeckCardAmounts, Repository} from "@mtgit/shared";
+import type {DeckCardCounts, Repository, TagsMap} from "@mtgit/shared";
+import {createEmptyRepository} from "@mtgit/shared";
 
 /**
  * Repository state plus active branch selection.
  */
 type RepositoryContextValue = {
   repository: Repository | null;
-  setRepository: (r: Repository) => void;
+  // setRepository: (r: Repository) => void;
   selectedBranchName: string | null;
   setSelectedBranchName: (n: string | null) => void;
-  selectedBranch: Branch;
-  currentDeckVersion: DeckCardAmounts;
+  selectedBranchContent: DeckCardCounts;
+  setBranchValue: (branchName: string, branchValue: DeckCardCounts) => void;
+  setTags: (tagsMap: TagsMap) => void;
+  createBranch: (branchName: string, branchContent: DeckCardCounts) => void;
 };
 
 const RepositoryContext = createContext<RepositoryContextValue | undefined>(undefined);
@@ -23,38 +26,43 @@ export function RepositoryProvider({children, initialRepository}: {
   children: ReactNode;
   initialRepository?: Repository | null;
 }) {
-  const [repository, setRepositoryState] = useState<Repository | null>(() => {
+  const [repository, setRepositoryState] = useState<Repository>(() => {
     return initialRepository ?? createEmptyRepository();
   });
 
-  const [selectedBranchName, setSelectedBranchName] = useState<string | null>(repository?.branches?.[0]?.name ?? null);
+  const [selectedBranchName, setSelectedBranchName] = useState<string | null>("main"); // todo fix initial state
 
-  useEffect(() => {
-    if (repository && !selectedBranchName) {
-      setSelectedBranchName(repository.branches?.[0]?.name ?? null);
-    }
-  }, [repository, selectedBranchName]);
+  const setBranchValue = (branchName: string, branchValue: DeckCardCounts) => {
 
-  function setRepository(r: Repository) {
-    setRepositoryState(r);
-    const nextSelected = r.branches.find(branch => branch.name === selectedBranchName)?.name
-      ?? r.branches?.[0]?.name
-      ?? null;
-    setSelectedBranchName(nextSelected);
-  }
+    const newRepo = structuredClone(repository);
+    newRepo.branches[branchName] = branchValue;
+    setRepositoryState(newRepo);
+  };
 
-  const selectedBranch = repository.branches.find(branch => branch.name === selectedBranchName);
+  const selectedBranchContent = repository.branches[selectedBranchName];
 
-  const currentDeckVersion = selectedBranch.versions[selectedBranch.versions.length - 1].sections;
+  const setTags = (tagsMap: TagsMap) => {
+    repository.tags = tagsMap;
+    setRepositoryState(repository);
+  };
+
+
+  const createBranch = (branchName: string, branchContent: DeckCardCounts) => {
+    repository.branches[branchName] = branchContent;
+    setRepositoryState(repository);
+  };
+
 
   return (
     <RepositoryContext.Provider value={{
       repository,
-      setRepository,
+      // setRepository,
       selectedBranchName,
       setSelectedBranchName,
-      selectedBranch,
-      currentDeckVersion
+      selectedBranchContent,
+      setBranchValue,
+      setTags,
+      createBranch
     }}>
       {children}
     </RepositoryContext.Provider>
@@ -73,24 +81,3 @@ export function useRepositoryContext() {
   return ctx;
 }
 
-function createEmptyRepository(): Repository {
-  const rootId = crypto.randomUUID();
-  const emptySections: DeckCardAmounts = {};
-  return {
-    name: "Untitled Repository",
-    tags: {},
-    branches: [
-      {
-        name: "main",
-        rootVersion: undefined,
-        versions: [
-          {
-            id: rootId,
-            timestamp: Date.now(),
-            sections: emptySections
-          }
-        ]
-      }
-    ]
-  };
-}

@@ -1,44 +1,58 @@
-import type {DeckSectionName, TagsMap} from "./deckTypes.js";
+import z from "zod";
 
-type UUID = string;
+export type TagsMap = Record<string, string[]>;
 
+export const OPTIONAL_DECK_SECTION_NAMES = ["Commander", "Sideboard", "Considering"] as const;
+export const DECK_SECTION_NAMES = ["Main", ...OPTIONAL_DECK_SECTION_NAMES] as const;
 
-export type OracleId = string;
-export type CardCounts = Record<OracleId, number>;
+export const DeckSectionNameSchema = z.enum(DECK_SECTION_NAMES);
+export const OptionalDeckSectionNameSchema = z.enum(OPTIONAL_DECK_SECTION_NAMES);
 
+export type DeckSectionName = typeof DECK_SECTION_NAMES[number];
+export type OptionalDeckSectionName = typeof OPTIONAL_DECK_SECTION_NAMES[number];
 
-export type TimeStamp = number;
+export const TagsMapSchema = z.record(
+  z.string(),
+  z.array(z.string())
+);
 
+export const OracleIdSchema = z.string();
 
-export type DeckCardAmounts = Partial<Record<DeckSectionName, CardCounts>>;
+export const CardCountsSchema = z.record(
+  OracleIdSchema,
+  z.number()
+);
 
-export interface DeckVersion {
-  id: UUID;
-  sections: DeckCardAmounts;
-  timestamp: TimeStamp;
+export const DeckCardCountsSchema = z
+  .partialRecord(OptionalDeckSectionNameSchema, CardCountsSchema)
+  .and(
+    z.object({
+      Main: CardCountsSchema
+    })
+  );
+
+export function emptyDeckCardCounts(): DeckCardCounts {
+  return {Main: {}};
 }
 
-export interface Branch {
-  name: string;
-  versions: DeckVersion[];
-  rootVersion: UUID | undefined;
-}
+export const BranchesSchema = z.record(
+  z.string(),
+  DeckCardCountsSchema
+);
 
-export interface Repository {
-  name: string;
-  tags: TagsMap;
-  branches: Branch[];
-}
+export const RepositorySchema = z.object({
+  name: z.string(),
+  tags: TagsMapSchema,
+  branches: BranchesSchema
+});
 
-export function createDeckVersion(sections: DeckCardAmounts): DeckVersion {
-  return {
-    id: crypto.randomUUID(),
-    sections,
-    timestamp: Date.now()
-  };
-}
+export type OracleId = z.infer<typeof OracleIdSchema>;
+export type CardCounts = z.infer<typeof CardCountsSchema>;
+export type DeckCardCounts = z.infer<typeof DeckCardCountsSchema>;
+export type Branches = z.infer<typeof BranchesSchema>;
+export type Repository = z.infer<typeof RepositorySchema>;
 
-export function copyDeckCardAmounts(cardAmounts: DeckCardAmounts) {
+export function copyDeckCardAmounts(cardAmounts: DeckCardCounts) {
   return {...cardAmounts};
 }
 
@@ -56,47 +70,6 @@ export function mergeTagsMaps(currentTags: TagsMap, importedTags: TagsMap): Tags
   return merged;
 }
 
-/**
- * Append a new version to a branch and return a new repository instance.
- */
-export function appendRepositoryVersion(
-  repository: Repository,
-  branchName: string,
-  sections: DeckCardAmounts,
-  tags: TagsMap
-): Repository {
-  // todo consider cleaning the clutter in the method
-
-  const newVersion: DeckVersion = createDeckVersion(sections);
-
-  let hasBranch = false;
-  const branches = repository.branches.map(branch => {
-    if (branch.name !== branchName) {
-      return branch;
-    }
-
-    hasBranch = true;
-    const versions = [...branch.versions, newVersion];
-    const rootVersion = branch.rootVersion ?? versions[0]?.id;
-    return {...branch, versions, rootVersion};
-  });
-
-  if (!hasBranch) {
-    branches.push({
-      name: branchName,
-      rootVersion: newVersion.id,
-      versions: [newVersion]
-    });
-  }
-
-  return {
-    ...repository,
-    tags,
-    branches
-  };
-}
-
-
 export function mergeDecks(
   a: CardCounts,
   b: CardCounts
@@ -108,4 +81,16 @@ export function mergeDecks(
   }
 
   return result;
+}
+
+export function createEmptyRepository(): Repository {
+  return {
+    name: "New Deck Repository",
+    tags: {},
+    branches: {
+      "main": {
+        "Main": {}
+      }
+    }
+  };
 }

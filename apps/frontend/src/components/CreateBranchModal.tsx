@@ -1,6 +1,6 @@
 import {Button, Group, Modal, Radio, Stack, TextInput, UnstyledButton} from "@mantine/core";
-import {useMemo, useState} from "react";
-import type {DeckCardAmounts} from "@mtgit/shared";
+import {useState} from "react";
+import {DeckCardCounts, emptyDeckCardCounts} from "@mtgit/shared";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 
 type CreateBranchModalProps = {
@@ -13,10 +13,7 @@ export function CreateBranchModal({opened, onClose}: CreateBranchModalProps) {
   const [newBranchName, setNewBranchName] = useState("");
   const [baseBranchName, setBaseBranchName] = useState("Empty");
 
-  const branchOptions = useMemo(
-    () => ["Empty", ...repo.repository.branches.map(branch => branch.name)],
-    [repo.repository.branches]
-  );
+  const branchOptions = [...Object.keys(repo.repository.branches), "Empty"];
 
   const handleCreateBranch = () => {
     const trimmedName = newBranchName.trim();
@@ -24,40 +21,13 @@ export function CreateBranchModal({opened, onClose}: CreateBranchModalProps) {
       return;
     }
 
-    const existing = new Set(repo.repository.branches.map(branch => branch.name));
-    if (existing.has(trimmedName)) {
-      return;
-    }
+    const sections: DeckCardCounts = emptyDeckCardCounts();
+    const source = repo.repository.branches[baseBranchName];
 
-    let sections: DeckCardAmounts = {};
-    if (baseBranchName && baseBranchName !== "Empty") {
-      const source = repo.repository.branches.find(branch => branch.name === baseBranchName);
-      const latest = source?.versions[source.versions.length - 1];
-      if (latest) {
-        sections = latest.sections;
-      }
-    }
+    repo.repository.branches[trimmedName] = sections;
 
-    const newVersion = {
-      id: crypto.randomUUID(),
-      timestamp: Date.now(),
-      sections
-    };
+    repo.createBranch(trimmedName, source);
 
-    const nextRepository = {
-      ...repo.repository,
-      branches: [
-        ...repo.repository.branches,
-        {
-          name: trimmedName,
-          rootVersion: newVersion.id,
-          versions: [newVersion]
-        }
-      ]
-    };
-
-    repo.setRepository(nextRepository);
-    repo.setSelectedBranchName(trimmedName);
     setNewBranchName("");
     setBaseBranchName("Empty");
     onClose();

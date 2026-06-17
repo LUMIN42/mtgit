@@ -1,7 +1,7 @@
 import {createContext, useContext} from "react";
 import type {ReactNode} from "react";
 import {Deck, DeckSection} from "@mtgit/shared";
-import type {CardCounts, DeckCard, DeckCardAmounts, DeckSectionName, DeckSections} from "@mtgit/shared";
+import type {CardCounts, DeckCard, DeckCardCounts, DeckSectionName, DeckSections} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 import {useScryfallCache} from "./ScryfallCacheContext";
 
@@ -10,7 +10,7 @@ export interface DeckDataContextValue {
 }
 
 interface DeckDataProviderProps {
-  sections?: DeckCardAmounts | null;
+  sections?: DeckCardCounts | null;
   children: ReactNode;
 }
 
@@ -27,7 +27,7 @@ export function DeckDataProvider({sections, children}: DeckDataProviderProps) {
 }
 
 function buildSections(
-  sections: DeckCardAmounts,
+  sections: DeckCardCounts,
   getCard: (oracleId: string) => ScryfallOracleCard | undefined
 ): DeckSections {
   const built: Partial<Record<DeckSectionName, DeckSection>> = {};

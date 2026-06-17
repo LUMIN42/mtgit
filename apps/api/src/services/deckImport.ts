@@ -1,4 +1,4 @@
-import {ScryfallOracleCardSchema, Deck, SECTION_BY_LABEL, DeckSection} from "@mtgit/shared";
+import {ScryfallOracleCardSchema, Deck, SECTION_BY_LABEL, DeckSection, withTags} from "@mtgit/shared";
 import type {DeckSectionName, TaggedDeck, TagsMap} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 
@@ -258,10 +258,8 @@ export async function parseDeckImportText(importText: string): Promise<TaggedDec
     throw new Error(`Could not find these cards in oracle data: ${missingList}${suffix}`);
   }
 
-  return {
-    deck: new Deck("Imported Deck", sections),
-    tagsMap
-  };
+
+  return withTags(new Deck("Imported Deck", sections), tagsMap);
 }
 
 // The deck parser is now exposed as a plain function so callers can inject the

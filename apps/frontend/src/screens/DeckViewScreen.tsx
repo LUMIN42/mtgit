@@ -28,7 +28,7 @@ export function DeckViewScreen() {
       <Button variant="default" onClick={() => deck.setViewMode("Branches")}>View branches</Button>
       <Button variant="default" onClick={() => setIsCreateBranchOpen(true)}>Add branch</Button>
 
-      <Select label={"Branch:"} p={"xs"} data={repo.repository.branches.map(branch => branch.name)}
+      <Select label={"Branch:"} p={"xs"} data={Object.keys(repo.repository.branches)}
         value={repo.selectedBranchName} onChange={value => repo.setSelectedBranchName(value)}
         searchable/>
 
@@ -36,8 +36,7 @@ export function DeckViewScreen() {
         p={"xs"}
         data={
           [
-            ...repo.repository.branches
-              .map(branch => branch.name)
+            ...Object.keys(repo.repository.branches)
               .filter(branchName => branchName !== repo.selectedBranchName),
             "None"
           ]

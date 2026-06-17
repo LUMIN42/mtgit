@@ -2,8 +2,8 @@ import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {Deck, DeckSection, appendRepositoryVersion, mergeDecks, mergeTagsMaps} from "@mtgit/shared";
-import type {CardCounts, DeckCardAmounts, DeckSectionName} from "@mtgit/shared";
+import {Deck, DeckSection, emptyDeckCardCounts, mergeDecks, mergeTagsMaps} from "@mtgit/shared";
+import type {CardCounts, DeckCardCounts, DeckSectionName} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 import {trpcClient} from "../trpcClient.ts";
 
@@ -20,21 +20,21 @@ const collectDeckCards = (deck: Deck): ScryfallOracleCard[] => {
   return out;
 };
 
-const mergeDeckCardAmounts = (base: DeckCardAmounts, incoming: DeckCardAmounts): DeckCardAmounts => {
+const mergeDeckCardAmounts = (base: DeckCardCounts, incoming: DeckCardCounts): DeckCardCounts => {
   const merged: Partial<Record<DeckSectionName, CardCounts>> = {...base};
   for (const [sectionName, counts] of Object.entries(incoming)) {
     const name = sectionName as DeckSectionName;
     merged[name] = merged[name] ? mergeDecks(merged[name], counts as CardCounts) : (counts as CardCounts);
   }
 
-  return merged as DeckCardAmounts;
+  return merged as DeckCardCounts;
 };
 
 /**
  * Modal UI for importing a deck list into the repository.
  */
 export function DeckImportModal() {
-  const {repository, selectedBranchName, setRepository} = useRepositoryContext();
+  const {repository, selectedBranchContent, setBranchValue, selectedBranchName, setTags} = useRepositoryContext();
   const {setCards} = useScryfallCache();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importDeckText, setImportDeckText] = useState("");
@@ -54,11 +54,11 @@ export function DeckImportModal() {
       const result = await trpcClient.deckImport.parse.mutate({text: importDeckText});
       const reconstructed = Deck.reconstruct(result.deck);
 
-      const branch = repository?.branches.find(b => b.name === selectedBranchName)
-        ?? repository?.branches?.[0];
-      const baseSections: DeckCardAmounts = mode === "replace"
-        ? {}
-        : branch?.versions[branch.versions.length - 1]?.sections ?? {};
+      // const branch = repository?.branches.find(b => b.name === selectedBranchName)
+      //   ?? repository?.branches?.[0];
+      const baseSections: DeckCardCounts = mode === "replace"
+        ? emptyDeckCardCounts()
+        : selectedBranchContent;
 
       const importedSections = reconstructed.toDeckCardAmounts();
       const nextSections = mode === "replace"
@@ -70,15 +70,17 @@ export function DeckImportModal() {
         : mergeTagsMaps(repository?.tags ?? {}, result.tagsMap);
 
       if (repository) {
-        const branchName = selectedBranchName ?? repository.branches?.[0]?.name ?? "main";
-        setRepository(appendRepositoryVersion(repository, branchName, nextSections, nextTags));
+        setBranchValue(selectedBranchName, nextSections);
+        setTags(nextTags);
       }
       setCards(collectDeckCards(reconstructed));
       closeModal();
-    } catch (error) {
+    }
+    catch (error) {
       const message = error instanceof Error ? error.message : "Deck import failed.";
       setImportError(message);
-    } finally {
+    }
+    finally {
       setIsImporting(false);
     }
   };
