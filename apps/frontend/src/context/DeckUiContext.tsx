@@ -1,16 +1,22 @@
- 
 import {createContext, useContext, useMemo, useState} from "react";
 import type {Dispatch, ReactNode, SetStateAction} from "react";
-import {Deck, type DeckSectionName} from "@mtgit/shared";
+import {type Deck} from "@mtgit/shared";
+import type {DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 import {DeckDataProvider, useDeckDataContext} from "./DeckDataContext.tsx";
+import type {DeckCardAmounts} from "@mtgit/shared";
+import {useRepositoryContext} from "./RepositoryContext.tsx";
 import type {DeckDataContextValue} from "./DeckDataContext.tsx";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 
 export type CardDisplayMode = "Images" | "Text";
+export type DeckViewMode = "Deck" | "Branches";
 
 interface DeckUIContextValue {
   sectionOrder: DeckSectionName[];
+
+  viewMode: DeckViewMode;
+  setViewMode: Dispatch<SetStateAction<DeckViewMode>>;
 
   displayMode: CardDisplayMode;
   setDisplayMode: Dispatch<SetStateAction<CardDisplayMode>>;
@@ -33,6 +39,9 @@ interface DeckUIContextValue {
 
   submittedSearch: string;
   setSubmittedSearch: Dispatch<SetStateAction<string>>;
+
+  comparisonBranchName: string | null;
+  setComparisonBranchName: Dispatch<SetStateAction<string | null>>;
 }
 
 type DeckContextValue = DeckDataContextValue & DeckUIContextValue;
@@ -44,8 +53,9 @@ interface DeckProviderProps {
   children: ReactNode;
 }
 
-function DeckUIProvider({children}: {children: ReactNode}) {
+function DeckUIProvider({children}: { children: ReactNode }) {
   const {deck} = useDeckDataContext();
+  const [viewMode, setViewMode] = useState<DeckViewMode>("Deck");
   const [displayMode, setDisplayMode] = useState<CardDisplayMode>("Images");
   const [groupingMode, setGroupingMode] = useState<CardGroupingMode>("none");
   const [sortingMode, setSortingMode] = useState<CardSortMode>("name");
@@ -53,6 +63,8 @@ function DeckUIProvider({children}: {children: ReactNode}) {
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [submittedSearch, setSubmittedSearch] = useState("");
+  const [comparisonBranchName, setComparisonBranchName] = useState(undefined);
+
 
   const filteredDeck = useMemo(
     () => filterDeckByScryfallQuery(deck, cardFilterQuery),
@@ -61,6 +73,8 @@ function DeckUIProvider({children}: {children: ReactNode}) {
 
   const value: DeckUIContextValue = {
     sectionOrder: SECTION_ORDER,
+    viewMode,
+    setViewMode,
     displayMode,
     setDisplayMode,
     groupingMode,
@@ -75,15 +89,23 @@ function DeckUIProvider({children}: {children: ReactNode}) {
     isSearching,
     setIsSearching,
     submittedSearch,
-    setSubmittedSearch
+    setSubmittedSearch,
+    comparisonBranchName,
+    setComparisonBranchName
   };
 
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;
 }
 
 export function DeckProvider({children}: DeckProviderProps) {
+  const {repository, selectedBranchName} = useRepositoryContext();
+  const branch = repository?.branches.find(b => b.name === selectedBranchName) ?? null;
+  const sections: DeckCardAmounts | null = branch?.versions.length
+    ? branch.versions[branch.versions.length - 1].sections
+    : null;
+
   return (
-    <DeckDataProvider deck={Deck.empty("Sample deck")}>
+    <DeckDataProvider sections={sections}>
       <DeckUIProvider>{children}</DeckUIProvider>
     </DeckDataProvider>
   );

@@ -2,7 +2,7 @@ import {ActionIcon, Box, Divider, Group, Modal, Stack, Tabs, Text, Image} from "
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
-import {useTagsContext} from "../context/useTagsContext.ts";
+import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel";
 
 interface CardDetailsModalProps {
@@ -19,7 +19,8 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
   const hasPrevious = index > 0;
   const hasNext = index < cards.length - 1;
  
-  const {tags} = useTagsContext();
+  const {repository} = useRepositoryContext();
+  const tags = repository?.tags ?? {};
   const cardId = card?.oracle_id ?? card?.id ?? null;
   const currentTags = cardId ? (tags[cardId] ?? []) : [];
   const tagSearchInputRef = useRef<HTMLInputElement | null>(null);

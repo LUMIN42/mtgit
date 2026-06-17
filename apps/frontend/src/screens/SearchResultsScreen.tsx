@@ -7,6 +7,7 @@ import {CardGroup} from "../components/CardGroup.tsx";
 import {CardDetailsModal} from "../components/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
+// todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
   return query
     .trim()
@@ -48,8 +49,13 @@ function SearchResultsScreen() {
   const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
 
   const cardsWithTags = useMemo(
-    () => cards.map(card => ({...card, tags: []})),
+    () => cards.map(card => ({...card, count: 1, tags: []})),
     [cards]
+  );
+
+  const resultsGroup = useMemo(
+    () => ({heading: "Results", cards: cardsWithTags}),
+    [cardsWithTags]
   );
 
   const safeSelection = selection !== null && selection < cardsWithTags.length ? selection : null;
@@ -107,11 +113,15 @@ function SearchResultsScreen() {
 
       {!showInitialLoading ? (
         <CardGroup
-          group={cardsWithTags}
+          group={resultsGroup}
+          sectionName="Main"
           displayMode={deck.displayMode}
           sortingMode={usesServerOrder ? undefined : deck.sortingMode}
           groupKey={submittedSearch || "search-results"}
-          onCardSelect={(_, index) => setSelection(index)}
+          onCardSelect={location => {
+            const index = cardsWithTags.findIndex(card => card.oracle_id === location.oracleId);
+            setSelection(index >= 0 ? index : null);
+          }}
         />
       ) : null}
 

@@ -8,7 +8,8 @@ import App from "./App.tsx";
 
 import {createTheme, MantineProvider} from "@mantine/core";
 import {DeckProvider} from "./context/DeckUiContext.tsx";
-import {TagsProvider} from "./context/TagsContext.tsx";
+import {ScryfallCacheProvider} from "./context/ScryfallCacheContext.tsx";
+import {RepositoryProvider} from "./context/RepositoryContext.tsx";
 
 const queryClient = new QueryClient();
 
@@ -25,18 +26,21 @@ const theme = createTheme({
     to: "yellow",
     deg: 45
   },
-  primaryColor: "orange"
+  primaryColor: "orange",
+  cursorType: "pointer"
 });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
-        <TagsProvider>
-          <DeckProvider>
-            <App/>
-          </DeckProvider>
-        </TagsProvider>
+        <ScryfallCacheProvider>
+          <RepositoryProvider>
+            <DeckProvider>
+              <App/>
+            </DeckProvider>
+          </RepositoryProvider>
+        </ScryfallCacheProvider>
       </MantineProvider>
     </QueryClientProvider>
   </StrictMode>

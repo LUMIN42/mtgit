@@ -12,13 +12,14 @@ import {
 } from "../utils/cardGrouping.ts";
 import {CardGroup} from "./CardGroup.tsx";
 import {CardDetailsModal} from "./CardDetailsModal.tsx";
-import {useTagsContext} from "../context/useTagsContext.ts";
-import {DeckSection, type DeckSectionName, withTags} from "@mtgit/shared";
-import type {TaggedDeckCard} from "@mtgit/shared";
+
+import {useRepositoryContext} from "../context/RepositoryContext.tsx";
+import {withTags} from "@mtgit/shared";
 
 export function GroupedCards() {
   const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
-  const {tags} = useTagsContext();
+  const {repository} = useRepositoryContext();
+  const tags = repository?.tags ?? {};
   // Track currently selected card for the modal
   
   /**
@@ -46,15 +47,22 @@ export function GroupedCards() {
       a.oracleId === b.oracleId
     );
   }
-  
-  
+
+  function findByOracleId(a: CardLocation, b: CardLocation | undefined): boolean {
+    return b !== undefined && a.oracleId === b.oracleId;
+  }
+
   const selectedCardIndex: number = pageCards
     .findIndex(card => sameLocation(card.location, selectedCardLocation));
-  
+
+  const fallbackCardIndex: number = selectedCardIndex === -1
+    ? pageCards.findIndex(card => findByOracleId(card.location, selectedCardLocation))
+    : selectedCardIndex;
+
   // todo try removing the null coalescence in the end
   const selectedCard: CardWithLocation | undefined =
-    selectedCardIndex === -1 ? undefined : pageCards[selectedCardIndex] ?? undefined;
-  
+    fallbackCardIndex === -1 ? undefined : pageCards[fallbackCardIndex] ?? undefined;
+
   return (
     <>
       {/* Render all deck sections */}
@@ -115,8 +123,8 @@ export function GroupedCards() {
       {/* Card details modal for selected card, supports navigation */}
       <CardDetailsModal
         cards={pageCards}
-        index={selectedCardIndex}
-        opened={selectedCard !== undefined}
+        index={fallbackCardIndex}
+        opened={fallbackCardIndex !== -1}
         onClose={() => {
           setSelectedCardLocation(undefined);
         }}

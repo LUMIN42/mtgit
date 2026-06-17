@@ -12,9 +12,6 @@ This repo uses an `apps/*` layout with npm workspaces and a shared TypeScript ba
 npm install
 npm run dev
 ```
-
-Use npm only in this repo; `package-lock.json` at the root is the canonical lockfile.
-
 ## API environment
 
 Create `apps/api/.env` from `apps/api/.env.example` and set:

@@ -3,6 +3,7 @@
 import {z} from "zod";
 import {ScryfallOracleCardSchema} from "./scryfall.js";
 import type {ScryfallOracleCard} from "./scryfall.js";
+import {CardCounts, DeckCardAmounts} from "./repositoryTypes.js";
 
 export type TagsMap = Record<string, string[]>;
 
@@ -26,6 +27,10 @@ export interface DeckCard extends ScryfallOracleCard {
 }
 
 
+export function isDeckCard(x: ScryfallOracleCard): x is DeckCard {
+  return typeof (x as DeckCard).count === "number";
+}
+
 
 // Zod schemas to validate and hydrate deck data into Deck/DeckSection instances
 const DeckCardSchema = ScryfallOracleCardSchema.extend({
@@ -39,27 +44,26 @@ const RawSectionItemSchema = z.union([
 
 const RawSectionsSchema = z.record(z.string(), RawSectionItemSchema).optional().transform(raw => {
   const sections: Partial<Record<DeckSectionName, DeckSection>> = {};
-  
+
   for (const canonical of DECK_SECTION_NAMES) {
     const item = raw?.[canonical as string];
     if (item == null) {
       continue;
     }
-    
+
     if (Array.isArray(item)) {
       sections[canonical] = new DeckSection(canonical, item as DeckCard[]);
-    }
-    else {
+    } else {
       // record map oracleId -> DeckCard
       sections[canonical] = new DeckSection(canonical, item as Record<OracleId, DeckCard>);
     }
   }
-  
+
   // ensure Main exists
   if (!sections.Main) {
     sections.Main = new DeckSection("Main");
   }
-  
+
   return sections as DeckSections;
 });
 
@@ -70,12 +74,12 @@ const DeckSchema = z.object({
   const name = raw.name ?? "Imported Deck";
   // RawSectionsSchema already converts present sections into DeckSection instances
   const sections = (raw.sections ?? {}) as DeckSections;
-  
+
   // Guarantee Main exists
   if (!sections.Main) {
     sections.Main = new DeckSection("Main");
   }
-  
+
   return new Deck(name, sections as DeckSections);
 });
 
@@ -93,15 +97,13 @@ export class DeckSection<T extends DeckCard = DeckCard> implements Iterable<T> {
       for (const card of cards) {
         this.cardsMap[card.oracle_id] = card;
       }
-    }
-    else if (cards) {
+    } else if (cards) {
       this.cardsMap = {...cards};
-    }
-    else {
+    } else {
       this.cardsMap = {};
     }
   }
-  
+
   get length(): number {
     return Object.keys(this.cardsMap).length;
   }
@@ -118,8 +120,7 @@ export class DeckSection<T extends DeckCard = DeckCard> implements Iterable<T> {
     const existing = this.cardsMap[card.oracle_id];
     if (existing) {
       existing.count += amount;
-    }
-    else {
+    } else {
       this.cardsMap[card.oracle_id] = {...card, count: amount};
     }
   }
@@ -137,6 +138,11 @@ export class DeckSection<T extends DeckCard = DeckCard> implements Iterable<T> {
    * not just number of unique card entries.
    */
   getCardCount(): number {
+    for (const tst of this.toArray()) {
+      if (tst.name === "Plains") {
+        console.log(tst);
+      }
+    }
     return this.toArray().reduce((sum, card) => sum + card.count, 0);
   }
 
@@ -154,8 +160,27 @@ export type DeckSections<T extends DeckCard = DeckCard> = {
 } & Partial<Record<OptionalDeckSectionName, DeckSection<T>>>;
 
 export class Deck<T extends DeckCard = DeckCard> {
-  constructor(public name: string, public sections: DeckSections<T>) {}
-  
+  constructor(public name: string, public sections: DeckSections<T>) {
+  }
+
+
+  toDeckCardAmounts(): DeckCardAmounts {
+    const sections: DeckCardAmounts = {};
+    for (const sectionName of DECK_SECTION_NAMES) {
+      const section = this.sections[sectionName as DeckSectionName];
+      if (!section) {
+        continue;
+      }
+      const counts: CardCounts = {};
+      for (const card of section.toArray()) {
+        counts[card.oracle_id] = card.count;
+      }
+      sections[sectionName as DeckSectionName] = counts;
+    }
+
+    return sections as DeckCardAmounts;
+  }
+
   /**
    * Merge this deck with another deck and return a new Deck.
    * Main section cards are concatenated; optional sections are merged if present.
@@ -167,28 +192,28 @@ export class Deck<T extends DeckCard = DeckCard> {
         ...other.sections.Main.toArray()
       ])
     };
-    
+
     // Iterate over optional section names and merge them
     for (const canonical of DECK_SECTION_NAMES) {
       if (canonical === "Main") {
         continue; // already handled
       }
-      
+
       const currentArr = this.sections[canonical as OptionalDeckSectionName]?.toArray() ?? [];
       const otherArr = other.sections[canonical as OptionalDeckSectionName]?.toArray() ?? [];
-      
+
       if (currentArr.length || otherArr.length) {
         mergedSections[canonical] = new DeckSection<T>(canonical, [...currentArr, ...otherArr]);
       }
     }
     return new Deck<T>(this.name, mergedSections);
   }
-  
+
   /** Convenience static wrapper for merging two decks. */
   static merge<U extends DeckCard = DeckCard>(current: Deck<U>, other: Deck<U>): Deck<U> {
     return current.merge(other);
   }
-  
+
   /**
    * Reconstructs a deck from plain JSON-like data and ensures section instances are DeckSection.
    */
@@ -214,7 +239,7 @@ export class Deck<T extends DeckCard = DeckCard> {
 
     return total;
   }
-  
+
   static empty<U extends DeckCard = DeckCard>(name: string): Deck<U> {
     return new Deck<U>(name, {
       Main: new DeckSection<U>("Main", [])
@@ -253,7 +278,10 @@ export function toTaggedDeckSections<T extends DeckCard = DeckCard>(sections: De
     const s = sections[name] as DeckSection<T> | undefined;
     if (s) {
       // Create a DeckSection<TaggedDeckCard<T>> by mapping base cards to tagged variants.
-      const taggedArray: TaggedDeckCard[] = s.toArray().map(c => ({...c, tags: tagsMap[c.oracle_id] ?? []} as TaggedDeckCard));
+      const taggedArray: TaggedDeckCard[] = s.toArray().map(c => ({
+        ...c,
+        tags: tagsMap[c.oracle_id] ?? []
+      } as TaggedDeckCard));
       out[name] = new DeckSection<TaggedDeckCard>(name as DeckSectionName, taggedArray);
     }
   }
@@ -266,6 +294,6 @@ export function toTaggedDeckSections<T extends DeckCard = DeckCard>(sections: De
  */
 export function withTags<T extends DeckCard = DeckCard>(deck: Deck<T>, tagsMap: TagsMap): TaggedDeck {
   const deckWithTags = new Deck<TaggedDeckCard>(deck.name, toTaggedDeckSections(deck.sections, tagsMap));
-  
-  return {deck:deckWithTags, tagsMap};
+
+  return {deck: deckWithTags, tagsMap};
 }

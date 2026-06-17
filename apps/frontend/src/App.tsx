@@ -1,16 +1,27 @@
 import {useQuery} from "@tanstack/react-query";
 import {CustomAppShell} from "./components/CustomAppShell.tsx";
 
-import {useDeckContext} from "./context/DeckUiContext.tsx";
+import {useDeckContext, useDeckUIContext} from "./context/DeckUiContext.tsx";
 import {trpcClient} from "./trpcClient.ts";
-import {DeckViewScreen} from "./screens/DeckViewScreen.tsx";
+import BranchViewingScreen from "./screens/BranchViewingScreen.tsx";
 import SearchResultsScreen from "./screens/SearchResultsScreen.tsx";
+import {DeckViewScreen} from "./screens/DeckViewScreen.tsx";
+import DeckComparisonScreen from "./screens/DeckComparisonScreen.tsx";
 
 
 function AppBody() {
   const deck = useDeckContext();
+  const uiState = useDeckUIContext();
 
-  return deck.isSearching ? <SearchResultsScreen/> : <DeckViewScreen />;
+  if (uiState.comparisonBranchName !== null) {
+    return <DeckComparisonScreen/>;
+  }
+
+  if (deck.viewMode === "Branches") {
+    return <BranchViewingScreen/>;
+  }
+
+  return deck.isSearching ? <SearchResultsScreen/> : <DeckViewScreen/>;
 }
 
 function App() {

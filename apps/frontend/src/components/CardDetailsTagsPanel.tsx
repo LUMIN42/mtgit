@@ -1,7 +1,7 @@
 import {ActionIcon, Box, Checkbox, Group, Input, Stack, Text, TextInput, useMantineTheme} from "@mantine/core";
 import {IconPlus} from "@tabler/icons-react";
-import {useEffect, useState} from "react";
-import {useTagsContext} from "../context/useTagsContext.ts";
+import {useEffect, useMemo, useState} from "react";
+import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 
 interface CardDetailsTagsPanelProps {
   cardId: string | null;
@@ -11,8 +11,13 @@ interface CardDetailsTagsPanelProps {
 
 export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: CardDetailsTagsPanelProps) {
   const theme = useMantineTheme();
-  const {setTags, allTags} = useTagsContext();
-  
+  const {repository, setRepository} = useRepositoryContext();
+  const tags = repository?.tags ?? {};
+  const allTags = useMemo(
+    () => Array.from(new Set(Object.values(tags).flat())).sort(),
+    [tags]
+  );
+
   const [tagSearch, setTagSearch] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -34,23 +39,30 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
       return;
     }
     
-    setTags(previousTags => {
-      const existing = previousTags[cardId] ?? [];
+    const previousTags = tags;
+    const existing = previousTags[cardId] ?? [];
       const nextCardTags = existing.includes(tag)
         ? existing.filter(existingTag => existingTag !== tag)
         : [...existing, tag];
-      
-      if (nextCardTags.length === 0) {
-        const nextTags = {...previousTags};
-        delete nextTags[cardId];
-        return nextTags;
-      }
-      
-      return {
+
+    let nextTags: typeof previousTags;
+    if (nextCardTags.length === 0) {
+      nextTags = {...previousTags};
+      delete nextTags[cardId];
+    }
+    else {
+      nextTags = {
         ...previousTags,
         [cardId]: nextCardTags
       };
-    });
+    }
+
+    if (repository) {
+      setRepository({
+        ...repository,
+        tags: nextTags
+      });
+    }
   };
   
   const handleTagCheckboxChange = (tag: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,18 +76,22 @@ export function CardDetailsTagsPanel({cardId, currentTags, tagSearchInputRef}: C
       return;
     }
     
-    setTags(previousTags => {
-      const existing = previousTags[cardId] ?? [];
-      if (existing.includes(tagSearch.trim())) {
-        return previousTags;
-      }
-      
-      return {
-        ...previousTags,
-        [cardId]: [...existing, tagSearch.trim()]
-      };
-    });
-    
+    const previousTags = tags;
+    const existing = previousTags[cardId] ?? [];
+    if (existing.includes(tagSearch.trim())) {
+      return;
+    }
+
+    if (repository) {
+      setRepository({
+        ...repository,
+        tags: {
+          ...previousTags,
+          [cardId]: [...existing, tagSearch.trim()]
+        }
+      });
+    }
+
     setTagSearch("");
   };
   
