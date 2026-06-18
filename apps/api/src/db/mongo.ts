@@ -6,7 +6,7 @@ const DEFAULT_DATABASE_NAME = "mtgit";
 /**
  * Valid collection names in the mtgit database.
  */
-export type CollectionName = "scryfall_cards";
+export type CollectionName = "scryfall_cards" | "users" | "sessions" | "repositories";
 
 let cachedMongoUri: string | null = null;
 let cachedMongoClient: MongoClient | null = null;
@@ -18,7 +18,7 @@ let cachedMongoDb: Db | null = null;
  * @returns The MongoDB connection string.
  */
 function resolveMongoUri(mongoUri?: string): string {
-  const uriFromGlobal = (globalThis as {process?: {env?: Record<string, string | undefined>}})
+  const uriFromGlobal = (globalThis as { process?: { env?: Record<string, string | undefined> } })
     .process?.env?.MONGODB_URI;
   const resolvedUri = mongoUri ?? uriFromGlobal;
 

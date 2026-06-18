@@ -2,10 +2,13 @@ import type {ReactNode} from "react";
 import {Text} from "@mantine/core";
 
 import {Button, Group, Menu, Paper} from "@mantine/core";
+import {useAuth} from "../hooks/LoginInfo.ts";
 
 // import style from "./assets/index.module.css"
 
 export function CustomAppShell({children}: {children: ReactNode}) {
+
+  const auth = useAuth();
 
   return <>
     <Paper withBorder>
@@ -20,7 +23,7 @@ export function CustomAppShell({children}: {children: ReactNode}) {
 
 
         <Group align={"center"}>
-          <Text>Logged in as: LUMIN42</Text>
+          <Text>Logged in as: {auth?.user?.username}</Text> // todo fix when logged out
           <Button variant="filled"
             color={"red"}>Logout</Button>
         </Group>

@@ -8,6 +8,9 @@ import * as trpcExpress from "@trpc/server/adapters/express";
 import {appRouter} from "./router/index.js";
 import {initMongo} from "./db/mongo.js";
 
+import cookieParser from "cookie-parser";
+
+
 const envPaths = [
   path.resolve(process.cwd(), "apps/api/.env"),
   path.resolve(process.cwd(), ".env")
@@ -24,8 +27,29 @@ for (const envPath of envPaths) {
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
 
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow same machine dev origins
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (origin.startsWith("http://localhost")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true
+  })
+);
+
+
 app.use(express.json());
+
+
+app.use(cookieParser());
 
 app.get("/health", (_req, res) => {
   res.json({ok: true});
@@ -34,7 +58,8 @@ app.get("/health", (_req, res) => {
 app.use(
   "/trpc",
   trpcExpress.createExpressMiddleware({
-    router: appRouter
+    router: appRouter,
+    createContext: ({req, res}) => ({req, res})
   })
 );
 

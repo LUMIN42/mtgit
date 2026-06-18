@@ -7,54 +7,82 @@ import style from "../assets/index.module.css";
 import {DeckImportModal} from "../components/DeckImportModal.tsx";
 import {DeckDisplayModeSection} from "../components/DeckViewingOptions/DeckDisplayModeSection.tsx";
 import {CreateBranchModal} from "../components/CreateBranchModal.tsx";
-import {useDeckContext, useDeckUIContext} from "../context/DeckUiContext.tsx";
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 
+import {
+  useDeckContext,
+  useDeckUIContext
+} from "../context/DeckUiContext.tsx";
+
+import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 
 export function DeckViewScreen() {
   const deck = useDeckContext();
   const repo = useRepositoryContext();
   const uiState = useDeckUIContext();
+
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
 
   const toggleDisplayMode = () => {
-    deck.setDisplayMode(currentMode => (currentMode === "Images" ? "Text" : "Images"));
+    deck.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
   };
 
-  return <Stack>
-    <Group>
-      <DeckImportModal/>
-      <DeckDisplayModeSection value={deck.displayMode} onToggle={toggleDisplayMode}/>
-      <Button variant="default" onClick={() => deck.setViewMode("Branches")}>View branches</Button>
-      <Button variant="default" onClick={() => setIsCreateBranchOpen(true)}>Add branch</Button>
+  const branches = Object.keys(repo.repository?.branches ?? {});
 
-      <Select label={"Branch:"} p={"xs"} data={Object.keys(repo.repository.branches)}
-        value={repo.selectedBranchName} onChange={value => repo.setSelectedBranchName(value)}
-        searchable/>
+  return (
+    <Stack>
+      <Group>
+        <DeckImportModal/>
 
-      <Select label={"Comparison branch:"}
-        p={"xs"}
-        data={
-          [
-            ...Object.keys(repo.repository.branches)
-              .filter(branchName => branchName !== repo.selectedBranchName),
-            "None"
-          ]
-        }
-        value={uiState.comparisonBranchName ?? "None"}
-        onChange={value => uiState.setComparisonBranchName(value === "None" ? undefined : value)}
-        searchable/>
+        <DeckDisplayModeSection
+          value={deck.displayMode}
+          onToggle={toggleDisplayMode}
+        />
 
-    </Group>
-    <CreateBranchModal opened={isCreateBranchOpen} onClose={() => setIsCreateBranchOpen(false)}/>
-    <Grid className={style.stretchChildren}>
-      <Grid.Col className={`${style.stretchMe} ${style.relative}`} span={3}>
-        <DeckViewingOptions/>
-      </Grid.Col>
+        <Button variant="default" onClick={() => deck.setViewMode("Branches")}>
+          View branches
+        </Button>
 
-      <Grid.Col span={9}>
-        <GroupedCards/>
-      </Grid.Col>
-    </Grid>
-  </Stack>;
+        <Button variant="default" onClick={() => setIsCreateBranchOpen(true)}>
+          Add branch
+        </Button>
+
+        <Select
+          label="Branch:"
+          p="xs"
+          data={branches}
+          value={repo.selectedBranchName}
+          onChange={value => repo.setSelectedBranchName(value)}
+          searchable
+        />
+
+        <Select
+          label="Comparison branch:"
+          p="xs"
+          data={[...branches.filter(b => b !== repo.selectedBranchName), "None"]}
+          value={uiState.comparisonBranchName ?? "None"}
+          onChange={value =>
+            uiState.setComparisonBranchName(
+              value === "None" ? undefined : value
+            )
+          }
+          searchable
+        />
+      </Group>
+
+      <CreateBranchModal
+        opened={isCreateBranchOpen}
+        onClose={() => setIsCreateBranchOpen(false)}
+      />
+
+      <Grid className={style.stretchChildren}>
+        <Grid.Col className={`${style.stretchMe} ${style.relative}`} span={3}>
+          <DeckViewingOptions/>
+        </Grid.Col>
+
+        <Grid.Col span={9}>
+          <GroupedCards/>
+        </Grid.Col>
+      </Grid>
+    </Stack>
+  );
 }
