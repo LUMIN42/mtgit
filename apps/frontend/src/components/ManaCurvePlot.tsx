@@ -50,16 +50,32 @@ export function ManaCurvePlot() {
       h={170}
       data={manaCurveData}
       dataKey="cmc"
-      series={[{name: "cards", color: "orange.6"}]}
+      series={[
+        {
+          name: "cards",
+          color: "orange.3"
+        }
+      ]}
       withLegend={false}
       barChartProps={{
         onClick: handleChartClick,
-        style: {cursor: groupingMode === "manaValue" ? "pointer" : "default"}
+        style: {
+          cursor: groupingMode === "manaValue" ? "pointer" : "default"
+        }
       }}
       tooltipProps={{
-        contentStyle: {fontSize: 11, padding: 0},
-        itemStyle: {fontSize: 11, padding: 0},
-        labelStyle: {fontSize: 10, marginBottom: 0}
+        contentStyle: {
+          fontSize: 11,
+          padding: 0
+        },
+        itemStyle: {
+          fontSize: 11,
+          padding: 0
+        },
+        labelStyle: {
+          fontSize: 10,
+          marginBottom: 0
+        }
       }}
     />
   </Stack>;
