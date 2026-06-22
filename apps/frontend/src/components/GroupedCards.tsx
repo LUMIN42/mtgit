@@ -1,14 +1,10 @@
 import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {Stack, Text} from "@mantine/core";
 import {useMemo, useState} from "react";
-import type {CardWithTags} from "../types/cardWithTags.ts";
 import {
   getGroupHeadingId,
-  groupCardsByMode,
   performGrouping,
-  flatten,
-  groupCardCount,
-  sectionCardCount, type CardWithLocation, type CardLocation
+  flatten, type CardWithLocation, type CardLocation
 } from "../utils/cardGrouping.ts";
 import {CardGroup} from "./CardGroup.tsx";
 import {CardDetailsModal} from "./CardDetailsModal.tsx";

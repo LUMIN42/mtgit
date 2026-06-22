@@ -10,7 +10,6 @@ type RepositoryContextValue = {
 
   selectedBranchContent: DeckCardCounts | undefined;
 
-  // mutations temporarily disabled
   setBranchValue: (branchName: string, branchValue: DeckCardCounts) => void;
   setTags: (tagsMap: TagsMap) => void;
   createBranch: (branchName: string, branchContent: DeckCardCounts) => void;
@@ -36,26 +35,40 @@ export function RepositoryProvider({
       ? repository.branches[selectedBranchName]
       : undefined;
 
-  // ❌ disabled for now (server-driven state approach)
+  /**
+   * ⚠️ TEMP IMPLEMENTATION NOTES:
+   * These mutate nothing for now because repository is server-owned.
+   * They are kept to preserve API compatibility.
+   */
+
   const setBranchValue = (
-    _branchName: string,
-    _branchValue: DeckCardCounts
+    branchName: string,
+    branchValue: DeckCardCounts
   ) => {
-    // TODO: reintroduce via mutation + cache invalidation
-    console.warn("setBranchValue is disabled (read-only repository mode)");
+    if (!repository) {
+      return;
+    }
+
+    repository.branches[branchName] = branchValue;
   };
 
-  const setTags = (_tagsMap: TagsMap) => {
-    // TODO: reintroduce via mutation
-    console.warn("setTags is disabled (read-only repository mode)");
+  const setTags = (tagsMap: TagsMap) => {
+    if (!repository) {
+      return;
+    }
+
+    repository.tags = tagsMap;
   };
 
   const createBranch = (
-    _branchName: string,
-    _branchContent: DeckCardCounts
+    branchName: string,
+    branchContent: DeckCardCounts
   ) => {
-    // TODO: reintroduce via mutation
-    console.warn("createBranch is disabled (read-only repository mode)");
+    if (!repository) {
+      return;
+    }
+
+    repository.branches[branchName] = branchContent;
   };
 
   return (

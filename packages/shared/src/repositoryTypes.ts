@@ -101,7 +101,7 @@ export function mergeTagsMaps(currentTags: TagsMap, importedTags: TagsMap): Tags
   return merged;
 }
 
-export function mergeDecks(a: CardCounts, b: CardCounts): CardCounts {
+export function mergeCardCounts(a: CardCounts, b: CardCounts): CardCounts {
   const result: CardCounts = {...a};
 
   for (const [oracleId, count] of Object.entries(b)) {

@@ -1,12 +1,19 @@
-import {createContext, useContext} from "react";
+import {createContext, useContext, useEffect, useState} from "react";
 import type {ReactNode} from "react";
 import {Deck, DeckSection} from "@mtgit/shared";
-import type {CardCounts, DeckCard, DeckCardCounts, DeckSectionName, DeckSections} from "@mtgit/shared";
+import type {
+  CardCounts,
+  DeckCard,
+  DeckCardCounts,
+  DeckSectionName,
+  DeckSections
+} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 import {useScryfallCache} from "./ScryfallCacheContext";
 
 export interface DeckDataContextValue {
   deck: Deck;
+  isLoading: boolean;
 }
 
 interface DeckDataProviderProps {
@@ -14,27 +21,79 @@ interface DeckDataProviderProps {
   children: ReactNode;
 }
 
-const DeckDataContext = createContext<DeckDataContextValue | undefined>(undefined);
+const DeckDataContext = createContext<DeckDataContextValue | undefined>(
+  undefined
+);
 
-export function DeckDataProvider({sections, children}: DeckDataProviderProps) {
-  const {getCard} = useScryfallCache();
+export function DeckDataProvider({
+  sections,
+  children
+}: DeckDataProviderProps) {
+  const {getCards} = useScryfallCache();
 
-  const deck = !sections
-    ? Deck.empty("Sample deck")
-    : new Deck("Imported", buildSections(sections, getCard));
+  const [deck, setDeck] = useState<Deck>(() =>
+    Deck.empty("Loading deck")
+  );
 
-  return <DeckDataContext.Provider value={{deck}}>{children}</DeckDataContext.Provider>;
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrate() {
+      if (!sections) {
+        setDeck(Deck.empty("Sample deck"));
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      const deckSections = await buildSectionsAsync(
+        sections,
+        getCards
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      setDeck(new Deck("Imported", deckSections));
+      setIsLoading(false);
+    }
+
+    hydrate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sections, getCards]);
+
+  return (
+    <DeckDataContext.Provider value={{deck, isLoading}}>
+      {children}
+    </DeckDataContext.Provider>
+  );
 }
 
-function buildSections(
+/**
+ * 🔥 async version (bulk fetch friendly)
+ */
+async function buildSectionsAsync(
   sections: DeckCardCounts,
-  getCard: (oracleId: string) => ScryfallOracleCard | undefined
-): DeckSections {
+  getCards: (
+    ids: string[]
+  ) => Promise<(ScryfallOracleCard | undefined)[]>
+): Promise<DeckSections> {
   const built: Partial<Record<DeckSectionName, DeckSection>> = {};
 
   for (const [sectionName, counts] of Object.entries(sections)) {
-    const items = buildCards(counts as CardCounts, getCard);
-    built[sectionName as DeckSectionName] = new DeckSection(sectionName as DeckSectionName, items);
+    const cards = await buildCardsAsync(counts as CardCounts, getCards);
+
+    built[sectionName as DeckSectionName] = new DeckSection(
+      sectionName as DeckSectionName,
+      cards
+    );
   }
 
   if (!built.Main) {
@@ -44,17 +103,33 @@ function buildSections(
   return built as DeckSections;
 }
 
-function buildCards(
+/**
+ * 🔥 batch-resolved card construction
+ */
+async function buildCardsAsync(
   counts: CardCounts,
-  getCard: (oracleId: string) => ScryfallOracleCard | undefined
-): DeckCard[] {
+  getCards: (
+    ids: string[]
+  ) => Promise<(ScryfallOracleCard | undefined)[]>
+): Promise<DeckCard[]> {
+  const ids = Object.keys(counts);
+
+  const cards = await getCards(ids);
+
   const out: DeckCard[] = [];
-  for (const [oracleId, count] of Object.entries(counts)) {
-    const base = getCard(oracleId);
-    if (base) {
-      out.push({...base, count});
+
+  for (let i = 0; i < ids.length; i++) {
+    const card = cards[i];
+    const count = counts[ids[i]];
+
+    if (card) {
+      out.push({
+        ...card,
+        count
+      });
     }
   }
+
   return out;
 }
 
@@ -62,7 +137,9 @@ export function useDeckDataContext(): DeckDataContextValue {
   const context = useContext(DeckDataContext);
 
   if (!context) {
-    throw new Error("useDeckDataContext must be used within DeckProvider");
+    throw new Error(
+      "useDeckDataContext must be used within DeckProvider"
+    );
   }
 
   return context;

@@ -68,5 +68,52 @@ export const decksRouter = router({
       _id: deck._id.toString(),
       name: deck.name
     }));
-  })
+  }),
+
+  update: protectedProcedure
+    .input(RepositorySchema)
+    .mutation(async ({ctx, input}) => {
+      const reposCollection = getCollection("repositories");
+
+      const currentDeck = await reposCollection.findOne({
+        _id: new ObjectId(input._id)
+      });
+
+      if (!currentDeck) {
+        throw new TRPCError({
+          code: "NOT_FOUND"
+        });
+      }
+
+      // ownership check
+      if (currentDeck.owner_id !== ctx.user._id) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED"
+        });
+      }
+
+      // update document
+      await reposCollection.replaceOne(
+        {_id: currentDeck._id},
+        {
+          ...input,
+          _id: currentDeck._id
+        }
+      );
+
+      const updated = await reposCollection.findOne({
+        _id: currentDeck._id
+      });
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR"
+        });
+      }
+
+      return RepositorySchema.parse({
+        ...updated,
+        _id: updated._id.toString()
+      });
+    })
 });

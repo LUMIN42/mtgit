@@ -1,117 +1,46 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
-import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {
-  Deck,
-  DeckSection,
-  emptyDeckCardCounts,
-  mergeDecks,
-  mergeTagsMaps
-} from "@mtgit/shared";
-import type {
-  CardCounts,
-  DeckCardCounts,
-  DeckSectionName
-} from "@mtgit/shared";
-import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 import {trpc} from "../trpcClient.ts";
 
-/**
- * Collect oracle cards from a deck for cache hydration.
- */
-const collectDeckCards = (deck: Deck): ScryfallOracleCard[] => {
-  const out: ScryfallOracleCard[] = [];
-
-  for (const section of Object.values(deck.sections)) {
-    for (const card of (section as DeckSection).toArray()) {
-      out.push(card as ScryfallOracleCard);
-    }
-  }
-
-  return out;
-};
-
-const mergeDeckCardAmounts = (
-  base: DeckCardCounts,
-  incoming: DeckCardCounts
-): DeckCardCounts => {
-  const merged: Partial<Record<DeckSectionName, CardCounts>> = {...base};
-
-  for (const [sectionName, counts] of Object.entries(incoming)) {
-    const name = sectionName as DeckSectionName;
-
-    merged[name] = merged[name]
-      ? mergeDecks(merged[name], counts as CardCounts)
-      : (counts as CardCounts);
-  }
-
-  return merged as DeckCardCounts;
-};
-
 export function DeckImportModal() {
-  const {
-    repository,
-    selectedBranchContent,
-    setBranchValue,
-    selectedBranchName,
-    setTags
-  } = useRepositoryContext();
-
-  const {setCards} = useScryfallCache();
+  const {repository, selectedBranchName} = useRepositoryContext();
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importDeckText, setImportDeckText] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const importDeckMutation = trpc.deckImport.parse.useMutation();
+  const utils = trpc.useUtils();
+
+  const importDeckMutation = trpc.deckImport.parse.useMutation({
+    onSuccess: async () => {
+      await utils.decks.get.invalidate();
+    }
+  });
 
   const closeModal = () => {
     setIsImportModalOpen(false);
     setImportError(null);
   };
 
-  const handleConfirmImport = async (mode: "replace" | "append") => {
+  const handleConfirmImport = async (mode: "overwrite" | "merge") => {
     setIsImporting(true);
     setImportError(null);
 
     try {
-      const result = await importDeckMutation.mutateAsync({
+      await importDeckMutation.mutateAsync({
+        deckId: repository!._id,
+        branchName: selectedBranchName ?? "main",
+        mode,
         text: importDeckText
       });
 
-      const reconstructed = Deck.reconstruct(result.deck);
-
-      const baseSections: DeckCardCounts =
-        mode === "replace"
-          ? emptyDeckCardCounts()
-          : selectedBranchContent;
-
-      const importedSections = reconstructed.toDeckCardAmounts();
-
-      const nextSections =
-        mode === "replace"
-          ? importedSections
-          : mergeDeckCardAmounts(baseSections, importedSections);
-
-      const nextTags =
-        mode === "replace"
-          ? result.tagsMap
-          : mergeTagsMaps(repository?.tags ?? {}, result.tagsMap);
-
-      if (repository) {
-        setBranchValue(selectedBranchName, nextSections);
-        setTags(nextTags);
-      }
-
-      setCards(collectDeckCards(reconstructed));
       closeModal();
     }
     catch (error) {
       const message =
         error instanceof Error ? error.message : "Deck import failed.";
-
       setImportError(message);
     }
     finally {
@@ -184,14 +113,14 @@ export function DeckImportModal() {
 
             <Button
               variant="default"
-              onClick={() => handleConfirmImport("append")}
+              onClick={() => handleConfirmImport("merge")}
               loading={isImporting}
             >
               Add to deck
             </Button>
 
             <Button
-              onClick={() => handleConfirmImport("replace")}
+              onClick={() => handleConfirmImport("overwrite")}
               loading={isImporting}
             >
               Replace deck
