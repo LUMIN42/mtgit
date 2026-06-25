@@ -3,7 +3,7 @@ import {protectedProcedure, router} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
 import {TRPCError} from "@trpc/server";
 
-import {createEmptyRepositoryTemplate, ObjectIdSchema, RepositorySchema} from "@mtgit/shared";
+import {createEmptyRepositoryTemplate, ObjectIdSchema, RepositorySchema, FormatSchema} from "@mtgit/shared";
 import {ObjectId} from "mongodb";
 
 
@@ -43,18 +43,21 @@ export const decksRouter = router({
   create: protectedProcedure
     .input(
       z.object({
-        deckName: z.string()
+        deckName: z.string(),
+        format: FormatSchema
       })
     )
-    .mutation(
-      async ({input, ctx}) => {
-        const result = await getCollection("repositories").insertOne(
-          createEmptyRepositoryTemplate(input.deckName, ctx.user._id)
-        );
+    .mutation(async ({input, ctx}) => {
+      const result = await getCollection("repositories").insertOne(
+        createEmptyRepositoryTemplate(
+          input.deckName,
+          ctx.user._id,
+          input.format
+        )
+      );
 
-        return result.insertedId;
-      }
-    ),
+      return result.insertedId;
+    }),
 
   usersDecks: protectedProcedure.query(async ({ctx}) => {
     const reposCollection = getCollection("repositories");
@@ -115,5 +118,55 @@ export const decksRouter = router({
         ...updated,
         _id: updated._id.toString()
       });
+    }),
+
+  setTag: protectedProcedure
+    .input(
+      z.object({
+        deckId: ObjectIdSchema,
+        tagKey: z.string(),
+        oracleId: z.string(),
+        value: z.boolean()
+      })
+    )
+    .mutation(async ({ctx, input}) => {
+      const reposCollection = getCollection("repositories");
+
+      const deck = await reposCollection.findOne({
+        _id: new ObjectId(input.deckId)
+      });
+
+      if (!deck) {
+        throw new TRPCError({code: "NOT_FOUND"});
+      }
+
+      if (deck.owner_id !== ctx.user._id) {
+        throw new TRPCError({code: "UNAUTHORIZED"});
+      }
+
+      const fieldPath = `tags.${input.oracleId}`;
+
+      if (input.value) {
+        await reposCollection.updateOne(
+          {_id: deck._id},
+          {
+            $addToSet: {
+              [fieldPath]: input.tagKey
+            }
+          }
+        );
+      }
+      else {
+        await reposCollection.updateOne(
+          {_id: deck._id},
+          {
+            $pull: {
+              [fieldPath]: input.tagKey
+            } as any
+          }
+        );
+      }
+
+      return {success: true};
     })
 });

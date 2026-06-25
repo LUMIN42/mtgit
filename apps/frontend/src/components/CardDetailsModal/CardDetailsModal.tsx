@@ -1,9 +1,10 @@
-import {ActionIcon, Box, Divider, Group, Modal, Stack, Tabs, Text, Image} from "@mantine/core";
+import {ActionIcon, Box, Divider, Group, Modal, Tabs, Text, Image} from "@mantine/core";
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
-import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
+import CardAddingPanel from "./CardAddingPanel.tsx";
 
 interface CardDetailsModalProps {
   cards: ScryfallOracleCard[];
@@ -19,7 +20,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
   const hasPrevious = index > 0;
   const hasNext = index < cards.length - 1;
  
-  const {repository} = useRepositoryContext();
+  const {repository, selectedBranchContent} = useRepositoryContext();
   const tags = repository?.tags ?? {};
   const cardId = card?.oracle_id ?? card?.id ?? null;
   const currentTags = cardId ? (tags[cardId] ?? []) : [];
@@ -97,18 +98,19 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
               </Tabs.List>
 
               <Tabs.Panel value="details">
-                <Stack gap="sm">
-                  <Text fw={700}>{card.name}</Text>
-                  <Text><strong>Type:</strong> {card.type_line}</Text>
-                  <Text><strong>Tags:</strong> {currentTags.length ? currentTags.join(", ") : "-"}</Text>
-                  <Text style={{whiteSpace: "pre-wrap"}}>
-                    <strong>OracleText:</strong><br/>
-                    {card.oracle_text || "-"}
-                  </Text>
-                  <Text>
-                    <strong>Price (USD):</strong> {card.prices?.usd ? `$${card.prices.usd}` : "-"}
-                  </Text>
-                </Stack>
+                <CardAddingPanel cardAmount={{...card, count:selectedBranchContent.Main[card.oracle_id] ?? 0}}/>
+                {/*<Stack gap="sm">*/}
+                {/*  <Text fw={700}>{card.name}</Text>*/}
+                {/*  <Text><strong>Type:</strong> {card.type_line}</Text>*/}
+                {/*  <Text><strong>Tags:</strong> {currentTags.length ? currentTags.join(", ") : "-"}</Text>*/}
+                {/*  <Text style={{whiteSpace: "pre-wrap"}}>*/}
+                {/*    <strong>OracleText:</strong><br/>*/}
+                {/*    {card.oracle_text || "-"}*/}
+                {/*  </Text>*/}
+                {/*  <Text>*/}
+                {/*    <strong>Price (USD):</strong> {card.prices?.usd ? `$${card.prices.usd}` : "-"}*/}
+                {/*  </Text>*/}
+                {/*</Stack>*/}
               </Tabs.Panel>
 
 

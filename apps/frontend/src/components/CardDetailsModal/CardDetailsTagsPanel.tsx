@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import {IconPlus} from "@tabler/icons-react";
 import React, {useEffect, useMemo, useState} from "react";
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 
 interface CardDetailsTagsPanelProps {
   cardId: string | null;
@@ -26,7 +26,7 @@ export function CardDetailsTagsPanel({
 }: CardDetailsTagsPanelProps) {
   const theme = useMantineTheme();
 
-  const {repository, setTags} = useRepositoryContext();
+  const {repository, updateTag} = useRepositoryContext();
 
   const tags = repository?.tags ?? {};
 
@@ -58,31 +58,9 @@ export function CardDetailsTagsPanel({
     }
 
     const existing = tags[cardId] ?? [];
+    const isActive = existing.includes(tag);
 
-    const nextCardTags = existing.includes(tag)
-      ? existing.filter(existingTag => existingTag !== tag)
-      : [...existing, tag];
-
-    const nextTags = {...tags};
-
-    if (nextCardTags.length === 0) {
-      delete nextTags[cardId];
-    }
-    else {
-      nextTags[cardId] = nextCardTags;
-    }
-
-    setTags(nextTags);
-  };
-
-  const handleTagCheckboxChange = (
-    tag: string,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    handleTagToggle(tag);
-
-    // Prevent checkbox focus from stealing keyboard shortcuts.
-    event.currentTarget.blur();
+    updateTag(cardId, tag, !isActive);
   };
 
   const createTag = () => {
@@ -91,7 +69,6 @@ export function CardDetailsTagsPanel({
     }
 
     const newTag = tagSearch.trim();
-
     if (!newTag) {
       return;
     }
@@ -102,50 +79,39 @@ export function CardDetailsTagsPanel({
       return;
     }
 
-    setTags({
-      ...tags,
-      [cardId]: [...existing, newTag]
-    });
+    // treat creation as "enable tag"
+    updateTag(cardId, newTag, true);
 
     setTagSearch("");
+  };
+
+  const handleTagCheckboxChange = (
+    tag: string,
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    handleTagToggle(tag);
+    event.currentTarget.blur();
   };
 
   const handleTagSearchKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (e.key === "Enter") {
-      if (
-        filteredTags.length > 0 &&
-        highlightedIndex !== null
-      ) {
+      if (filteredTags.length > 0 && highlightedIndex !== null) {
         handleTagToggle(filteredTags[highlightedIndex]);
       }
-      else if (
-        tagSearch.trim() &&
-        filteredTags.length === 0 &&
-        cardId
-      ) {
+      else if (tagSearch.trim() && filteredTags.length === 0 && cardId) {
         createTag();
       }
     }
-    else if (
-      e.key === "ArrowDown" &&
-      filteredTags.length > 0
-    ) {
+    else if (e.key === "ArrowDown" && filteredTags.length > 0) {
       setHighlightedIndex(i =>
-        i === null
-          ? 0
-          : Math.min(i + 1, filteredTags.length - 1)
+        i === null ? 0 : Math.min(i + 1, filteredTags.length - 1)
       );
     }
-    else if (
-      e.key === "ArrowUp" &&
-      filteredTags.length > 0
-    ) {
+    else if (e.key === "ArrowUp" && filteredTags.length > 0) {
       setHighlightedIndex(i =>
-        i === null
-          ? 0
-          : Math.max(i - 1, 0)
+        i === null ? 0 : Math.max(i - 1, 0)
       );
     }
   };
@@ -163,13 +129,9 @@ export function CardDetailsTagsPanel({
           size="sm"
           style={{flex: 1}}
           rightSection={
-            tagSearch !== ""
-              ? (
-                <Input.ClearButton
-                  onClick={() => setTagSearch("")}
-                />
-              )
-              : undefined
+            tagSearch !== "" ? (
+              <Input.ClearButton onClick={() => setTagSearch("")}/>
+            ) : undefined
           }
         />
 
@@ -208,8 +170,7 @@ export function CardDetailsTagsPanel({
             borderRadius: 4,
             padding: "0.3em",
             backgroundColor:
-              highlightedIndex === idx ||
-              hoveredIndex === idx
+              highlightedIndex === idx || hoveredIndex === idx
                 ? theme.colors[theme.primaryColor][0]
                 : undefined,
             transition: "background-color 0.1s"
@@ -217,9 +178,7 @@ export function CardDetailsTagsPanel({
         >
           <Checkbox
             checked={currentTags.includes(tag)}
-            onChange={event =>
-              handleTagCheckboxChange(tag, event)
-            }
+            onChange={event => handleTagCheckboxChange(tag, event)}
             disabled={!cardId}
             aria-label={tag}
             tabIndex={-1}

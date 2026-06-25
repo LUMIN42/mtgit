@@ -1,19 +1,19 @@
-import {GroupedCards} from "../components/GroupedCards.tsx";
-import {DeckViewingOptions} from "../components/DeckViewingOptions.tsx";
+import {GroupedCards} from "../../components/GroupedCards.tsx";
+import {DeckViewingOptions} from "../../components/DeckViewingOptions.tsx";
 import {Button, Grid, Group, Select, Stack} from "@mantine/core";
 import {useState} from "react";
 
-import style from "../assets/index.module.css";
-import {DeckImportModal} from "../components/DeckImportModal.tsx";
-import {DeckDisplayModeSection} from "../components/DeckViewingOptions/DeckDisplayModeSection.tsx";
-import {CreateBranchModal} from "../components/CreateBranchModal.tsx";
+import style from "../../assets/index.module.css";
+import {DeckImportModal} from "../../components/DeckImportModal.tsx";
+import {DeckDisplayModeSection} from "../../components/DeckViewingOptions/DeckDisplayModeSection.tsx";
+import {CreateBranchModal} from "../../components/CreateBranchModal.tsx";
 
 import {
   useDeckContext,
   useDeckUIContext
-} from "../context/DeckUiContext.tsx";
+} from "../../context/DeckUiContext.tsx";
 
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 
 export function DeckViewScreen() {
   const deck = useDeckContext();

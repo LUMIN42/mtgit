@@ -4,7 +4,7 @@ import {useQuery} from "@tanstack/react-query";
 import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/CardGroup.tsx";
-import {CardDetailsModal} from "../components/CardDetailsModal.tsx";
+import {CardDetailsModal} from "../components/CardDetailsModal/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
 // todo make sure to handle tags properly here
@@ -21,7 +21,7 @@ function hasScryfallOrderClause(query: string): boolean {
     );
 }
 
-function SearchResultsScreen() {
+export function SearchResultsScreen() {
   const deck = useDeckContext();
 
   const submittedSearch = deck.submittedSearch;

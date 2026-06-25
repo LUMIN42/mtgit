@@ -52,7 +52,7 @@ interface DeckProviderProps {
   children: ReactNode;
 }
 
-function DeckUIProvider({children}: { children: ReactNode }) {
+function DeckUIProvider({children}: {children: ReactNode}) {
   const {deck} = useDeckDataContext();
   const [viewMode, setViewMode] = useState<DeckViewMode>("Deck");
   const [displayMode, setDisplayMode] = useState<CardDisplayMode>("Images");

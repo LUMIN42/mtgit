@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {FormatSchema} from "./deckFormats.ts";
 
 export type TagsMap = Record<string, string[]>;
 
@@ -24,7 +25,7 @@ export const TagsMapSchema = z.record(z.string(), z.array(z.string()));
 
 export const OracleIdSchema = z.string();
 
-export const CardCountsSchema = z.record(OracleIdSchema, z.number());
+export const CardCountsSchema = z.record(OracleIdSchema, z.number().int().positive());
 
 export const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
 
@@ -61,7 +62,8 @@ export const RepositorySchema = z.object({
   _id: ObjectIdSchema,
   owner_id: z.string(),
   tags: TagsMapSchema,
-  branches: BranchesSchema
+  branches: BranchesSchema,
+  format: FormatSchema
 });
 
 export type OracleId = z.infer<typeof OracleIdSchema>;
@@ -70,10 +72,7 @@ export type DeckCardCounts = z.infer<typeof DeckCardCountsSchema>;
 export type Branches = z.infer<typeof BranchesSchema>;
 export type Repository = z.infer<typeof RepositorySchema>;
 
-/**
- * 🔥 FIXED: restore original shape compatibility
- */
-export function createEmptyRepositoryTemplate(name: string, owner_id: string) {
+export function createEmptyRepositoryTemplate(name: string, owner_id: string, format: string) {
   return {
     name,
     owner_id,
@@ -82,7 +81,8 @@ export function createEmptyRepositoryTemplate(name: string, owner_id: string) {
       main: {
         Main: {}
       }
-    }
+    },
+    format
   };
 }
 
