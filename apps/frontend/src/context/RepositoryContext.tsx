@@ -36,14 +36,65 @@ export function RepositoryProvider({
     "main"
   );
 
-  const updateTagEndpoint = trpc.decks.setTag
-    .useMutation({
-      onSuccess: () => {
-        utils.decks.get.invalidate(
-          {deckId: repository._id}
-        );
+  const updateTagEndpoint = trpc.decks.setTag.useMutation({
+    async onMutate(variables) {
+      if (!variables) {
+        return;
       }
-    });
+
+      const {deckId, tagKey, value, oracleId} = variables;
+
+      // 1. stop conflicting refetches
+      await utils.decks.get.cancel({deckId});
+
+      // 2. snapshot previous state
+      const previousDeck = utils.decks.get.getData({deckId});
+
+      // 3. optimistic update
+      utils.decks.get.setData({deckId}, old => {
+        if (!old) {
+          return old;
+        }
+
+        const current = old.tags[oracleId] ?? [];
+
+        return {
+          ...old,
+          tags: {
+            ...old.tags,
+            [oracleId]: value
+              ? [...current, tagKey]
+              : current.filter(tag => tag !== tagKey)
+          }
+        };
+      });
+
+      // 4. return rollback context
+      return {previousDeck, deckId};
+    },
+
+    onError(_err, _vars, ctx) {
+      if (!ctx) {
+        return;
+      }
+
+      // rollback
+      utils.decks.get.setData(
+        {deckId: ctx.deckId},
+        ctx.previousDeck
+      );
+    }
+
+    // onSettled(_data, _err, vars) {
+    //   if (!vars) {
+    //     return;
+    //   }
+    //
+    // //   optional: ensure server truth
+    //   utils.decks.get.invalidate({deckId: vars.deckId});
+    // }
+  });
+
 
   const updateDeck = trpc.decks.update
     .useMutation(

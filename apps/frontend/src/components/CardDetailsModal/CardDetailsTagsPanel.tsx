@@ -160,6 +160,9 @@ export function CardDetailsTagsPanel({
               current === idx ? null : current
             )
           }
+
+          onMouseDown={() => handleTagToggle(tag)}
+
           style={{
             width: "100%",
             margin: 0,
@@ -178,7 +181,7 @@ export function CardDetailsTagsPanel({
         >
           <Checkbox
             checked={currentTags.includes(tag)}
-            onChange={event => handleTagCheckboxChange(tag, event)}
+            onChange={() => { /* handled by the whole element, not the checkbox */ }}
             disabled={!cardId}
             aria-label={tag}
             tabIndex={-1}
