@@ -3,7 +3,7 @@ import {useState} from "react";
 import {
   getGroupHeadingId,
   performGrouping,
-  flatten, type CardWithLocation, type CardLocation
+  flatten, type CardWithLocation, type CardLocation, cardCountSortedGroup
 } from "../utils/cardGrouping.ts";
 import {CardGroup} from "./DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "./DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
@@ -99,7 +99,7 @@ export function GroupedCards() {
                     >
                       {groupingMode === "manaValue" && group.heading !== "Lands"
                         ? `Mana Value ${group.heading}`
-                        : group.heading} ({group.cards.length})
+                        : group.heading} ({cardCountSortedGroup(group)} cards)
                     </Text>
                   ) : null}
                   

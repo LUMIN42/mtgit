@@ -301,7 +301,7 @@ function sortCardsInGroup(cards: TaggedDeckCard[], mode: CardSortMode): TaggedDe
   });
 }
 
-function handleSection(section: DeckSection<TaggedDeckCard>, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
+function handleSection(section: DeckSection, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
   const groups = groupCardsByMode(section.toArray(), groupingMode);
   
   let sortedGroups = groups.map(group => {
@@ -322,7 +322,7 @@ function handleSection(section: DeckSection<TaggedDeckCard>, groupingMode: CardG
   };
 }
 
-export function performGrouping(deck: Deck<TaggedDeckCard>, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
+export function performGrouping(deck: Deck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
   const outputSections: SortedSection[] = [];
   
   for (const section of Object.values(deck.sections)) {
