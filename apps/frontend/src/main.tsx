@@ -1,4 +1,4 @@
-import {StrictMode} from "react";
+import React, {StrictMode} from "react";
 import {createRoot} from "react-dom/client";
 import {BrowserRouter} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
@@ -13,6 +13,16 @@ import {createTheme, MantineProvider} from "@mantine/core";
 import {ScryfallCacheProvider} from "./context/ScryfallCacheContext.tsx";
 
 import {trpc, trpcLinks} from "./trpcClient";
+
+/**
+ * 🧠 WDYR (Why Did You Render)
+ * Enables render tracking in development only
+ */
+if (import.meta.env.DEV) {
+  const whyDidYouRender = (await import("@welldone-software/why-did-you-render")).default;
+
+  whyDidYouRender(React);
+}
 
 const queryClient = new QueryClient();
 

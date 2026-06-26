@@ -106,7 +106,7 @@ export type DeckSections = {
 } & Partial<Record<OptionalDeckSectionName, DeckSection>>;
 
 export class Deck {
-  constructor(public name: string, public sections: DeckSections) {
+  constructor(public sections: DeckSections) {
   }
 
   isEmpty(): boolean {
@@ -167,7 +167,7 @@ export class Deck {
   // }
 
   static empty(name: string): Deck {
-    return new Deck(name, {
+    return new Deck({
       Main: new DeckSection("Main", [])
     });
   }
@@ -219,7 +219,7 @@ export function toTaggedDeckSections(sections: DeckSections, tagsMap: TagsMap): 
  * Convenience helper that returns a `TaggedDeck` view for a given `Deck` and `TagsMap`.
  */
 export function withTags(deck: Deck, tagsMap: TagsMap): TaggedDeck {
-  const deckWithTags = new Deck(deck.name, toTaggedDeckSections(deck.sections, tagsMap));
+  const deckWithTags = new Deck(toTaggedDeckSections(deck.sections, tagsMap));
 
   return {deck: deckWithTags, tagsMap};
 }

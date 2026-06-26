@@ -6,7 +6,7 @@ import {DeckGroupingSection} from "./DeckGroupingSection.tsx";
 import {DeckSortingSection} from "./DeckSortingSection.tsx";
 import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
 import {DeckMainCountBadge} from "./DeckMainCountBadge.tsx";
-import {ManaCurvePlot} from "../CardDetailsModal/ManaCurvePlot.tsx";
+import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
 export function DeckViewingOptions({horizontal = false}: {horizontal?: boolean}) {
