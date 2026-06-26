@@ -1,5 +1,5 @@
 import {SegmentedControl} from "@mantine/core";
-import type {CardGroupingMode} from "../../types/grouping.ts";
+import type {CardGroupingMode} from "../../../types/grouping.ts";
 import {FieldSection} from "./FieldSection.tsx";
 
 interface DeckGroupingSectionProps {

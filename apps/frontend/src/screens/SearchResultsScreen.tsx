@@ -3,8 +3,8 @@ import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
 import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {SearchBox} from "../components/SearchBox.tsx";
-import {CardGroup} from "../components/CardGroup.tsx";
-import {CardDetailsModal} from "../components/CardDetailsModal/CardDetailsModal.tsx";
+import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
+import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
 // todo make sure to handle tags properly here
@@ -118,6 +118,7 @@ export function SearchResultsScreen() {
           displayMode={deck.displayMode}
           sortingMode={usesServerOrder ? undefined : deck.sortingMode}
           groupKey={submittedSearch || "search-results"}
+          quicklyAdjustable
           onCardSelect={location => {
             const index = cardsWithTags.findIndex(card => card.oracle_id === location.oracleId);
             setSelection(index >= 0 ? index : null);

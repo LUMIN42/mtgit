@@ -2,7 +2,7 @@ import {ActionIcon, Box, Divider, Group, Modal, Tabs, Text, Image} from "@mantin
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
-import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
 import CardAddingPanel from "./CardAddingPanel.tsx";
 

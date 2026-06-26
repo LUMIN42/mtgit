@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import {IconPlus} from "@tabler/icons-react";
 import React, {useEffect, useMemo, useState} from "react";
-import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 
 interface CardDetailsTagsPanelProps {
   cardId: string | null;

@@ -1,11 +1,11 @@
 import {Box, Stack} from "@mantine/core";
-import style from "../assets/index.module.css";
+import style from "../../assets/index.module.css";
 // import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import {Card} from "./Card.tsx";
-import type {CardLocation, SortedGroup} from "../utils/cardGrouping.ts";
+import type {CardLocation, SortedGroup} from "../../utils/cardGrouping.ts";
 import type {DeckSectionName} from "@mtgit/shared";
-import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
-import type {CardSortMode} from "../types/grouping.ts";
+import type {CardDisplayMode} from "../../context/DeckUiContext.tsx";
+import type {CardSortMode} from "../../types/grouping.ts";
 
 interface CardGroupProps {
   group: SortedGroup;
@@ -15,6 +15,7 @@ interface CardGroupProps {
   groupKey: string;
   onCardSelect?: (location: CardLocation) => void;
   onCardHover?: (imageUrl: string | null) => void;
+  quicklyAdjustable?: boolean;
 }
 
 export function CardGroup({
@@ -25,9 +26,10 @@ export function CardGroup({
   onCardSelect = () => {
   },
   onCardHover = () => {
-  }
+  },
+  quicklyAdjustable = false
 }: CardGroupProps) {
-  
+
   if (displayMode === "Text") {
     return (
       <Stack className={style.cardNameList} gap="xs">
@@ -44,7 +46,7 @@ export function CardGroup({
       </Stack>
     );
   }
-  
+
   return (
     <Box className={style.grid}>
       {group.cards.map((card, index) => (
@@ -53,6 +55,7 @@ export function CardGroup({
           card={card}
           displayMode={displayMode}
           onSelect={() => onCardSelect({oracleId: card.oracle_id, groupName: group.heading, sectionName})}
+          quicklyAdjustable={quicklyAdjustable}
         />
       ))}
     </Box>

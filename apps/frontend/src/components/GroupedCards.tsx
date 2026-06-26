@@ -6,8 +6,8 @@ import {
   performGrouping,
   flatten, type CardWithLocation, type CardLocation
 } from "../utils/cardGrouping.ts";
-import {CardGroup} from "./CardGroup.tsx";
-import {CardDetailsModal} from "./CardDetailsModal/CardDetailsModal.tsx";
+import {CardGroup} from "./DeckViewScreen/CardGroup.tsx";
+import {CardDetailsModal} from "./DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {withTags} from "@mtgit/shared";

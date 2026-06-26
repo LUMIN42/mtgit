@@ -1,6 +1,6 @@
 import {createContext, useContext, useState} from "react";
 import type {ReactNode} from "react";
-import type {DeckCardCounts, Repository, TagsMap} from "@mtgit/shared";
+import type {DeckCardCounts, Repository} from "@mtgit/shared";
 import {trpc} from "../trpcClient.ts";
 
 type RepositoryContextValue = {
@@ -45,7 +45,7 @@ export function RepositoryProvider({
       const {deckId, tagKey, value, oracleId} = variables;
 
       // 1. stop conflicting refetches
-      await utils.decks.get.cancel({deckId});
+      // await utils.decks.get.cancel({deckId});
 
       // 2. snapshot previous state
       const previousDeck = utils.decks.get.getData({deckId});
@@ -135,23 +135,17 @@ export function RepositoryProvider({
     updateTagEndpoint.mutateAsync({deckId: repository._id, tagKey: tagName, oracleId, value});
   };
 
-  const setTags = async (tagsMap: TagsMap) => {
-    const newRepository = structuredClone(repository);
-
-    newRepository.tags = tagsMap;
-
-    await setRepositoryValue(newRepository);
-  };
-
-  const createBranch = (
+  const createBranch = async (
     branchName: string,
     branchContent: DeckCardCounts
   ) => {
-    if (!repository) {
-      return;
-    }
+    const newRepo = structuredClone(repository);
 
-    repository.branches[branchName] = branchContent;
+
+    newRepo.branches[branchName] = branchContent;
+
+    await setRepositoryValue(newRepo);
+    setSelectedBranchName(branchName);
   };
 
   const setCardAmount = async (oracleId: string, branchName: string, newAmount: number) => {

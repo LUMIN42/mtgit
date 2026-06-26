@@ -1,5 +1,5 @@
 import {TableOfContents} from "@mantine/core";
-import {useDeckContext} from "../../context/DeckUiContext.tsx";
+import {useDeckContext} from "../../../context/DeckUiContext.tsx";
 import {FieldSection} from "./FieldSection.tsx";
 import {type DeckSection} from "@mtgit/shared";
 

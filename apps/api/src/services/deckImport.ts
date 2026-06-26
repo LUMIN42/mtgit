@@ -1,4 +1,4 @@
-import type {DeckCardCounts, DeckSectionName} from "@mtgit/shared";
+import {DeckCardCounts, DeckSectionName, emptyDeckCardCounts} from "@mtgit/shared";
 import {SECTION_BY_LABEL} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {ScryfallOracleCardSchema} from "@mtgit/shared";
@@ -9,19 +9,25 @@ import {ScryfallOracleCardSchema} from "@mtgit/shared";
 type ParsedDeckEntry = {
   quantity: number;
   cardName: string;
+  tags: string[];
 };
 
 function parseDeckEntry(rawLine: string): ParsedDeckEntry {
-  const lineRegex = /(\d+)\s+(.+)/;
+  const lineRegex = /^(\d+)\s+([A-Za-z].*?)(?:\s+\([^)]+\)\s+\d+)?(?:\s+(#.+))?$/;
 
   const match = rawLine.match(lineRegex);
   if (!match) {
     throw new Error(`Invalid line: ${rawLine}`);
   }
 
+  const tags = match[3]
+    ? match[3].trim().split(/\s+/).filter(Boolean)
+    : [];
+
   return {
     quantity: Number(match[1]),
-    cardName: match[2].trim()
+    cardName: match[2].trim(),
+    tags
   };
 }
 
@@ -59,7 +65,7 @@ async function lookupOracleId(name: string): Promise<string | null> {
  */
 export async function parseDeckImportText(
   importText: string
-): Promise<DeckCardCounts> {
+) {
   const lines = importText.split(/\r?\n/);
 
   const sectionHeaderPattern =
@@ -67,18 +73,27 @@ export async function parseDeckImportText(
 
   let currentSection: DeckSectionName = "Main";
 
-  const result: DeckCardCounts = {
-    Main: {}
-  };
+  const resultingDeck: DeckCardCounts = emptyDeckCardCounts();
+
+  // 🧠 NEW: oracleId -> tags dictionary (currently unused)
+  const oracleTagsMap: Record<string, string[]> = {};
 
   function add(section: DeckSectionName, oracleId: string, qty: number) {
-    if (!result[section]) {
-      result[section] = {};
+    if (!resultingDeck[section]) {
+      resultingDeck[section] = {};
     }
 
-    const map = result[section]!;
+    const map = resultingDeck[section]!;
     map[oracleId] = (map[oracleId] ?? 0) + qty;
   }
+
+  type PendingLookup = {
+    quantity: number;
+    cardName: string;
+    section: DeckSectionName;
+  };
+
+  const tasks: Promise<void>[] = [];
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -94,18 +109,27 @@ export async function parseDeckImportText(
       continue;
     }
 
-    const {quantity, cardName} = parseDeckEntry(line);
+    const {quantity, cardName, tags} = parseDeckEntry(line);
 
-    const oracleId = await lookupOracleId(
-      normalizeCardName(cardName)
-    );
+    const task = (async () => {
+      const oracleId = await lookupOracleId(
+        normalizeCardName(cardName)
+      );
 
-    if (!oracleId) {
-      continue; // or collect missing cards if you want
-    }
+      if (!oracleId) {
+        return;
+      }
 
-    add(currentSection, oracleId, quantity);
+      // 🧠 store tags per oracleId (unused for now)
+      oracleTagsMap[oracleId] = tags;
+
+      add(currentSection, oracleId, quantity);
+    })();
+
+    tasks.push(task);
   }
 
-  return result;
+  await Promise.all(tasks);
+
+  return {resultingDeck, oracleTagsMap};
 }

@@ -1,7 +1,10 @@
-import {Box, Text, Image, Overlay} from "@mantine/core";
+import {Box, Text, Image, Overlay, ActionIcon, Group, Paper} from "@mantine/core";
 import {type DeckCard, getCardImageUrl, isDeckCard} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
-import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
+import type {CardDisplayMode} from "../../context/DeckUiContext.tsx";
+import {IconMinus, IconPlus} from "@tabler/icons-react";
+import React from "react";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 
 
 type CardProps = {
@@ -10,6 +13,7 @@ type CardProps = {
   className?: string;
   onSelect?: (card: ScryfallOracleCard) => void;
   onHoverImage?: (imageUrl: string | null) => void;
+  quicklyAdjustable?: boolean;
 };
 
 
@@ -18,12 +22,15 @@ export function Card({
   displayMode = "Images",
   className,
   onSelect,
-  onHoverImage
+  onHoverImage,
+  quicklyAdjustable = false
 }: CardProps) {
   const imageUrl = getCardImageUrl(card);
-  
+  const {setCardAmount, selectedBranchName, selectedBranchContent} = useRepositoryContext();
+
   const cardAmount: number | undefined = isDeckCard(card) ? card.count : undefined;
-  
+  const count = selectedBranchContent.Main[card.oracle_id] ?? 0;
+
   if (displayMode === "Text") {
     return (
       <Box
@@ -36,15 +43,15 @@ export function Card({
       </Box>
     );
   }
-  
+
   if (!imageUrl) {
     return null;
   }
-  
+
   return (
     <Box style={{position: "relative", width: "100%"}}>
       <Overlay color="black" opacity={1} zIndex={0} style={{backgroundColor: "black"}}/>
-      
+
       <Image
         src={imageUrl}
         alt={card.name}
@@ -56,9 +63,9 @@ export function Card({
         }}
         radius="lg"
       />
-      
+
       {/*// display card amount if there's more than one of it*/}
-      {(isDeckCard(card) && cardAmount !== 1) && (
+      {(isDeckCard(card) && cardAmount !== 1 && !quicklyAdjustable) && (
         <Box
           style={{
             position: "absolute",
@@ -76,6 +83,44 @@ export function Card({
           {card.count}x
         </Box>
       )}
+
+      {quicklyAdjustable && (
+        <Paper
+          bg="gray.1"
+          style={{zIndex: 1}}
+          pos="absolute"
+          right="8%"
+          top="11%"
+        >
+          <Group gap="xs" style={{zIndex: 2}}>
+            <ActionIcon
+              variant="light"
+              size="xs"
+              onClick={() =>
+                setCardAmount(card.oracle_id, selectedBranchName, count - 1)
+              }
+            >
+              <IconMinus size={14}/>
+            </ActionIcon>
+
+            <Text fw={500} size="xs" ta="center">
+              {count}
+            </Text>
+
+            <ActionIcon
+              variant="light"
+              size="xs"
+              onClick={() =>
+                setCardAmount(card.oracle_id, selectedBranchName, count + 1)
+              }
+            >
+              <IconPlus size={14}/>
+            </ActionIcon>
+          </Group>
+        </Paper>
+      )}
+
+
     </Box>
   );
 }

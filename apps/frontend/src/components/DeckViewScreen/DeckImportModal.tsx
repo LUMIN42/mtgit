@@ -1,10 +1,12 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
-import {trpc} from "../trpcClient.ts";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import {trpc} from "../../trpcClient.ts";
+import {useDeckContext} from "../../context/DeckUiContext.tsx";
 
 export function DeckImportModal() {
-  const {repository, selectedBranchName} = useRepositoryContext();
+  const {repository, selectedBranchName, selectedBranchContent} = useRepositoryContext();
+  const deck = useDeckContext();
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importDeckText, setImportDeckText] = useState("");
@@ -48,9 +50,14 @@ export function DeckImportModal() {
     }
   };
 
+  const empty = deck.deck.getCardCount() === 0;
+
   return (
     <>
-      <Button onClick={() => setIsImportModalOpen(true)}>
+      <Button
+        onClick={() => setIsImportModalOpen(true)}
+        variant={empty ? "gradient" : "default"}
+      >
         Import deck
       </Button>
 

@@ -4,7 +4,7 @@ import {protectedProcedure} from "../trpc.js";
 import {parseDeckImportText} from "../services/deckImport.js";
 import {getCollection} from "../db/mongo.js";
 import {ObjectId} from "mongodb";
-import {mergeCardCounts} from "@mtgit/shared";
+import {mergeCardCounts, mergeTagsMaps, RepositorySchema} from "@mtgit/shared";
 
 export const deckImportRouter = router({
   parse: protectedProcedure
@@ -21,32 +21,34 @@ export const deckImportRouter = router({
 
       const repoCollection = getCollection("repositories");
 
-      const deck = await repoCollection.findOne({
+      const rawDeck = await repoCollection.findOne({
         _id: new ObjectId(deckId)
       });
 
-      if (!deck) {
+      if (!rawDeck) {
         throw new Error("Deck not found");
       }
+
+      const deck = RepositorySchema.parse({...rawDeck, _id: rawDeck._id.toString()});
 
       if (deck.owner_id !== ctx.user._id) {
         throw new Error("Unauthorized");
       }
 
-      const parsed = await parseDeckImportText(text);
+      const {resultingDeck, oracleTagsMap} = await parseDeckImportText(text);
 
-      const existingBranch = deck.branches?.[branchName];
+      const existingBranch = rawDeck.branches?.[branchName];
 
       let nextBranch;
 
       if (mode === "overwrite" || !existingBranch) {
-        nextBranch = parsed;
+        nextBranch = resultingDeck;
       }
       else {
         // 🔥 USE shared mergeDecks here
         nextBranch = {...existingBranch};
 
-        for (const [section, cards] of Object.entries(parsed)) {
+        for (const [section, cards] of Object.entries(resultingDeck)) {
           if (!nextBranch[section]) {
             nextBranch[section] = {};
           }
@@ -58,11 +60,14 @@ export const deckImportRouter = router({
         }
       }
 
+      const newTags = mergeTagsMaps(deck.tags, oracleTagsMap);
+
       await repoCollection.updateOne(
         {_id: new ObjectId(deckId)},
         {
           $set: {
-            [`branches.${branchName}`]: nextBranch
+            [`branches.${branchName}`]: nextBranch,
+            tags: newTags
           }
         }
       );

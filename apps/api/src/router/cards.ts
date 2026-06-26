@@ -46,7 +46,7 @@ export const cardRouter = router({
   getMany: publicProcedure
     .input(
       z.object({
-        cardIds: z.array(CardIdSchema).min(1).max(200)
+        cardIds: z.array(CardIdSchema).min(1).max(10000)
       })
     )
     .query(async ({input}) => {

@@ -1,9 +1,9 @@
 import {Anchor, Group} from "@mantine/core";
 import {useState} from "react";
-import {Tip} from "../Tip.tsx";
-import {SearchBox} from "../SearchBox.tsx";
+import {Tip} from "../../Tip.tsx";
+import {SearchBox} from "../../SearchBox.tsx";
 import {FieldSection} from "./FieldSection.tsx";
-import {useDeckContext} from "../../context/DeckUiContext.tsx";
+import {useDeckContext} from "../../../context/DeckUiContext.tsx";
 
 export function CardSearchSection() {
   const deck = useDeckContext();
