@@ -1,11 +1,11 @@
 import {useEffect, useMemo, useState} from "react";
 import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
-import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
+import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -22,9 +22,10 @@ function hasScryfallOrderClause(query: string): boolean {
 }
 
 export function SearchResultsScreen() {
-  const deck = useDeckContext();
 
-  const submittedSearch = deck.submittedSearch;
+  const uiContext = useDeckUiContext();
+
+  const submittedSearch = uiContext.submittedSearch;
   const [searchInput, setSearchInput] = useState(submittedSearch);
   const [selection, setSelection] = useState<number | null>(null);
 
@@ -62,13 +63,13 @@ export function SearchResultsScreen() {
 
   const handleSearchSubmit = (value: string) => {
     const trimmedValue = value.trim();
-    deck.setSubmittedSearch(trimmedValue);
+    uiContext.setSubmittedSearch(trimmedValue);
     setSelection(null);
   };
 
   return (
     <Stack gap={"md"}>
-      <Button onClick={() => deck.setIsSearching(false)} w={"fit-content"}>
+      <Button onClick={() => uiContext.setIsSearching(false)} w={"fit-content"}>
         Return to Deck View
       </Button>
       <SearchBox
@@ -115,8 +116,8 @@ export function SearchResultsScreen() {
         <CardGroup
           group={resultsGroup}
           sectionName="Main"
-          displayMode={deck.displayMode}
-          sortingMode={usesServerOrder ? undefined : deck.sortingMode}
+          displayMode={uiContext.displayMode}
+          sortingMode={usesServerOrder ? undefined : uiContext.sortingMode}
           groupKey={submittedSearch || "search-results"}
           quicklyAdjustable
           onCardSelect={location => {

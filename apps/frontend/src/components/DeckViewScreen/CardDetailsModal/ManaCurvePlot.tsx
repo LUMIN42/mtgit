@@ -1,11 +1,13 @@
 import {InputLabel, Stack} from "@mantine/core";
 import {BarChart} from "@mantine/charts";
-import {useDeckContext} from "../../../context/DeckUiContext.tsx";
 import {getGroupHeadingId} from "../../../utils/cardGrouping.ts";
+import {useDeckDataContext} from "../../../context/DeckDataContext.tsx";
+import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
 export function ManaCurvePlot() {
 
-  const {filteredDeck, groupingMode} = useDeckContext();
+  const {filteredDeck} = useDeckDataContext();
+  const {groupingMode} = useDeckUiContext();
 
   const countsPerCMC: {[key: number]: number} = {};
 

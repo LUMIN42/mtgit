@@ -19,8 +19,13 @@ import {Format, formats} from "@mtgit/shared";
 
 function DeckOverviewScreen() {
   const navigate = useNavigate();
+
+  const utils = trpc.useUtils();
+
   const decksQuery = trpc.decks.usersDecks.useQuery();
-  const createDeck = trpc.decks.create.useMutation();
+  const createDeck = trpc.decks.create.useMutation({
+    onSuccess: () => utils.decks.usersDecks.invalidate()
+  });
 
   const [opened, setOpened] = useState(false);
   const [name, setName] = useState("");

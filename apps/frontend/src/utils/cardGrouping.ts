@@ -4,7 +4,6 @@ import {
   type DeckSection,
   type DeckSectionName,
   type ScryfallOracleCard,
-  type TaggedDeck
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
 
@@ -18,6 +17,17 @@ export type SortedSection = {
   name: DeckSectionName;
   groups: SortedGroup[];
 };
+
+export function cardCountSortedGroup(sortedGroup:SortedGroup) {
+  return sortedGroup.cards.reduce((prev, current) => prev + current.count,0);
+}
+
+export function cardCountSortedSection(sortedSection:SortedSection) {
+  return sortedSection.groups.reduce(
+    (prev, current) => prev + cardCountSortedGroup(current),
+    0
+  );
+}
 
 export type SortedGroup = {
   heading: string;

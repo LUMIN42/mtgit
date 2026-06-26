@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {Button, Grid, Group, Select, Stack} from "@mantine/core";
+import {Button, Grid, Group, Select, Stack, Title} from "@mantine/core";
 import {useState} from "react";
 
 import style from "../../assets/index.module.css";
@@ -9,36 +9,40 @@ import {DeckDisplayModeSection} from "../../components/DeckViewScreen/DeckViewin
 import {CreateBranchModal} from "../../components/DeckViewScreen/CreateBranchModal.tsx";
 
 import {
-  useDeckContext,
-  useDeckUIContext
+  useDeckUiContext
 } from "../../context/DeckUiContext.tsx";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 
 export function DeckViewScreen() {
-  const deck = useDeckContext();
+  const ui = useDeckUiContext();
   const repo = useRepositoryContext();
-  const uiState = useDeckUIContext();
+  const uiState = useDeckUiContext();
 
   const [isCreateBranchOpen, setIsCreateBranchOpen] = useState(false);
 
   const toggleDisplayMode = () => {
-    deck.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
+    ui.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
   };
 
   const branches = Object.keys(repo.repository?.branches ?? {});
 
   return (
     <Stack>
+
+      <Title order={1}>
+        {repo.repository.name}
+      </Title>
+
       <Group>
         <DeckImportModal/>
 
         <DeckDisplayModeSection
-          value={deck.displayMode}
+          value={ui.displayMode}
           onToggle={toggleDisplayMode}
         />
 
-        <Button variant="default" onClick={() => deck.setViewMode("Branches")}>
+        <Button variant="default" onClick={() => ui.setViewMode("Branches")}>
           View branches
         </Button>
 

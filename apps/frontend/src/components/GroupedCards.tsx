@@ -1,6 +1,5 @@
-import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {Stack, Text} from "@mantine/core";
-import {useMemo, useState} from "react";
+import {useState} from "react";
 import {
   getGroupHeadingId,
   performGrouping,
@@ -11,9 +10,14 @@ import {CardDetailsModal} from "./DeckViewScreen/CardDetailsModal/CardDetailsMod
 
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {withTags} from "@mtgit/shared";
+import {useDeckUiContext} from "../context/DeckUiContext.tsx";
+import {useDeckDataContext} from "../context/DeckDataContext.tsx";
 
 export function GroupedCards() {
-  const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
+  const {displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
+
+  const {filteredDeck} = useDeckDataContext();
+
   const {repository} = useRepositoryContext();
   const tags = repository?.tags ?? {};
   // Track currently selected card for the modal
@@ -21,15 +25,16 @@ export function GroupedCards() {
   /**
    * Memoized preparation of deck sections and a flat card list for the modal.
    */
-  const {sections, pageCards} = useMemo(
-    () => {
-      
-      const tagged = withTags(filteredDeck, tags);
-      const groups = performGrouping(tagged.deck, groupingMode, sortingMode);
-      return {sections: groups, pageCards: flatten(groups)};
-    },
-    [filteredDeck, groupingMode, sortingMode, tags]
+  const tagged = withTags(filteredDeck, tags);
+
+  const groups = performGrouping(
+    tagged.deck,
+    groupingMode,
+    sortingMode
   );
+
+  const sections = groups;
+  const pageCards = flatten(groups);
   
   
   const [selectedCardLocation, setSelectedCardLocation] = useState<CardLocation | undefined>(undefined);
@@ -79,7 +84,7 @@ export function GroupedCards() {
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading="true"
               >
-                {section.name} ({filteredDeck.sections[section.name].getCardCount()})
+                {section.name} ({filteredDeck.sections[section.name].getCardCount()}) tst
               </Text>
               
               {/* Render groups within the section */}

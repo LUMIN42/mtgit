@@ -22,6 +22,7 @@ function parseDeckEntry(rawLine: string): ParsedDeckEntry {
 
   const tags = match[3]
     ? match[3].trim().split(/\s+/).filter(Boolean)
+      .map(tag => tag.replace(/^#+/, ""))
     : [];
 
   return {

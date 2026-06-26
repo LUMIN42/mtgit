@@ -1,4 +1,3 @@
-import {useDeckContext} from "../../../context/DeckUiContext.tsx";
 import {Group, Paper, ScrollArea, Stack, Box} from "@mantine/core";
 import {DeckPreviewImage} from "./DeckPreviewImage.tsx";
 import {CardSearchSection} from "./CardSearchSection.tsx";
@@ -8,30 +7,24 @@ import {DeckSortingSection} from "./DeckSortingSection.tsx";
 import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
 import {DeckMainCountBadge} from "./DeckMainCountBadge.tsx";
 import {ManaCurvePlot} from "../CardDetailsModal/ManaCurvePlot.tsx";
+import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
 export function DeckViewingOptions({horizontal = false}: {horizontal?: boolean}) {
-  const deckContext = useDeckContext();
   const {
     displayMode,
-    hoveredCardImageUrl,
-    groupingMode,
-    setGroupingMode,
-    sortingMode,
-    setSortingMode,
-    filteredDeck
-  } = deckContext;
+    hoveredCardImageUrl
+  } = useDeckUiContext();
 
-  const mainDeckCount = filteredDeck.sections.Main.getCardCount();
 
   const content = (
     <>
       <DeckPreviewImage visible={displayMode !== "Images"} imageUrl={hoveredCardImageUrl}/>
       <CardSearchSection/>
       <DeckFilterSection/>
-      <DeckGroupingSection value={groupingMode} onChange={value => setGroupingMode(value)}/>
-      <DeckSortingSection value={sortingMode} onChange={value => setSortingMode(value)}/>
+      <DeckGroupingSection />
+      <DeckSortingSection  />
       <DeckSectionsToc/>
-      <DeckMainCountBadge count={mainDeckCount}/>
+      <DeckMainCountBadge/>
       <ManaCurvePlot/>
     </>
   );

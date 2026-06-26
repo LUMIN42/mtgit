@@ -2,11 +2,12 @@ import {useParams} from "react-router-dom";
 import {trpc} from "../../trpcClient.ts";
 
 import {RepositoryProvider} from "../../context/RepositoryContext.tsx";
-import {DeckProvider} from "../../context/DeckUiContext.tsx";
 
 
 import {Center, Loader} from "@mantine/core";
 import DeckViewScreenWrapperInner from "./DeckViewScreenWrapperInner.tsx";
+import {DeckDataProvider} from "../../context/DeckDataContext.tsx";
+import {DeckUiProvider} from "../../context/DeckUiContext.tsx";
 
 export function DeckViewScreenWrapper() {
   const {deckId} = useParams<{deckId: string}>();
@@ -38,9 +39,11 @@ export function DeckViewScreenWrapper() {
 
   return (
     <RepositoryProvider repository={deckQuery.data}>
-      <DeckProvider>
-        <DeckViewScreenWrapperInner/>
-      </DeckProvider>
+      <DeckUiProvider>
+        <DeckDataProvider>
+          <DeckViewScreenWrapperInner/>
+        </DeckDataProvider>
+      </DeckUiProvider>
     </RepositoryProvider>
   );
 }

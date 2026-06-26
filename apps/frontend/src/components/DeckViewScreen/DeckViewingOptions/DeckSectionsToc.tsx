@@ -1,10 +1,10 @@
 import {TableOfContents} from "@mantine/core";
-import {useDeckContext} from "../../../context/DeckUiContext.tsx";
 import {FieldSection} from "./FieldSection.tsx";
 import {type DeckSection} from "@mtgit/shared";
+import {useDeckDataContext} from "../../../context/DeckDataContext.tsx";
 
 export function DeckSectionsToc() {
-  const {filteredDeck} = useDeckContext();
+  const {filteredDeck} = useDeckDataContext();
   const tocRefreshKey = Object.entries(filteredDeck.sections as Record<string, DeckSection | undefined>)
     .map(([sectionName, cards]) => `${sectionName}:${cards?.length ?? 0}`)
     .join("|");
