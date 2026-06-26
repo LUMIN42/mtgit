@@ -13,21 +13,41 @@ type ParsedDeckEntry = {
 };
 
 function parseDeckEntry(rawLine: string): ParsedDeckEntry {
-  const lineRegex = /^(\d+)\s+([A-Za-z].*?)(?:\s+\([^)]+\)\s+\d+)?(?:\s+(#.+))?$/;
+  const lineRegex = /^(\d+)\s+([^(#]+)(?:\s+[^#]*(#.*)?)?$/;
 
   const match = rawLine.match(lineRegex);
+
   if (!match) {
     throw new Error(`Invalid line: ${rawLine}`);
   }
 
+  const quantity = Number(match[1]);
+
+  // ----------------------------
+  // 1. Clean card name
+  // ----------------------------
+  const rawName = match[2].trim();
+
+  // normalize split / MDFC separators
+  const cardName = rawName
+    .replace(/\s*\/\/\s*/g, " // ")
+    .replace(/\s*\/\s*/g, " / ")
+    .trim();
+
+  // ----------------------------
+  // 2. Tags
+  // ----------------------------
   const tags = match[3]
-    ? match[3].trim().split(/\s+/).filter(Boolean)
-      .map(tag => tag.replace(/^#+/, ""))
+    ? match[3]
+      .trim()
+      .split(/\s+/)
+      .map(tag => tag.replace(/^#+/, "").trim())
+      .filter(Boolean)
     : [];
 
   return {
-    quantity: Number(match[1]),
-    cardName: match[2].trim(),
+    quantity,
+    cardName,
     tags
   };
 }
@@ -36,6 +56,10 @@ function parseDeckEntry(rawLine: string): ParsedDeckEntry {
  * Normalize name for DB lookup
  */
 function normalizeCardName(name: string): string {
+  if (name === "Order of Midnight / Alter Fate") {
+    console.log("here we go!");
+  }
+
   return name
     .toLowerCase()
     .replace(/\s*\/\/\s*/g, " // ")
@@ -76,7 +100,6 @@ export async function parseDeckImportText(
 
   const resultingDeck: DeckCardCounts = emptyDeckCardCounts();
 
-  // 🧠 NEW: oracleId -> tags dictionary (currently unused)
   const oracleTagsMap: Record<string, string[]> = {};
 
   function add(section: DeckSectionName, oracleId: string, qty: number) {
@@ -98,6 +121,10 @@ export async function parseDeckImportText(
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
+
+    if (rawLine === "1 Order of Midnight / Alter Fate (PLST) ELD-99 #early #resilience") {
+      console.log("here we go!");
+    }
 
     if (!line || line.startsWith("//") || line.startsWith("#")) {
       continue;

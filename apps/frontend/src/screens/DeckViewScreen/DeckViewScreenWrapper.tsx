@@ -6,7 +6,6 @@ import {RepositoryProvider} from "../../context/RepositoryContext.tsx";
 
 import {Center, Loader} from "@mantine/core";
 import DeckViewScreenWrapperInner from "./DeckViewScreenWrapperInner.tsx";
-import {DeckDataProvider} from "../../context/DeckDataContext.tsx";
 import {DeckUiProvider} from "../../context/DeckUiContext.tsx";
 import DeckDataProviderWrapper from "../../context/DeckDataProviderWrapper.tsx";
 
