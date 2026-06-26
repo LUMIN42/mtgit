@@ -2,10 +2,11 @@ import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 import {
   type Deck,
   type DeckSection,
-  type DeckSectionName,
-  type ScryfallOracleCard,
+  type DeckSectionName, isMainCardType, MainCardType,
+  type ScryfallOracleCard
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
+import {MAIN_TYPE_ORDER} from "@mtgit/shared";
 
 /**
  * Represents a group of cards with a heading and the associated cards.
@@ -44,36 +45,6 @@ export type CardWithLocation = TaggedDeckCard & {
   location: CardLocation;
 };
 
-
-// todo move to proper global types
-export const MainCardType = {
-  Artifact: "Artifact",
-  Battle: "Battle",
-  Creature: "Creature",
-  Dungeon: "Dungeon",
-  Enchantment: "Enchantment",
-  Instant: "Instant",
-  Land: "Land",
-  Planeswalker: "Planeswalker",
-  Sorcery: "Sorcery"
-} as const;
-
-export type MainCardType = (typeof MainCardType)[keyof typeof MainCardType];
-
-// todo just sort alphabetically ?
-const MAIN_TYPE_ORDER: MainCardType[] = [
-  MainCardType.Artifact,
-  MainCardType.Battle,
-  MainCardType.Creature,
-  MainCardType.Dungeon,
-  MainCardType.Enchantment,
-  MainCardType.Instant,
-  MainCardType.Sorcery,
-  MainCardType.Planeswalker,
-  MainCardType.Land
-];
-
-const MAIN_TYPE_SET = new Set<string>(MAIN_TYPE_ORDER);
 const MANA_VALUE_LANDS_GROUP = "Lands";
 const MANA_VALUE_TEN_PLUS_GROUP = "10+";
 const RARITY_ORDER: Record<string, number> = {
@@ -112,11 +83,12 @@ function toTitleCase(word: string): string {
 export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
   const {mainPart} = parseTypeLineParts(card.type_line);
   const words = mainPart.match(/[A-Za-z]+/g) ?? [];
-  const keys = new Set<string>();
+  const keys = new Set<MainCardType>();
   
   for (const word of words) {
     const normalizedWord = toTitleCase(word);
-    if (MAIN_TYPE_SET.has(normalizedWord)) {
+
+    if (isMainCardType(normalizedWord)) {
       keys.add(normalizedWord);
     }
   }
@@ -332,11 +304,11 @@ export function performGrouping(deck: Deck, groupingMode: CardGroupingMode, sort
   return outputSections;
 }
 
-export function groupCardCount<T extends TaggedDeckCard>(group: SortedGroup) {
+export function groupCardCount(group: SortedGroup) {
   return group.cards.reduce((sum, card) => sum + card.count, 0);
 }
 
-export function sectionCardCount<T extends TaggedDeckCard>(section: SortedSection) {
+export function sectionCardCount(section: SortedSection) {
   return section.groups.reduce(
     (sum, group) => sum + groupCardCount(group), 0
   );
