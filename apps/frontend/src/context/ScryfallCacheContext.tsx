@@ -9,8 +9,8 @@ import {ScryfallOracleCard, ScryfallOracleCardSchema} from "@mtgit/shared/scryfa
 import {trpcClient} from "../trpcClient.ts";
 
 type ScryfallCacheValue = {
-  getCard: (id: string) => Promise<ScryfallOracleCard | undefined>;
-  getCards: (ids: string[]) => Promise<(ScryfallOracleCard | undefined)[]>;
+  getCard: (oracleId: string) => Promise<ScryfallOracleCard | undefined>;
+  getCards: (oracleIds: string[]) => Promise<(ScryfallOracleCard | undefined)[]>;
   clear: () => void;
 };
 

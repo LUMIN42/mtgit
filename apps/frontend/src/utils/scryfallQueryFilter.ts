@@ -1,5 +1,4 @@
 import {Deck, DeckSection} from "@mtgit/shared";
-import type {DeckCard, DeckSectionName} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared";
 
 // todo move file to shared code
@@ -328,16 +327,13 @@ export function filterDeckByScryfallQuery(deck: Deck, query: string): Deck {
   }
 
   const matcher = createScryfallCardMatcher(trimmedQuery);
-  const sectionNames = Object.keys(deck.sections) as DeckSectionName[];
-  const sectionsEntries = sectionNames.map(sectionName => {
-    const section = deck.sections[sectionName]!;
-    const cardsArray: DeckCard[] = section instanceof DeckSection ? section.toArray() : (section as DeckCard[]);
-    const filtered = cardsArray.filter(card => matcher(card));
-    return [sectionName, new DeckSection(sectionName, filtered)] as [DeckSectionName, DeckSection];
-  });
 
-  const newSections = Object.fromEntries(sectionsEntries) as Deck["sections"];
-  return new Deck(deck.name, newSections);
+  const sectionEntries = Object.values(deck.sections)
+    .map(section => {
+      return [section.name, new DeckSection(section.name, section.toArray().filter(matcher))];
+    });
+
+  return new Deck(Object.fromEntries(sectionEntries));
 }
 
 

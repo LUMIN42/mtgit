@@ -14,16 +14,6 @@ import {ScryfallCacheProvider} from "./context/ScryfallCacheContext.tsx";
 
 import {trpc, trpcLinks} from "./trpcClient";
 
-/**
- * 🧠 WDYR (Why Did You Render)
- * Enables render tracking in development only
- */
-if (import.meta.env.DEV) {
-  const whyDidYouRender = (await import("@welldone-software/why-did-you-render")).default;
-
-  whyDidYouRender(React);
-}
-
 const queryClient = new QueryClient();
 
 const trpcClient = trpc.createClient({

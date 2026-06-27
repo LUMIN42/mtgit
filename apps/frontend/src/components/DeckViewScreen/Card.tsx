@@ -1,10 +1,10 @@
-import {Box, Text, Image, Overlay, ActionIcon, Group, Paper} from "@mantine/core";
+import {Box, Text, Image, Overlay, Paper} from "@mantine/core";
 import {type DeckCard, getCardImageUrl, isDeckCard} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
 import type {CardDisplayMode} from "../../context/DeckUiContext.tsx";
-import {IconMinus, IconPlus} from "@tabler/icons-react";
 import React from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import CardAmountEditor from "./CardAmountEditor.tsx";
 
 
 type CardProps = {
@@ -92,31 +92,7 @@ export function Card({
           right="8%"
           top="11%"
         >
-          <Group gap="xs" style={{zIndex: 2}}>
-            <ActionIcon
-              variant="light"
-              size="xs"
-              onClick={() =>
-                setCardAmount(card.oracle_id, selectedBranchName, count - 1)
-              }
-            >
-              <IconMinus size={14}/>
-            </ActionIcon>
-
-            <Text fw={500} size="xs" ta="center">
-              {count}
-            </Text>
-
-            <ActionIcon
-              variant="light"
-              size="xs"
-              onClick={() =>
-                setCardAmount(card.oracle_id, selectedBranchName, count + 1)
-              }
-            >
-              <IconPlus size={14}/>
-            </ActionIcon>
-          </Group>
+          <CardAmountEditor branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={"Main"}/>
         </Paper>
       )}
 

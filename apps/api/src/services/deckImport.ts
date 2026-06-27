@@ -12,13 +12,13 @@ type ParsedDeckEntry = {
   tags: string[];
 };
 
-function parseDeckEntry(rawLine: string): ParsedDeckEntry {
+function parseDeckEntry(rawLine: string): ParsedDeckEntry | null {
   const lineRegex = /^(\d+)\s+([^(#]+)(?:\s+[^#]*(#.*)?)?$/;
 
   const match = rawLine.match(lineRegex);
 
   if (!match) {
-    throw new Error(`Invalid line: ${rawLine}`);
+    return null;
   }
 
   const quantity = Number(match[1]);
@@ -122,10 +122,6 @@ export async function parseDeckImportText(
   for (const rawLine of lines) {
     const line = rawLine.trim();
 
-    if (rawLine === "1 Order of Midnight / Alter Fate (PLST) ELD-99 #early #resilience") {
-      console.log("here we go!");
-    }
-
     if (!line || line.startsWith("//") || line.startsWith("#")) {
       continue;
     }
@@ -137,8 +133,14 @@ export async function parseDeckImportText(
       continue;
     }
 
-    const {quantity, cardName, tags} = parseDeckEntry(line);
+    const parsingResult = parseDeckEntry(line);
+    if (!parsingResult) {
+      continue;
+    }
 
+    const {quantity, cardName, tags} = parsingResult;
+
+    const capturedDeckSection = currentSection;
     const task = (async () => {
       const oracleId = await lookupOracleId(
         normalizeCardName(cardName)
@@ -151,7 +153,7 @@ export async function parseDeckImportText(
       // 🧠 store tags per oracleId (unused for now)
       oracleTagsMap[oracleId] = tags;
 
-      add(currentSection, oracleId, quantity);
+      add(capturedDeckSection, oracleId, quantity);
     })();
 
     tasks.push(task);

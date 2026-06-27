@@ -1,8 +1,8 @@
 import React from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
-import {DeckCard} from "@mtgit/shared";
-import {ActionIcon, Group, Table, Text} from "@mantine/core";
-import {IconMinus, IconPlus} from "@tabler/icons-react";
+import {DeckCard, relevantSections} from "@mtgit/shared";
+import {Table} from "@mantine/core";
+import CardAmountEditor from "../CardAmountEditor.tsx";
 
 
 type CardAddingPanelProps = {
@@ -10,18 +10,28 @@ type CardAddingPanelProps = {
 };
 
 function CardAddingPanel({cardAmount}: CardAddingPanelProps) {
-  const {setCardAmount, repository} = useRepositoryContext();
+  const {repository} = useRepositoryContext();
 
   const {oracle_id} = cardAmount;
 
 
   return (
-
-    <Table w={"fit-content"} style={{whiteSpace: "nowrap", textAlign:"center"}}>
+    <Table w={"fit-content"} style={{whiteSpace: "nowrap", textAlign: "center"}}>
       <Table.Thead>
         <Table.Tr>
           <Table.Th ta={"center"}>Branch name</Table.Th>
-          <Table.Th ta={"center"}>Card amount</Table.Th>
+
+          {
+            relevantSections(repository.format)
+              .map(
+                sectionName =>
+                  <Table.Th key={sectionName}>
+                    {sectionName}
+                  </Table.Th>
+              )
+          }
+
+
         </Table.Tr>
       </Table.Thead>
 
@@ -32,45 +42,27 @@ function CardAddingPanel({cardAmount}: CardAddingPanelProps) {
 
       <Table.Tbody>
         {Object.keys(repository.branches).map(branchName => {
-          const count =
-            repository.branches[branchName].Main[oracle_id] ?? 0;
-
           return (
             <Table.Tr key={branchName}>
               <Table.Td ta={"center"}>{branchName}</Table.Td>
 
-              <Table.Td ta={"center"}>
-                <Group gap="xs" justify="flex-end" wrap={"nowrap"}>
-                  <ActionIcon
-                    variant="light"
-                    onClick={() =>
-                      setCardAmount(oracle_id, branchName, count - 1)
-                    }
-                  >
-                    <IconMinus size={16}/>
-                  </ActionIcon>
+              {
+                relevantSections(repository.format)
+                  .map(
+                    sectionName =>
+                      <Table.Td ta={"center"} key={sectionName}>
+                        <CardAmountEditor branchName={branchName} oracleId={oracle_id} deckSection={sectionName}/>
+                      </Table.Td>
+                  )
+              }
 
-                  <Text fw={500} w={40} ta="center">
-                    {count}
-                  </Text>
 
-                  <ActionIcon
-                    variant="light"
-                    onClick={() =>
-                      setCardAmount(oracle_id, branchName, count + 1)
-                    }
-                  >
-                    <IconPlus size={16}/>
-                  </ActionIcon>
-                </Group>
-              </Table.Td>
             </Table.Tr>
           );
         })}
       </Table.Tbody>
     </Table>
-  )
-    ;
+  );
 }
 
 export default CardAddingPanel;

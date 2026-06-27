@@ -21,7 +21,7 @@ export function GroupedCards() {
   const {repository} = useRepositoryContext();
   const tags = repository?.tags ?? {};
   // Track currently selected card for the modal
-  
+
   /**
    * Memoized preparation of deck sections and a flat card list for the modal.
    */
@@ -34,12 +34,13 @@ export function GroupedCards() {
   );
 
   const sections = groups;
+  console.log("groups:", sections);
   const pageCards = flatten(groups);
-  
-  
+
+
   const [selectedCardLocation, setSelectedCardLocation] = useState<CardLocation | undefined>(undefined);
-  
-  
+
+
   function sameLocation(a: CardLocation, b: CardLocation | undefined): boolean {
     return (
       b !== undefined &&
@@ -73,7 +74,7 @@ export function GroupedCards() {
           // if (section.cards.length === 0) {
           //   return null;
           // }
-          
+
           return (
             <Stack key={section.name} gap="xs">
               {/* Section heading with card count */}
@@ -84,14 +85,14 @@ export function GroupedCards() {
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading="true"
               >
-                {section.name} ({filteredDeck.sections[section.name].getCardCount()}) tst
+                {section.name} ({filteredDeck.sections[section.name].getCardCount()})
               </Text>
-              
+
               {/* Render groups within the section */}
               {section.groups.map(group => (
                 <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
                   {/* Group heading if grouping is enabled */}
-                  {groupingMode !== "none" ? (
+                  {(groupingMode !== "none" && section.name != "Commander") ? (
                     <Text
                       fw={600}
                       id={getGroupHeadingId(groupingMode, group.heading)}
@@ -99,10 +100,10 @@ export function GroupedCards() {
                     >
                       {groupingMode === "manaValue" && group.heading !== "Lands"
                         ? `Mana Value ${group.heading}`
-                        : group.heading} ({cardCountSortedGroup(group)} cards)
+                        : group.heading} ({cardCountSortedGroup(group)} {cardCountSortedGroup(group) === 1 ? "card" : "cards"})
                     </Text>
                   ) : null}
-                  
+
                   {/* Render cards in the group */}
                   <CardGroup
                     group={group}
@@ -120,7 +121,7 @@ export function GroupedCards() {
           );
         })}
       </Stack>
-      
+
       {/* Card details modal for selected card, supports navigation */}
       <CardDetailsModal
         cards={pageCards}

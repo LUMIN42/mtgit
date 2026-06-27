@@ -1,6 +1,6 @@
 import {createContext, useContext, useState} from "react";
 import type {ReactNode} from "react";
-import type {DeckCardCounts, Repository} from "@mtgit/shared";
+import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
 import {trpc} from "../trpcClient.ts";
 
 type RepositoryContextValue = {
@@ -14,7 +14,7 @@ type RepositoryContextValue = {
   setBranchValue: (branchName: string, branchValue: DeckCardCounts) => void;
   updateTag: (oracleId: string, tagName: string, value: boolean) => void;
   createBranch: (branchName: string, branchContent: DeckCardCounts) => void;
-  setCardAmount: (oracleId: string, branchName: string, newAmount: number) => void;
+  setCardAmount: (oracleId: string, branchName: string, newAmount: number, deckSection: DeckSectionName) => void;
 
   setRepositoryValue: (repository: Repository) => void;
 };
@@ -114,12 +114,6 @@ export function RepositoryProvider({
       ? repository.branches[selectedBranchName]
       : undefined;
 
-  /**
-   * ⚠️ TEMP IMPLEMENTATION NOTES:
-   * These mutate nothing for now because repository is server-owned.
-   * They are kept to preserve API compatibility.
-   */
-
   const setBranchValue = (
     branchName: string,
     branchValue: DeckCardCounts
@@ -148,16 +142,23 @@ export function RepositoryProvider({
     setSelectedBranchName(branchName);
   };
 
-  const setCardAmount = async (oracleId: string, branchName: string, newAmount: number) => {
+  const setCardAmount = async (
+    oracleId: string,
+    branchName: string,
+    newAmount: number,
+    deckSection = "Main"
+  ) => {
     const repoCopy = structuredClone(repository);
 
-    if (newAmount > 0) {
-      repoCopy.branches[branchName].Main[oracleId] = newAmount;
+    repoCopy.branches[branchName][deckSection] ??= {};
 
+    const section = repoCopy.branches[branchName][deckSection];
+
+    if (newAmount > 0) {
+      section[oracleId] = newAmount;
     }
     else {
-      delete repoCopy.branches[branchName].Main[oracleId];
-
+      delete section[oracleId];
     }
 
     await setRepositoryValue(repoCopy);

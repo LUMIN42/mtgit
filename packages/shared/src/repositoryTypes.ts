@@ -1,5 +1,6 @@
 import {z} from "zod";
-import {FormatSchema} from "./deckFormats.ts";
+import {Format, FormatSchema} from "./deckFormats.ts";
+import {relevantSections} from "./cardTypes.ts";
 
 export type TagsMap = Record<string, string[]>;
 
@@ -48,8 +49,15 @@ export const DeckCardCountsSchema = z
     }
   });
 
-export function emptyDeckCardCounts(): DeckCardCounts {
-  return {Main: {}};
+export function emptyDeckCardCounts(format?: Format): DeckCardCounts {
+  if (format === undefined) {
+    return {Main: {}};
+  }
+
+  return Object.fromEntries(
+    relevantSections(format)
+      .map(sectionName => [sectionName, {}])
+  );
 }
 
 export const BranchesSchema = z.record(
@@ -72,15 +80,16 @@ export type DeckCardCounts = z.infer<typeof DeckCardCountsSchema>;
 export type Branches = z.infer<typeof BranchesSchema>;
 export type Repository = z.infer<typeof RepositorySchema>;
 
-export function createEmptyRepositoryTemplate(name: string, owner_id: string, format: string) {
+
+emptyDeckCardCounts();
+
+export function createEmptyRepositoryTemplate(name: string, owner_id: string, format: Format) {
   return {
     name,
     owner_id,
     tags: {},
     branches: {
-      main: {
-        Main: {}
-      }
+      main: emptyDeckCardCounts(format)
     },
     format
   };

@@ -1,4 +1,4 @@
-import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
+import {CardGroupingMode, CardSortMode, SECTION_SCREEN_SORT_ORDER} from "../types/grouping.ts";
 import {
   type Deck,
   type DeckSection,
@@ -19,11 +19,11 @@ export type SortedSection = {
   groups: SortedGroup[];
 };
 
-export function cardCountSortedGroup(sortedGroup:SortedGroup) {
-  return sortedGroup.cards.reduce((prev, current) => prev + current.count,0);
+export function cardCountSortedGroup(sortedGroup: SortedGroup) {
+  return sortedGroup.cards.reduce((prev, current) => prev + current.count, 0);
 }
 
-export function cardCountSortedSection(sortedSection:SortedSection) {
+export function cardCountSortedSection(sortedSection: SortedSection) {
   return sortedSection.groups.reduce(
     (prev, current) => prev + cardCountSortedGroup(current),
     0
@@ -84,7 +84,7 @@ export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
   const {mainPart} = parseTypeLineParts(card.type_line);
   const words = mainPart.match(/[A-Za-z]+/g) ?? [];
   const keys = new Set<MainCardType>();
-  
+
   for (const word of words) {
     const normalizedWord = toTitleCase(word);
 
@@ -92,7 +92,7 @@ export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
       keys.add(normalizedWord);
     }
   }
-  
+
   return keys.size > 0 ? Array.from(keys) : ["Other"];
 }
 
@@ -105,7 +105,7 @@ export function getManaValueGroupKey(card: ScryfallOracleCard): string {
   if (card.type_line.toLowerCase().includes("land")) {
     return MANA_VALUE_LANDS_GROUP;
   }
-  
+
   const manaValue = Math.floor(card.cmc);
   return manaValue >= 10 ? MANA_VALUE_TEN_PLUS_GROUP : `${manaValue}`;
 }
@@ -119,7 +119,7 @@ export function getTagGroupKeys(card: TaggedDeckCard): string[] {
   if (!card.tags?.length) {
     return ["Untagged"];
   }
-  
+
   return Array.from(new Set(card.tags));
 }
 
@@ -133,7 +133,7 @@ export function getGroupHeadingId(groupingMode: CardGroupingMode, heading: strin
   if (groupingMode === "manaValue") {
     return `mana-value-heading-${heading.replace(/\+/g, "plus")}`;
   }
-  
+
   return undefined;
 }
 
@@ -149,33 +149,33 @@ function sortGroupedHeadings(headings: string[], mode: CardGroupingMode): string
       if (left === MANA_VALUE_LANDS_GROUP) {
         return 1;
       }
-      
+
       if (right === MANA_VALUE_LANDS_GROUP) {
         return -1;
       }
-      
+
       const leftValue = left === MANA_VALUE_TEN_PLUS_GROUP ? 10 : Number.parseInt(left, 10);
       const rightValue = right === MANA_VALUE_TEN_PLUS_GROUP ? 10 : Number.parseInt(right, 10);
       return leftValue - rightValue;
     }
-    
+
     if (mode === "type") {
       const leftIndex = MAIN_TYPE_ORDER.findIndex(type => type === left);
       const rightIndex = MAIN_TYPE_ORDER.findIndex(type => type === right);
-      
+
       if (leftIndex >= 0 && rightIndex >= 0) {
         return leftIndex - rightIndex;
       }
-      
+
       if (leftIndex >= 0) {
         return -1;
       }
-      
+
       if (rightIndex >= 0) {
         return 1;
       }
     }
-    
+
     return left.localeCompare(right);
   });
 }
@@ -189,9 +189,9 @@ export function groupCardsByMode(cards: TaggedDeckCard[], mode: CardGroupingMode
   if (mode === "none") {
     return [{heading: "", cards}];
   }
-  
+
   const groups = new Map<string, TaggedDeckCard[]>();
-  
+
   for (const card of cards) {
     const keys =
       mode === "type"
@@ -199,16 +199,16 @@ export function groupCardsByMode(cards: TaggedDeckCard[], mode: CardGroupingMode
         : mode === "manaValue"
           ? [getManaValueGroupKey(card)]
           : getTagGroupKeys(card);
-    
+
     for (const key of keys) {
       const currentCards = groups.get(key) ?? [];
       currentCards.push(card);
       groups.set(key, currentCards);
     }
   }
-  
+
   const sortedHeadings = sortGroupedHeadings(Array.from(groups.keys()), mode);
-  
+
   return sortedHeadings.map(heading => ({
     heading,
     cards: groups.get(heading) ?? [],
@@ -227,7 +227,7 @@ function getUsdPrice(card: TaggedDeckCard): number {
   if (!rawUsd) {
     return -1;
   }
-  
+
   const parsedValue = Number.parseFloat(rawUsd);
   return Number.isFinite(parsedValue) ? parsedValue : -1;
 }
@@ -268,26 +268,26 @@ function sortCardsInGroup(cards: TaggedDeckCard[], mode: CardSortMode): TaggedDe
         return rarityDelta;
       }
     }
-    
+
     return left.name.localeCompare(right.name);
   });
 }
 
 function handleSection(section: DeckSection, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
   const groups = groupCardsByMode(section.toArray(), groupingMode);
-  
+
   let sortedGroups = groups.map(group => {
     return {
       heading: group.heading,
       cards: sortCardsInGroup(group.cards, sortingMode)
     };
   });
-  
+
   const headingOrder = sortGroupedHeadings(groups.map(group => group.heading), groupingMode);
-  
+
   sortedGroups = headingOrder.map(heading => sortedGroups.find(group => group.heading == heading));
-  
-  
+
+
   return {
     name: section.name,
     groups: sortedGroups
@@ -296,11 +296,13 @@ function handleSection(section: DeckSection, groupingMode: CardGroupingMode, sor
 
 export function performGrouping(deck: Deck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
   const outputSections: SortedSection[] = [];
-  
-  for (const section of Object.values(deck.sections)) {
-    outputSections.push(handleSection(section, groupingMode, sortingMode));
+
+  for (const sectionName of SECTION_SCREEN_SORT_ORDER) {
+    if (sectionName in deck.sections) {
+      outputSections.push(handleSection(deck.sections[sectionName], groupingMode, sortingMode));
+    }
   }
-  
+
   return outputSections;
 }
 
@@ -316,7 +318,7 @@ export function sectionCardCount(section: SortedSection) {
 
 export function flatten(grouping: GroupingResult): CardWithLocation[] {
   const output: CardWithLocation[] = [];
-  
+
   for (const section of grouping) {
     for (const group of section.groups) {
       for (const card of group.cards) {
@@ -327,6 +329,6 @@ export function flatten(grouping: GroupingResult): CardWithLocation[] {
       }
     }
   }
-  
+
   return output;
 }
