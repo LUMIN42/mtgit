@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {DeckSectionName, maximumCardAmount, maximumCardAmountWithoutCard} from "@mtgit/shared";
 import {useScryfallCache} from "../../context/ScryfallCacheContext.tsx";
@@ -20,23 +20,10 @@ function CardAmountEditor({branchName, oracleId, deckSection = "Main"}: CardAmou
   const currentCount = repository.branches?.[branchName]?.[deckSection]?.[oracleId] ?? 0;
 
 
-  const {getCard} = useScryfallCache();
-
-  const [maxCount, setMaxCount] = useState(maximumCardAmountWithoutCard(repository.format));
-
-  useEffect(() => {
-    const loadCard = async () => {
-      const card = await getCard(oracleId);
-
-      if (!card) {
-        throw new Error("Card not found.");
-      }
-
-      setMaxCount(maximumCardAmount(card, repository.format));
-    };
-
-    loadCard();
-  }, [oracleId, repository.format]);
+  const {tryGetCard} = useScryfallCache();
+  
+  const card = tryGetCard(oracleId);
+  const maxCount = card ? maximumCardAmount(card, repository.format) : maximumCardAmountWithoutCard(repository.format);
 
   return (
     <>

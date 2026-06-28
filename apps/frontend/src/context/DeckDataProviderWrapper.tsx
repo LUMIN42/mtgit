@@ -1,19 +1,17 @@
 import React, {ReactNode} from "react";
 import {useRepositoryContext} from "./RepositoryContext.tsx";
-import {DeckDataProvider} from "./DeckDataContext.tsx";
+import {DeckDataProviderInner} from "./DeckDataContext.tsx";
 
 type DeckDataProviderWrapperProps = {
   children: ReactNode;
 };
 
-function DeckDataProviderWrapper({children}: DeckDataProviderWrapperProps) {
+export function DeckDataProviderWrapper({children}: DeckDataProviderWrapperProps) {
   const {selectedBranchContent} = useRepositoryContext();
 
   return (
-    <DeckDataProvider sections={selectedBranchContent}>
+    <DeckDataProviderInner sections={selectedBranchContent}>
       {children}
-    </DeckDataProvider>
+    </DeckDataProviderInner>
   );
 }
-
-export default DeckDataProviderWrapper;

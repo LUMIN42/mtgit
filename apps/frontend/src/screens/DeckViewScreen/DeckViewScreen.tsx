@@ -13,6 +13,7 @@ import {
 } from "../../context/DeckUiContext.tsx";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import BranchSelector from "../../components/DeckViewScreen/BranchSelector.tsx";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
@@ -25,7 +26,6 @@ export function DeckViewScreen() {
     ui.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
   };
 
-  const branches = Object.keys(repo.repository?.branches ?? {});
 
   return (
     <Stack>
@@ -49,28 +49,6 @@ export function DeckViewScreen() {
         <Button variant="default" onClick={() => setIsCreateBranchOpen(true)}>
           Add branch
         </Button>
-
-        <Select
-          label="Branch:"
-          p="xs"
-          data={branches}
-          value={repo.selectedBranchName}
-          onChange={value => repo.setSelectedBranchName(value)}
-          searchable
-        />
-
-        <Select
-          label="Comparison branch:"
-          p="xs"
-          data={[...branches.filter(b => b !== repo.selectedBranchName), "None"]}
-          value={uiState.comparisonBranchName ?? "None"}
-          onChange={value =>
-            uiState.setComparisonBranchName(
-              value === "None" ? undefined : value
-            )
-          }
-          searchable
-        />
       </Group>
 
       <CreateBranchModal

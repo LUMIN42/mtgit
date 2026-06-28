@@ -7,7 +7,7 @@ import {RepositoryProvider} from "../../context/RepositoryContext.tsx";
 import {Center, Loader} from "@mantine/core";
 import DeckViewScreenWrapperInner from "./DeckViewScreenWrapperInner.tsx";
 import {DeckUiProvider} from "../../context/DeckUiContext.tsx";
-import DeckDataProviderWrapper from "../../context/DeckDataProviderWrapper.tsx";
+import {DeckDataProviderWrapper} from "../../context/DeckDataProviderWrapper.tsx";
 
 export function DeckViewScreenWrapper() {
   const {deckId} = useParams<{deckId: string}>();

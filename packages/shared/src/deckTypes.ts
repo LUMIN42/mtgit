@@ -4,7 +4,6 @@ import type {ScryfallOracleCard} from "./scryfall.js";
 import {
   DECK_SECTION_NAMES,
   DeckSectionName,
-  OptionalDeckSectionName,
   TagsMap
 } from "./repositoryTypes.js";
 
@@ -17,7 +16,6 @@ export const SECTION_BY_LABEL: Record<string, DeckSectionName> =
     DECK_SECTION_NAMES.map(name => [name.toLowerCase(), name])
   );
 
-// Card with count property, count is part of the card object itself
 export interface DeckCard extends ScryfallOracleCard {
   count: number;
 }
@@ -101,12 +99,11 @@ export class DeckSection implements Iterable<TaggedDeckCard> {
   }
 }
 
-export type DeckSections = {
-  Main: DeckSection;
-} & Partial<Record<OptionalDeckSectionName, DeckSection>>;
+export type DeckSections = Partial<Record<DeckSectionName, DeckSection>>;
 
 export class Deck {
   constructor(public sections: DeckSections) {
+    // this.sections = sections;
   }
 
   isEmpty(): boolean {
@@ -114,6 +111,11 @@ export class Deck {
       (cum, cur) => cum && cur.isEmpty(),
       true
     );
+  }
+
+  addCardCount(deckCard: TaggedDeckCard, deckSection: DeckSectionName) {
+    this.sections[deckSection] ??= new DeckSection(deckSection);
+    this.sections[deckSection].addCard(deckCard, deckCard.count);
   }
 
   // toDeckCardAmounts(): DeckCardCounts {
@@ -166,7 +168,7 @@ export class Deck {
   //   return current.merge(other);
   // }
 
-  static empty(name: string): Deck {
+  static empty(): Deck {
     return new Deck({
       Main: new DeckSection("Main", [])
     });

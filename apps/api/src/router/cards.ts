@@ -1,7 +1,7 @@
 import {z} from "zod";
 import {router, publicProcedure} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
-import {ScryfallOracleCardSchema} from "@mtgit/shared";
+import {ScryfallOracleCard, ScryfallOracleCardSchema} from "@mtgit/shared";
 import {TRPCError} from "@trpc/server";
 
 const CardIdSchema = z.string();
@@ -9,7 +9,7 @@ const CardIdSchema = z.string();
 /**
  * Internal helper: normalize + validate Mongo document
  */
-function parseCard(raw: unknown) {
+function parseCard(raw: unknown):ScryfallOracleCard {
   return ScryfallOracleCardSchema.parse(raw);
 }
 

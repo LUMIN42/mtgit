@@ -56,7 +56,7 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [submittedSearch, setSubmittedSearch] = useState("");
-  const [comparisonBranchName, setComparisonBranchName] = useState(undefined);
+  const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
 
   const value: DeckUIContextValue = {
     sectionOrder: SECTION_ORDER,

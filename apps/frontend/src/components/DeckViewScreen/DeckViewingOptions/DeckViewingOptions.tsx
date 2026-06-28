@@ -8,6 +8,7 @@ import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
 import {DeckMainCountBadge} from "./DeckMainCountBadge.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
+import BranchSelector from "../BranchSelector.tsx";
 
 export function DeckViewingOptions({horizontal = false}: {horizontal?: boolean}) {
   const {
@@ -16,50 +17,57 @@ export function DeckViewingOptions({horizontal = false}: {horizontal?: boolean})
   } = useDeckUiContext();
 
 
-  const content = (
+  const commonContent = (
     <>
       <DeckPreviewImage visible={displayMode !== "Images"} imageUrl={hoveredCardImageUrl}/>
       <CardSearchSection/>
       <DeckFilterSection/>
-      <DeckGroupingSection />
-      <DeckSortingSection  />
-      <DeckSectionsToc/>
+      <BranchSelector/>
+      <DeckGroupingSection/>
+      <DeckSortingSection/>
       <DeckMainCountBadge/>
-      <ManaCurvePlot/>
     </>
   );
 
-  return (
-    <Paper pos={"relative"} top={"-0.75rem"} h={"100%"}>
-      <
-        Paper
+  if (horizontal) {
+    return (
+      <Paper
         pos="sticky"
         top={0}
-        h="100vh"
         py={"sm"}
-        style={{
-          transition: "padding 50ms ease-out"
-        }}
       >
         <Paper withBorder h="100%" px={"sm"} py={"xs"}>
-          <ScrollArea h="100%" type="auto">
-            <Box
-
-            >
-              {horizontal ? (
-                <Group align="flex-start" gap="xl" wrap="wrap">
-                  {content}
-                </Group>
-              ) : (
-                <Stack align="stretch" gap="xl" justify="space-between" h="100%">
-                  {content}
-                </Stack>
-              )}
-            </Box>
-          </ScrollArea>
+          {/*<ScrollArea h="100%" type="auto">*/}
+          <Box>
+            <Group align="flex-start" gap="xl" wrap="wrap">
+              {commonContent}
+            </Group>
+          </Box>
+          {/*</ScrollArea>*/}
         </Paper>
       </Paper>
-    </Paper>
-
-  );
+    );
+  }
+  else {
+    return (
+      <Paper pos={"relative"} top={"-0.75rem"} h={"100%"} style={{zIndex: 3}}>
+        <Paper
+          pos="sticky"
+          top={0}
+          h="100vh"
+          py={"sm"}
+        >
+          <Paper withBorder h="100%" px={"sm"} py={"xs"}>
+            <ScrollArea h="100%" type="auto">
+              <Stack align="stretch" gap="xl" justify="space-between" h="100%">
+                {commonContent}
+                <DeckSectionsToc/>
+                <ManaCurvePlot/>
+              </Stack>
+            </ScrollArea>
+          </Paper>
+        </Paper>
+      </Paper>
+    );
+  }
 }

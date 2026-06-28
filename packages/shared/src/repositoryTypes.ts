@@ -1,6 +1,6 @@
 import {z} from "zod";
-import {Format, FormatSchema} from "./deckFormats.ts";
-import {relevantSections} from "./cardTypes.ts";
+import {Format, FormatSchema} from "./deckFormats.js";
+import {relevantSections} from "./cardTypes.js";
 
 export type TagsMap = Record<string, string[]>;
 
@@ -81,8 +81,6 @@ export type Branches = z.infer<typeof BranchesSchema>;
 export type Repository = z.infer<typeof RepositorySchema>;
 
 
-emptyDeckCardCounts();
-
 export function createEmptyRepositoryTemplate(name: string, owner_id: string, format: Format) {
   return {
     name,
@@ -93,6 +91,20 @@ export function createEmptyRepositoryTemplate(name: string, owner_id: string, fo
     },
     format
   };
+}
+
+export function allDeckOracleIds(cardCounts: DeckCardCounts) {
+  const result = new Set<string>();
+
+  for (const sectionNameRaw in cardCounts) {
+    const sectionName = sectionNameRaw as DeckSectionName;
+
+    for (const oracleId of Object.keys(cardCounts[sectionName]!)) {
+      result.add(oracleId);
+    }
+  }
+
+  return [...result.keys()];
 }
 
 export function copyDeckCardAmounts(cardAmounts: DeckCardCounts) {
