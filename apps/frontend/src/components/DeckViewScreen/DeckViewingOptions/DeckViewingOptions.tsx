@@ -34,7 +34,14 @@ export function DeckViewingOptions({horizontal = false}: {horizontal?: boolean})
       <Paper
         pos="sticky"
         top={0}
-        py={"sm"}
+        pt="sm"
+        style={{
+          zIndex: 3,
+          borderTopLeftRadius: 0,
+          borderTopRightRadius: 0,
+          borderBottomLeftRadius: 8,
+          borderBottomRightRadius: 8
+        }}
       >
         <Paper withBorder h="100%" px={"sm"} py={"xs"}>
           {/*<ScrollArea h="100%" type="auto">*/}

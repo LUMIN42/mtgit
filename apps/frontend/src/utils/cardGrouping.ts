@@ -1,7 +1,7 @@
 import {CardGroupingMode, CardSortMode, SECTION_SCREEN_SORT_ORDER} from "../types/grouping.ts";
 import {
-  type Deck,
-  type DeckSection,
+  type HydratedDeck,
+  type HydratedDeckSection,
   type DeckSectionName, isMainCardType, MainCardType,
   type ScryfallOracleCard
 } from "@mtgit/shared";
@@ -273,8 +273,8 @@ function sortCardsInGroup(cards: TaggedDeckCard[], mode: CardSortMode): TaggedDe
   });
 }
 
-function handleSection(section: DeckSection, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
-  const groups = groupCardsByMode(section.toArray(), groupingMode);
+function handleSection(section: HydratedDeckSection, sectionName: DeckSectionName, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
+  const groups = groupCardsByMode(Object.values(section), groupingMode);
 
   let sortedGroups = groups.map(group => {
     return {
@@ -289,17 +289,17 @@ function handleSection(section: DeckSection, groupingMode: CardGroupingMode, sor
 
 
   return {
-    name: section.name,
+    name: sectionName,
     groups: sortedGroups
   };
 }
 
-export function performGrouping(deck: Deck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
+export function performGrouping(deck: HydratedDeck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
   const outputSections: SortedSection[] = [];
 
   for (const sectionName of SECTION_SCREEN_SORT_ORDER) {
-    if (sectionName in deck.sections) {
-      outputSections.push(handleSection(deck.sections[sectionName], groupingMode, sortingMode));
+    if (sectionName in deck) {
+      outputSections.push(handleSection(deck[sectionName], sectionName, groupingMode, sortingMode));
     }
   }
 

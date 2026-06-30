@@ -5,7 +5,7 @@ import {
 } from "react";
 import type {ReactNode} from "react";
 
-import {Deck} from "@mtgit/shared";
+import {HydratedDeck} from "@mtgit/shared";
 import type {
   DeckCardCounts
 } from "@mtgit/shared";
@@ -17,9 +17,9 @@ import {useDeckUiContext} from "./DeckUiContext.tsx";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 
 export interface DeckDataContextValue {
-  deck: Deck;
+  deck: HydratedDeck;
   isLoading: boolean;
-  filteredDeck: Deck;
+  filteredDeck: HydratedDeck;
 }
 
 export interface DeckDataProviderProps {
@@ -103,7 +103,7 @@ export function DeckDataProviderInner({
 
   const deck = partiallyReconstructedDeck(sections, repository.tags);
 
-  let filteredDeck = Deck.empty();
+  let filteredDeck = {};
   if (deck !== null) {
     filteredDeck = filterDeckByScryfallQuery(deck, ui.cardFilterQuery);
   }
@@ -115,7 +115,7 @@ export function DeckDataProviderInner({
   return (
     <DeckDataContext.Provider
       value={{
-        deck: deck ?? Deck.empty(),
+        deck: deck ?? {},
         isLoading: deck !== null,
         filteredDeck
       }}

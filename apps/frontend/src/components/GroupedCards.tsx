@@ -9,9 +9,9 @@ import {CardGroup} from "./DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "./DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
-import {withTags} from "@mtgit/shared";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useDeckDataContext} from "../context/DeckDataContext.tsx";
+import {cardCount} from "@mtgit/shared";
 
 export function GroupedCards() {
   const {displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
@@ -22,13 +22,8 @@ export function GroupedCards() {
   const tags = repository?.tags ?? {};
   // Track currently selected card for the modal
 
-  /**
-   * Memoized preparation of deck sections and a flat card list for the modal.
-   */
-  const tagged = withTags(filteredDeck, tags);
-
   const groups = performGrouping(
-    tagged.deck,
+    filteredDeck,
     groupingMode,
     sortingMode
   );
@@ -85,7 +80,7 @@ export function GroupedCards() {
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading="true"
               >
-                {section.name} ({filteredDeck.sections[section.name].getCardCount()})
+                {section.name} ({cardCount(filteredDeck[section.name])})
               </Text>
 
               {/* Render groups within the section */}

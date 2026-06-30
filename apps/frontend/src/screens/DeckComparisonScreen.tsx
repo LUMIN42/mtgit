@@ -1,24 +1,34 @@
-import React, {useEffect} from "react";
+import React from "react";
 import {Grid, Stack} from "@mantine/core";
 import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {GroupedCards} from "../components/GroupedCards.tsx";
-import {DeckDataProviderInner} from "../context/DeckDataContext.tsx";
+import {DeckDataProviderInner, useDeckDataContext} from "../context/DeckDataContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {performGrouping} from "../utils/cardGrouping.ts";
+import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 
 export function DeckComparisonScreen() {
   const {comparisonBranchName} = useDeckUiContext();
   const {repository} = useRepositoryContext();
+  const uiState = useDeckUiContext();
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
   const {partiallyReconstructedDeck, fetchMissingDeckCards} = useScryfallCache();
 
-  useEffect(() => {
-    fetchMissingDeckCards(comparisonBranchContent);
-  }, [comparisonBranchContent]);
+  const {filteredDeck} = useDeckDataContext();
 
-  const comparisonDeck = partiallyReconstructedDeck(comparisonBranchContent, repository.tags);
+  fetchMissingDeckCards(comparisonBranchContent);
+
+
+  const comparisonDeck = filterDeckByScryfallQuery(
+    partiallyReconstructedDeck(comparisonBranchContent, repository.tags),
+    uiState.cardFilterQuery
+  );
+
+  const leftGrouping = performGrouping(partiallyReconstructedDeck, uiState.groupingMode, uiState.sortingMode);
+
 
   return (
     <Stack>

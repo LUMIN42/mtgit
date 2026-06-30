@@ -6,14 +6,14 @@ import {
 import type {ReactNode} from "react";
 import {ScryfallOracleCard, ScryfallOracleCardSchema} from "@mtgit/shared/scryfall";
 import {trpcClient} from "../trpcClient.ts";
-import {allDeckOracleIds, Deck, DeckCardCounts, DeckSectionName, TagsMap} from "@mtgit/shared";
+import {allDeckOracleIds, HydratedDeck, DeckCardCounts, TagsMap} from "@mtgit/shared";
 import {z} from "zod";
 
 type ScryfallCacheValue = {
   // getCard: (oracleId: string) => Promise<ScryfallOracleCard | undefined>;
   // getCards: (oracleIds: string[]) => Promise<(ScryfallOracleCard | undefined)[]>;
   // clear: () => void;
-  partiallyReconstructedDeck: (cardCounts: DeckCardCounts, tags: TagsMap) => Deck;
+  partiallyReconstructedDeck: (cardCounts: DeckCardCounts, tags: TagsMap) => HydratedDeck;
   fetchMissingDeckCards: (deckCardCounts: DeckCardCounts) => Promise<void>;
   tryGetCard: (oracleId: string) => ScryfallOracleCard | undefined;
 };
@@ -29,6 +29,9 @@ export function ScryfallCacheProvider({
   const [map, setMap] = useState<
     Record<string, ScryfallOracleCard>
   >({});
+
+  const [fetchingCards, setFetchingCards] = useState<Set<string>>(new Set());
+
 
   // const getCard = async (id: string): Promise<ScryfallOracleCard> => {
   //   const cached = map[id];
@@ -60,41 +63,35 @@ export function ScryfallCacheProvider({
   // };
 
   const fetchMissingCards = async (ids: string[]): Promise<void> => {
-    const missing = new Set<string>();
+    const missing = ids.filter(id => !map[id] && !fetchingCards.has(id));
 
-    for (const id of ids) {
-      if (!(id in map)) {
-        missing.add(id);
-      }
+    if (missing.length === 0) {
+      return;
     }
 
-    const result = await trpcClient.cards.getMany.query(
-      {cardIds: [...missing]}
-    );
+    setFetchingCards(prev => new Set([...prev, ...missing]));
 
-    const cardListSchema = z.array(ScryfallOracleCardSchema);
+    const result = await trpcClient.cards.getMany.query({
+      cardIds: missing
+    });
 
-    const cards = cardListSchema.parse(result);
+    const cards = z.array(ScryfallOracleCardSchema).parse(result);
 
     const newMap = Object.fromEntries(
       cards.map(card => [card.oracle_id, card])
     );
 
-    setMap(
-      {
-        ...map,
-        ...newMap
-      }
-    );
+    setMap(prev => ({
+      ...prev,
+      ...newMap
+    }));
   };
 
   const fetchMissingDeckCards = async (deckCardCounts: DeckCardCounts) => {
     await fetchMissingCards(allDeckOracleIds(deckCardCounts));
   };
 
-  /**
-   * 🔥 bulk fetch with partial cache hit
-   */
+
   // const getCards = async (ids: string[]) => {
   //   const result: (ScryfallOracleCard | undefined)[] = [];
   //   const missing: string[] = [];
@@ -140,20 +137,19 @@ export function ScryfallCacheProvider({
   // };
 
   const partiallyReconstructedDeck = (cardCounts: DeckCardCounts, tags: TagsMap) => {
-    const result = Deck.empty();
+    const result: HydratedDeck = {};
 
     for (const sectionName in cardCounts) {
+      result[sectionName] ??= {};
+
       for (const oracleId in cardCounts[sectionName]) {
         const cardCount = cardCounts[sectionName][oracleId];
         if (oracleId in map) {
-          result.addCardCount(
-            {
-              ...map[oracleId],
-              count: cardCount,
-              tags: tags[oracleId] ?? []
-            },
-            sectionName as DeckSectionName
-          );
+          result[sectionName][oracleId] = {
+            ...map[oracleId],
+            count: cardCount,
+            tags: tags[oracleId] ?? []
+          };
         }
       }
     }

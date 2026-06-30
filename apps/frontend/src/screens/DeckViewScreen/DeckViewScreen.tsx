@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {Button, Grid, Group, Select, Stack, Title} from "@mantine/core";
+import {Button, Grid, Group, Stack, Title} from "@mantine/core";
 import {useState} from "react";
 
 import style from "../../assets/index.module.css";
@@ -13,7 +13,6 @@ import {
 } from "../../context/DeckUiContext.tsx";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
-import BranchSelector from "../../components/DeckViewScreen/BranchSelector.tsx";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();

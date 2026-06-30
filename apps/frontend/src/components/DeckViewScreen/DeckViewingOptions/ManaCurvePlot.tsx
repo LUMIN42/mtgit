@@ -15,7 +15,7 @@ export function ManaCurvePlot() {
   const manaCurveData = useMemo(() => {
     const countsPerCMC: Record<number, number> = {};
 
-    for (const card of filteredDeck.sections.Main) {
+    for (const card of Object.values(filteredDeck.Main) ?? []) {
       if (card.type_line.toLowerCase().includes("land")) {
         continue;
       }
@@ -28,7 +28,7 @@ export function ManaCurvePlot() {
       cmc: cmc === "10" ? "10+" : cmc,
       cards: count
     }));
-  }, [filteredDeck.sections.Main]);
+  }, [filteredDeck.Main]);
 
   /**
    * Stable click handler

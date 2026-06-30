@@ -3,6 +3,7 @@ import {useState} from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {trpc} from "../../trpcClient.ts";
 import {useDeckDataContext} from "../../context/DeckDataContext.tsx";
+import {isEmpty} from "@mtgit/shared";
 
 export function DeckImportModal() {
   const {repository, selectedBranchName, selectedBranchContent} = useRepositoryContext();
@@ -51,7 +52,7 @@ export function DeckImportModal() {
     }
   };
 
-  const empty = deck.isEmpty();
+  const empty = isEmpty(deck);
 
   return (
     <>
