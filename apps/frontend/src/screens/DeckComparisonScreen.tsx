@@ -55,10 +55,16 @@ export function DeckComparisonScreen() {
                           <Title style={{textAlign: "center"}} order={3}>{group.heading}</Title>
                         </Grid.Col>
 
+
                         <Grid.Col span={5} key={`${section.sectionName}-${group.heading}-left`}>
-                          <CardGroup group={{heading: group.heading, cards: group.leftCards}}
-                            sectionName={section.sectionName}
-                            groupKey={group.heading}/>
+                          <Stack pos={"relative"} h={"100%"}>
+                            <CardGroup group={{heading: group.heading, cards: group.leftCards}}
+                              sectionName={section.sectionName}
+                              groupKey={group.heading}
+                              sticky={true}
+                              rightToLeft={true}
+                            />
+                          </Stack>
                         </Grid.Col>
 
                         {/*align={"center"}*/}
@@ -66,10 +72,14 @@ export function DeckComparisonScreen() {
                           <Divider h={"100%"} mx={"auto"} w={"fit-content"} orientation={"vertical"}/>
                         </Grid.Col>
 
-                        <Grid.Col span={5} key={`${section.sectionName}-${group.heading}-right`}>
-                          <CardGroup group={{heading: group.heading, cards: group.rightCards}}
-                            sectionName={section.sectionName}
-                            groupKey={group.heading}/>
+                        <Grid.Col pos={"relative"} span={5} key={`${section.sectionName}-${group.heading}-right`}>
+                          <Stack pos={"relative"} h={"100%"}>
+                            <CardGroup group={{heading: group.heading, cards: group.rightCards}}
+                              sectionName={section.sectionName}
+                              groupKey={group.heading}
+                              sticky={true}
+                            />
+                          </Stack>
                         </Grid.Col>
 
 

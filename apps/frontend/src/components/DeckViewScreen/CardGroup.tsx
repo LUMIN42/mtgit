@@ -6,6 +6,8 @@ import type {CardLocation, SortedGroup} from "../../utils/cardGrouping.ts";
 import type {DeckSectionName} from "@mtgit/shared";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import type {CardSortMode} from "../../types/grouping.ts";
+import {useElementSize} from "@mantine/hooks";
+import {useMemo} from "react";
 
 interface CardGroupProps {
   group: SortedGroup;
@@ -16,6 +18,7 @@ interface CardGroupProps {
   onCardHover?: (imageUrl: string | null) => void;
   quicklyAdjustable?: boolean;
   rightToLeft?: boolean;
+  sticky?: boolean;
 }
 
 export function CardGroup({
@@ -27,14 +30,23 @@ export function CardGroup({
   onCardHover = () => {
   },
   quicklyAdjustable = false,
-  rightToLeft = false
+  rightToLeft = false,
+  sticky = false
 }: CardGroupProps) {
 
   const {displayMode} = useDeckUiContext();
+  const {ref, height} = useElementSize();
+
+  const isTall = useMemo(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return height >= window.innerHeight;
+  }, [height]);
 
   if (displayMode === "Text") {
     return (
-      <Stack w={"100%"} gap="xs" style={{flexDirection: "row-reverse"}}>
+      <Stack w={"100%"} gap="xs">
         {group.cards.map((card, index) => (
           <Card
             key={`${groupKey}-${card.id}-${index}`}
@@ -50,7 +62,20 @@ export function CardGroup({
   }
 
   return (
-    <Box className={style.grid}>
+    <Box
+      // pos={sticky ? "sticky" : "initial"}
+      ref={ref}
+      pos={"sticky"}
+      bottom={sticky && isTall ? "1em" : "initial"}
+      top={sticky && !isTall ? "8em" : "initial"}
+
+      mt={sticky && isTall ? "auto" : 0}
+      // top={sticky ? 0 : "initial"}
+      className={style.grid}
+      style={{
+        direction: rightToLeft ? "rtl" : "initial",
+        justifySelf: "flex-end"
+      }}>
       {group.cards.map((card, index) => (
         <Card
           key={`${groupKey}-${card.id}-${index}`}
