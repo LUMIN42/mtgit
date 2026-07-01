@@ -14,6 +14,8 @@ function CardAddingPanel({cardAmount}: CardAddingPanelProps) {
 
   const {oracle_id} = cardAmount;
 
+  const canBeCommander = cardAmount.type_line.includes("Legendary") &&
+    cardAmount.type_line.includes("Creature");
 
   return (
     <Table w={"fit-content"} style={{whiteSpace: "nowrap", textAlign: "center"}}>
@@ -24,14 +26,18 @@ function CardAddingPanel({cardAmount}: CardAddingPanelProps) {
           {
             relevantSections(repository.format)
               .map(
-                sectionName =>
-                  <Table.Th key={sectionName}>
-                    {sectionName}
-                  </Table.Th>
+                sectionName => {
+                  if (sectionName == "Commander" && !canBeCommander) {
+                    return null;
+                  }
+
+                  return (
+                    <Table.Th key={sectionName}>
+                      {sectionName}
+                    </Table.Th>);
+                }
               )
           }
-
-
         </Table.Tr>
       </Table.Thead>
 
@@ -49,10 +55,15 @@ function CardAddingPanel({cardAmount}: CardAddingPanelProps) {
               {
                 relevantSections(repository.format)
                   .map(
-                    sectionName =>
-                      <Table.Td ta={"center"} key={sectionName}>
+                    sectionName => {
+                      if (sectionName == "Commander" && !canBeCommander) {
+                        return null;
+                      }
+
+                      return (<Table.Td ta={"center"} key={sectionName}>
                         <CardAmountEditor branchName={branchName} oracleId={oracle_id} deckSection={sectionName}/>
-                      </Table.Td>
+                      </Table.Td>);
+                    }
                   )
               }
 
