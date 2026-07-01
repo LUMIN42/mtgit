@@ -143,7 +143,7 @@ export function getGroupHeadingId(groupingMode: CardGroupingMode, heading: strin
  * @param mode The grouping mode.
  * @returns The sorted array of headings.
  */
-function sortGroupedHeadings(headings: string[], mode: CardGroupingMode): string[] {
+export function sortGroupHeadings(headings: string[], mode: CardGroupingMode): string[] {
   return headings.sort((left, right) => {
     if (mode === "manaValue") {
       if (left === MANA_VALUE_LANDS_GROUP) {
@@ -207,12 +207,11 @@ export function groupCardsByMode(cards: TaggedDeckCard[], mode: CardGroupingMode
     }
   }
 
-  const sortedHeadings = sortGroupedHeadings(Array.from(groups.keys()), mode);
+  const sortedHeadings = sortGroupHeadings(Array.from(groups.keys()), mode);
 
   return sortedHeadings.map(heading => ({
     heading,
-    cards: groups.get(heading) ?? [],
-    offset: -1
+    cards: groups.get(heading) ?? []
   }));
 }
 
@@ -283,7 +282,7 @@ function handleSection(section: HydratedDeckSection, sectionName: DeckSectionNam
     };
   });
 
-  const headingOrder = sortGroupedHeadings(groups.map(group => group.heading), groupingMode);
+  const headingOrder = sortGroupHeadings(groups.map(group => group.heading), groupingMode);
 
   sortedGroups = headingOrder.map(heading => sortedGroups.find(group => group.heading == heading));
 

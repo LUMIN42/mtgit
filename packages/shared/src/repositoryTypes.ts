@@ -131,3 +131,55 @@ export function mergeCardCounts(a: CardCounts, b: CardCounts): CardCounts {
 
   return result;
 }
+
+export function withoutIdenticalParts(
+  deck1: DeckCardCounts,
+  deck2: DeckCardCounts
+): [DeckCardCounts, DeckCardCounts] {
+  const result1: DeckCardCounts = {};
+  const result2: DeckCardCounts = {};
+
+  const sections = new Set([
+    ...Object.keys(deck1),
+    ...Object.keys(deck2)
+  ]) as Set<DeckSectionName>;
+
+  for (const section of sections) {
+    const section1 = deck1[section] ?? {};
+    const section2 = deck2[section] ?? {};
+
+    const ids = new Set([
+      ...Object.keys(section1),
+      ...Object.keys(section2)
+    ]);
+
+    const sectionCardCounts1: CardCounts = {};
+    const sectionCardCounts2: CardCounts = {};
+
+    for (const id of ids) {
+      const cardCount1 = section1[id];
+      const cardCount2 = section2[id];
+
+      if (cardCount1 === undefined && cardCount2 === undefined) {
+        continue;
+      }
+
+      if (cardCount1 === cardCount2) {
+        // identical → drop from both
+        continue;
+      }
+
+      if (cardCount1 !== undefined) {
+        sectionCardCounts1[id] = cardCount1;
+      }
+      if (cardCount2 !== undefined) {
+        sectionCardCounts2[id] = cardCount2;
+      }
+    }
+
+    result1[section] = sectionCardCounts1;
+    result2[section] = sectionCardCounts2;
+  }
+
+  return [result1, result2];
+}

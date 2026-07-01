@@ -44,10 +44,6 @@ html, body, #root, .gridRoot {
     position: relative;
 }
 
-.cardNameList {
-    width: 100%;
-}
-
 .cardNameItem {
     border: 1px solid lightgray;
     border-radius: 6px;
