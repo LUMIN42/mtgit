@@ -14,9 +14,6 @@ function BranchSelector() {
   const selectedBranch = repo.selectedBranchName;
   const comparisonBranch = uiState.comparisonBranchName;
 
-  /**
-   * Derived option sets (single source of truth)
-   */
   const editedBranchOptions = React.useMemo(() => {
     return branches.filter(b => b !== comparisonBranch);
   }, [branches, comparisonBranch]);
@@ -28,9 +25,6 @@ function BranchSelector() {
     ];
   }, [branches, selectedBranch]);
 
-  /**
-   * Swap logic (guarded)
-   */
   const swapBranches = () => {
     if (!selectedBranch || !comparisonBranch) return;
     if (selectedBranch === comparisonBranch) return;
@@ -39,9 +33,6 @@ function BranchSelector() {
     uiState.setComparisonBranchName(selectedBranch);
   };
 
-  /**
-   * Safety guard: never allow invalid state
-   */
   React.useEffect(() => {
     if (
       selectedBranch &&
@@ -53,10 +44,10 @@ function BranchSelector() {
   }, [selectedBranch, comparisonBranch, uiState]);
 
   return (
-    <Flex wrap="nowrap" align="end" gap="sm">
+    <Flex wrap="nowrap" align="center" gap="sm">
       <Select
-        label="Edited Branch:"
-        p="xs"
+        size="xs"
+        label="Editing"
         data={editedBranchOptions}
         value={selectedBranch}
         onChange={value => {
@@ -64,27 +55,25 @@ function BranchSelector() {
 
           repo.setSelectedBranchName(value);
 
-          // auto-fix invalid state immediately
-          if (value === comparisonBranch)
+          if (value === comparisonBranch) {
             uiState.setComparisonBranchName(null);
-
+          }
         }}
         searchable
       />
 
       <ActionIcon
         variant="light"
-        size="lg"
+        size="sm"
         onClick={swapBranches}
         disabled={!selectedBranch || !comparisonBranch}
-        style={{alignSelf: "flex-end"}}
       >
-        <IconArrowsLeftRight size={18}/>
+        <IconArrowsLeftRight size={16}/>
       </ActionIcon>
 
       <Select
-        label="Comparison Branch:"
-        p="xs"
+        size="xs"
+        label="Compare"
         data={comparisonBranchOptions}
         value={comparisonBranch ?? "None"}
         onChange={value =>
