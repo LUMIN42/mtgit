@@ -63,7 +63,7 @@ export default defineConfig([
       "no-eval": ["error"],
       "no-warning-comments": "off",
       curly: ["warn", "multi-line"],
-      "brace-style": ["warn", "1tbs", {allowSingleLine: false}],
+      // "brace-style": ["warn", "1tbs", {allowSingleLine: false}],
 
       // Replaced by the @typescript-eslint rules.
       "no-unused-vars": "off",

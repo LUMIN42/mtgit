@@ -1,13 +1,11 @@
-import {createContext, useContext, useState} from "react";
+import {createContext, useContext, useEffect} from "react";
 import type {ReactNode} from "react";
 import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
 import {trpc} from "../trpcClient.ts";
+import {useDeckUiContext} from "./DeckUiContext.tsx";
 
 type RepositoryContextValue = {
   repository: Repository | null;
-
-  selectedBranchName: string | null;
-  setSelectedBranchName: (n: string | null) => void;
 
   selectedBranchContent: DeckCardCounts | undefined;
 
@@ -28,12 +26,18 @@ export function RepositoryProvider({
   repository
 }: {
   children: ReactNode;
-  repository: Repository | null;
+  repository: Repository;
 }) {
   const utils = trpc.useUtils();
 
-  const [selectedBranchName, setSelectedBranchName] = useState<string | null>(
-    "main"
+  const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
+
+  useEffect(
+    () => {
+      if (selectedBranchName === null) {
+        setSelectedBranchName(Object.keys(repository.branches)[0]);
+      }
+    }
   );
 
   const updateTagEndpoint = trpc.decks.setTag.useMutation({
@@ -173,8 +177,6 @@ export function RepositoryProvider({
       value={{
         repository,
 
-        selectedBranchName,
-        setSelectedBranchName,
         setCardAmount,
 
         selectedBranchContent,

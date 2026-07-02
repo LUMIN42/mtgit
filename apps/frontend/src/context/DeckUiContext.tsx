@@ -1,4 +1,4 @@
-import type {Dispatch, ReactNode, SetStateAction} from "react";
+import {Dispatch, ReactNode, SetStateAction} from "react";
 import {createContext, useContext, useState} from "react";
 import type {DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
@@ -36,16 +36,15 @@ interface DeckUIContextValue {
 
   comparisonBranchName: string | null;
   setComparisonBranchName: Dispatch<SetStateAction<string | null>>;
+
+  selectedBranchName: string | null;
+  setSelectedBranchName: (n: string | null) => void;
 }
 
-type DeckContextValue = DeckDataContextValue & DeckUIContextValue;
 
 const DeckUIContext = createContext<DeckUIContextValue | undefined>(undefined);
 const SECTION_ORDER: DeckSectionName[] = ["Commander", "Main", "Considering"];
 
-interface DeckProviderProps {
-  children: ReactNode;
-}
 
 export function DeckUiProvider({children}: {children: ReactNode}) {
   const [viewMode, setViewMode] = useState<DeckViewMode>("Deck");
@@ -57,6 +56,7 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [isSearching, setIsSearching] = useState(false);
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
+  const [selectedBranchName, setSelectedBranchName] = useState(null);
 
   const value: DeckUIContextValue = {
     sectionOrder: SECTION_ORDER,
@@ -77,7 +77,10 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
     submittedSearch,
     setSubmittedSearch,
     comparisonBranchName,
-    setComparisonBranchName
+    setComparisonBranchName,
+
+    selectedBranchName,
+    setSelectedBranchName
   };
 
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;

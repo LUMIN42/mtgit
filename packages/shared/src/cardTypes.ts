@@ -54,7 +54,7 @@ export function maximumCardAmount(card: ScryfallOracleCard, format: Format) {
     return Infinity;
   }
 
-  else if (card.oracle_text.includes("A deck can have any number of cards named")) {
+  else if ((card.oracle_text ?? "").includes("A deck can have any number of cards named")) {
     return Infinity;
   }
 

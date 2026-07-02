@@ -11,7 +11,7 @@ function BranchSelector() {
 
   const branches = Object.keys(repo.repository?.branches ?? {});
 
-  const selectedBranch = repo.selectedBranchName;
+  const selectedBranch = uiState.selectedBranchName;
   const comparisonBranch = uiState.comparisonBranchName;
 
   const editedBranchOptions = React.useMemo(() => {
@@ -29,7 +29,7 @@ function BranchSelector() {
     if (!selectedBranch || !comparisonBranch) return;
     if (selectedBranch === comparisonBranch) return;
 
-    repo.setSelectedBranchName(comparisonBranch);
+    uiState.setSelectedBranchName(comparisonBranch);
     uiState.setComparisonBranchName(selectedBranch);
   };
 
@@ -53,7 +53,7 @@ function BranchSelector() {
         onChange={value => {
           if (!value) return;
 
-          repo.setSelectedBranchName(value);
+          uiState.setSelectedBranchName(value);
 
           if (value === comparisonBranch) {
             uiState.setComparisonBranchName(null);

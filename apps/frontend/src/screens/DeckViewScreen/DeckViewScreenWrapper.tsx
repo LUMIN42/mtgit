@@ -38,12 +38,13 @@ export function DeckViewScreenWrapper() {
   }
 
   return (
-    <RepositoryProvider repository={deckQuery.data}>
-      <DeckUiProvider>
+    <DeckUiProvider>
+      <RepositoryProvider repository={deckQuery.data}>
         <DeckDataProviderWrapper>
           <DeckViewScreenWrapperInner/>
         </DeckDataProviderWrapper>
-      </DeckUiProvider>
-    </RepositoryProvider>
+      </RepositoryProvider>
+
+    </DeckUiProvider>
   );
 }
