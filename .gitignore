@@ -5,6 +5,7 @@ dist/
 # Keep shared .idea config, skip user-local IDE state
 .idea/workspace.xml
 .idea/copilotDiffState.xml
+.idea/discord.xml
 
 # Frontend local datasets
 apps/frontend/src/assets/oracle-cards-20260411090222.json
