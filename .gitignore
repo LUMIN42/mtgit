@@ -18,3 +18,4 @@ apps/api/.env*
 !apps/api/.env.example
 
 package-lock.json
+.idea/discord.xml
