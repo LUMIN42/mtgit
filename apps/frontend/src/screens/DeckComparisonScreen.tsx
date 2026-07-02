@@ -13,18 +13,18 @@ export function DeckComparisonScreen() {
   const {repository, selectedBranchContent} = useRepositoryContext();
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
-  const {partiallyReconstructedDeck, fetchMissingDeckCards} = useScryfallCache();
+  const {usePartiallyReconstructedDeck, fetchMissingDeckCards} = useScryfallCache();
 
 
-  fetchMissingDeckCards(comparisonBranchContent); // todo think through where exactly this should be called
+  // fetchMissingDeckCards(comparisonBranchContent); // todo think through where exactly this should be called
 
   const [leftCardCounts, rightCardCounts] = withoutIdenticalParts(
     selectedBranchContent,
     comparisonBranchContent
   );
 
-  const leftDeck = partiallyReconstructedDeck(leftCardCounts, repository.tags);
-  const rightDeck = partiallyReconstructedDeck(rightCardCounts, repository.tags);
+  const leftDeck = usePartiallyReconstructedDeck(leftCardCounts, repository.tags);
+  const rightDeck = usePartiallyReconstructedDeck(rightCardCounts, repository.tags);
 
 
   const comparison = compareDecks(

@@ -1,7 +1,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
+  useEffect
 } from "react";
 import type {ReactNode} from "react";
 
@@ -97,11 +97,11 @@ export function DeckDataProviderInner({
   sections,
   children
 }: DeckDataProviderProps) {
-  const {fetchMissingDeckCards, partiallyReconstructedDeck} = useScryfallCache();
+  const {fetchMissingDeckCards, usePartiallyReconstructedDeck} = useScryfallCache();
   const {repository} = useRepositoryContext();
   const ui = useDeckUiContext();
 
-  const deck = partiallyReconstructedDeck(sections, repository.tags);
+  const deck = usePartiallyReconstructedDeck(sections, repository.tags);
 
   let filteredDeck = {};
   if (deck !== null) {
