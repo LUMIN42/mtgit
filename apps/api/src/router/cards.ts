@@ -9,7 +9,7 @@ const CardIdSchema = z.string();
 /**
  * Internal helper: normalize + validate Mongo document
  */
-function parseCard(raw: unknown):ScryfallOracleCard {
+function parseCard(raw: unknown): ScryfallOracleCard {
   return ScryfallOracleCardSchema.parse(raw);
 }
 
@@ -50,14 +50,21 @@ export const cardRouter = router({
       })
     )
     .query(async ({input}) => {
-      const cards = getCollection("scryfall_cards");
+      const cardsCollection = getCollection("scryfall_cards");
 
-      const rawCards = await cards
+      const rawCards = await cardsCollection
         .find({
           oracle_id: {$in: input.cardIds}
         })
         .toArray();
 
-      return rawCards.map(parseCard);
+      const cards = rawCards.map(parseCard);
+
+
+      return Object.fromEntries(
+        cards.map(
+          card => [card.oracle_id, card]
+        )
+      );
     })
 });

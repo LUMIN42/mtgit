@@ -71,15 +71,14 @@ export function ScryfallCacheProvider({
         cardIds: missing
       });
 
-      const cards = z
-        .array(ScryfallOracleCardSchema)
-        .parse(result);
+      const CardsMapSchema = z.record(
+        z.string(),
+        ScryfallOracleCardSchema
+      );
 
       setMap(prev => ({
         ...prev,
-        ...Object.fromEntries(
-          cards.map(c => [c.oracle_id, c])
-        )
+        ...CardsMapSchema.parse(result)
       }));
     }
     finally {
