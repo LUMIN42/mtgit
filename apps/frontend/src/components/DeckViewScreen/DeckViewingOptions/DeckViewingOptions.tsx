@@ -8,7 +8,7 @@ import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
 import {DeckMainCountBadge} from "./DeckMainCountBadge.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
-import BranchSelector from "../BranchSelector.tsx";
+import BranchSelector from "./BranchSelector.tsx";
 
 export function DeckViewingOptions({horizontal = false}: {horizontal?: boolean}) {
   const {
