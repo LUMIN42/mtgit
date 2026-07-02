@@ -9,7 +9,7 @@ import {compareDecks} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 
 export function DeckComparisonScreen() {
-  const {comparisonBranchName, groupingMode} = useDeckUiContext();
+  const {comparisonBranchName, groupingMode, sortingMode} = useDeckUiContext();
   const {repository, selectedBranchContent} = useRepositoryContext();
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
@@ -30,7 +30,8 @@ export function DeckComparisonScreen() {
   const comparison = compareDecks(
     leftDeck,
     rightDeck,
-    groupingMode
+    groupingMode,
+    sortingMode
   );
 
   console.log("comparison:", comparison);

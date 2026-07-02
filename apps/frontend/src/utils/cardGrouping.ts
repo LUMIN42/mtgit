@@ -272,7 +272,7 @@ function sortCardsInGroup(cards: TaggedDeckCard[], mode: CardSortMode): TaggedDe
   });
 }
 
-function handleSection(section: HydratedDeckSection, sectionName: DeckSectionName, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
+export function handleSection(section: HydratedDeckSection, sectionName: DeckSectionName, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
   const groups = groupCardsByMode(Object.values(section), groupingMode);
 
   let sortedGroups = groups.map(group => {
