@@ -16,7 +16,9 @@ export default defineConfig([
   ...[
     "",
     "apps/backend/src/email/_styles/"
-  ].map(path => join(process.cwd(), `${path}.gitignore`)).filter((path): path is string => existsSync(path)).map(path => includeIgnoreFile(path)),
+  ].map(path => join(process.cwd(), `${path}.gitignore`))
+    .filter((path): path is string => existsSync(path))
+    .map(path => includeIgnoreFile(path)),
 
   globalIgnores([
     "eslint.frontend.ts",
@@ -60,7 +62,8 @@ export default defineConfig([
       "@stylistic/linebreak-style": ["error", "unix"],
       "no-eval": ["error"],
       "no-warning-comments": "off",
-      "curly": ["warn", "all"],
+      curly: ["warn", "multi-line"],
+      "brace-style": ["warn", "1tbs", {allowSingleLine: false}],
 
       // Replaced by the @typescript-eslint rules.
       "no-unused-vars": "off",
@@ -83,7 +86,7 @@ export default defineConfig([
         asyncArrow: "always"
       }],
       "@stylistic/brace-style": ["warn", "stroustrup"],
-      "@stylistic/nonblock-statement-body-position": ["warn", "below"],
+      // "@stylistic/nonblock-statement-body-position": ["warn", "below"],
       "@stylistic/comma-dangle": ["warn", "never"],
       "@stylistic/quotes": ["warn", "double", {
         allowTemplateLiterals: "always"
@@ -96,9 +99,9 @@ export default defineConfig([
         }
       }],
       "@stylistic/space-infix-ops": ["warn"],
-      
+
       "unused-imports/no-unused-imports": "error",
-      
+
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-empty-function": ["warn", {
         allow: ["private-constructors"]
