@@ -4,9 +4,11 @@ import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {trpc} from "../../trpcClient.ts";
 import {useDeckDataContext} from "../../context/DeckDataContext.tsx";
 import {isEmpty} from "@mtgit/shared";
+import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 
 export function DeckImportModal() {
-  const {repository, selectedBranchName, selectedBranchContent} = useRepositoryContext();
+  const {repository} = useRepositoryContext();
+  const {selectedBranchName} = useDeckUiContext();
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importDeckText, setImportDeckText] = useState("");
