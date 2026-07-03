@@ -41,7 +41,7 @@ export function CardGroup({
     if (typeof window === "undefined") {
       return false;
     }
-    return height >= window.innerHeight;
+    return height >= window.innerHeight * 0.9;
   }, [height]);
 
   if (displayMode === "Text") {
@@ -77,13 +77,17 @@ export function CardGroup({
         justifySelf: "flex-end"
       }}>
       {group.cards.map((card, index) => (
-        <Card
-          key={`${groupKey}-${card.id}-${index}`}
-          card={card}
-          displayMode={displayMode}
-          onSelect={() => onCardSelect({oracleId: card.oracle_id, groupName: group.heading, sectionName})}
-          quicklyAdjustable={quicklyAdjustable}
-        />
+        <div style={{direction: "ltr"}}>
+          <Card
+            key={`${groupKey}-${card.id}-${index}`}
+            card={card}
+            displayMode={displayMode}
+            onSelect={() => onCardSelect({oracleId: card.oracle_id, groupName: group.heading, sectionName})}
+            quicklyAdjustable={quicklyAdjustable}
+            deckSection={sectionName}
+          />
+        </div>
+
       ))}
     </Box>
   );

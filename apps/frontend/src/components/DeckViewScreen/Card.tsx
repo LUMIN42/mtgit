@@ -1,7 +1,7 @@
 import {Box, Text, Image, Overlay, Paper} from "@mantine/core";
-import {type DeckCard, getCardImageUrl, isDeckCard} from "@mtgit/shared";
+import {type DeckCard, DeckSectionName, getCardImageUrl, isDeckCard} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
-import type {CardDisplayMode} from "../../context/DeckUiContext.tsx";
+import {CardDisplayMode, useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import React from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import CardAmountEditor from "./CardAmountEditor.tsx";
@@ -14,6 +14,8 @@ type CardProps = {
   onSelect?: (card: ScryfallOracleCard) => void;
   onHoverImage?: (imageUrl: string | null) => void;
   quicklyAdjustable?: boolean;
+  actualCardCount?: number;
+  deckSection?:DeckSectionName;
 };
 
 
@@ -23,13 +25,17 @@ export function Card({
   className,
   onSelect,
   onHoverImage,
-  quicklyAdjustable = false
+  quicklyAdjustable = false,
+  deckSection = "Main"
 }: CardProps) {
   const imageUrl = getCardImageUrl(card);
-  const {setCardAmount, selectedBranchName, selectedBranchContent} = useRepositoryContext();
+  const {selectedBranchContent} = useRepositoryContext();
+  const {selectedBranchName} = useDeckUiContext();
+
 
   const cardAmount: number | undefined = isDeckCard(card) ? card.count : undefined;
-  const count = selectedBranchContent.Main[card.oracle_id] ?? 0;
+
+
 
   if (displayMode === "Text") {
     return (
@@ -92,7 +98,7 @@ export function Card({
           right="8%"
           top="11%"
         >
-          <CardAmountEditor branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={"Main"}/>
+          <CardAmountEditor originalCardAmount={cardAmount} branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={deckSection}/>
         </Paper>
       )}
 

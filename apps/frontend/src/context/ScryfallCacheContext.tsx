@@ -34,6 +34,13 @@ type ScryfallCacheValue = {
   fetchMissingDeckCards: (deckCardCounts: DeckCardCounts) => Promise<void>;
 
   tryGetCard: (oracleId: string) => ScryfallOracleCard | undefined;
+
+  buildPartiallyReconstructedDeck: (
+    cardCounts: DeckCardCounts,
+    tags: TagsMap
+  ) => HydratedDeck;
+
+  map: Record<string, ScryfallOracleCard>;
 };
 
 const ScryfallCacheContext =
@@ -102,6 +109,30 @@ export function ScryfallCacheProvider({
     [map]
   );
 
+  function buildPartiallyReconstructedDeck(
+    cardCounts: DeckCardCounts,
+    tags: TagsMap
+  ): HydratedDeck {
+    const result: HydratedDeck = {};
+
+    for (const section in cardCounts) {
+      result[section] = {};
+
+      for (const id in cardCounts[section]) {
+        const card = map[id];
+        if (!card) continue;
+
+        result[section][id] = {
+          ...card,
+          count: cardCounts[section][id],
+          tags: tags[id] ?? []
+        };
+      }
+    }
+
+    return result;
+  }
+
   /**
    * Hook: derive hydrated deck + trigger fetching
    */
@@ -130,26 +161,7 @@ export function ScryfallCacheProvider({
     }, [missing]);
 
     return useMemo(() => {
-      const result: HydratedDeck = {};
-
-      for (const section in cardCounts) {
-        result[section] = {};
-
-        for (const id in cardCounts[section]) {
-          const card = map[id];
-          if (!card) {
-            continue;
-          }
-
-          result[section][id] = {
-            ...card,
-            count: cardCounts[section][id],
-            tags: tags[id] ?? []
-          };
-        }
-      }
-
-      return result;
+      return buildPartiallyReconstructedDeck(cardCounts, tags);
     }, [cardCounts, tags, map]);
   };
 
@@ -158,7 +170,9 @@ export function ScryfallCacheProvider({
       value={{
         usePartiallyReconstructedDeck,
         fetchMissingDeckCards,
-        tryGetCard
+        tryGetCard,
+        buildPartiallyReconstructedDeck,
+        map
       }}
     >
       {children}

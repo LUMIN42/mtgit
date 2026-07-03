@@ -1,19 +1,19 @@
-import React from "react";
+import React, {useMemo} from "react";
 import {Divider, Grid, Stack, Title} from "@mantine/core";
 import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {withoutIdenticalParts} from "@mtgit/shared";
+import {DeckCardCounts, HydratedDeck, withoutIdenticalParts} from "@mtgit/shared";
 import {compareDecks} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 
 export function DeckComparisonScreen() {
-  const {comparisonBranchName, groupingMode, sortingMode} = useDeckUiContext();
+  const {comparisonBranchName, groupingMode, sortingMode, selectedBranchName} = useDeckUiContext();
   const {repository, selectedBranchContent} = useRepositoryContext();
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
-  const {usePartiallyReconstructedDeck, fetchMissingDeckCards} = useScryfallCache();
+  const {usePartiallyReconstructedDeck, map} = useScryfallCache();
 
 
   // fetchMissingDeckCards(comparisonBranchContent); // todo think through where exactly this should be called
@@ -26,13 +26,42 @@ export function DeckComparisonScreen() {
   const leftDeck = usePartiallyReconstructedDeck(leftCardCounts, repository.tags);
   const rightDeck = usePartiallyReconstructedDeck(rightCardCounts, repository.tags);
 
-
-  const comparison = compareDecks(
-    leftDeck,
-    rightDeck,
-    groupingMode,
-    sortingMode
+  // todo maybe remove the other branch name from the memo
+  const originalLeftDeck: HydratedDeck = useMemo(
+    () => {
+      return leftDeck;
+    },
+    [map, selectedBranchName, comparisonBranchName]
   );
+
+  const originalRightDeck: HydratedDeck = useMemo(
+    () => {
+      return rightDeck;
+    },
+    [map, selectedBranchName, comparisonBranchName]
+  );
+
+  const comparison = useMemo(
+    () => {
+      return compareDecks(
+        originalLeftDeck,
+        originalRightDeck,
+        groupingMode,
+        sortingMode
+      );
+    },
+    [groupingMode, originalLeftDeck, originalRightDeck, sortingMode]
+  );
+
+
+  // const comparison = compareDecks(
+  //   leftDeck,
+  //   rightDeck,
+  //   groupingMode,
+  //   sortingMode
+  // );
+  //
+  // const originalComparison
 
   console.log("comparison:", comparison);
 
@@ -64,6 +93,7 @@ export function DeckComparisonScreen() {
                               groupKey={group.heading}
                               sticky={true}
                               rightToLeft={true}
+                              quicklyAdjustable={true}
                             />
                           </Stack>
                         </Grid.Col>
@@ -79,6 +109,7 @@ export function DeckComparisonScreen() {
                               sectionName={section.sectionName}
                               groupKey={group.heading}
                               sticky={true}
+                              quicklyAdjustable={true}
                             />
                           </Stack>
                         </Grid.Col>

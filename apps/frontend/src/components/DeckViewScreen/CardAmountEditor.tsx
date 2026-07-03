@@ -9,9 +9,15 @@ type CardAmountEditorProps = {
   branchName: string;
   oracleId: string;
   deckSection: DeckSectionName;
+  originalCardAmount?: number;
 };
 
-function CardAmountEditor({branchName, oracleId, deckSection = "Main"}: CardAmountEditorProps) {
+function CardAmountEditor({
+  branchName,
+  oracleId,
+  deckSection = "Main",
+  originalCardAmount = undefined
+}: CardAmountEditorProps) {
   const repositoryContext = useRepositoryContext();
   const repository = repositoryContext.repository;
   const setCardAmount = (newAmount: number) => repositoryContext
@@ -21,7 +27,7 @@ function CardAmountEditor({branchName, oracleId, deckSection = "Main"}: CardAmou
 
 
   const {tryGetCard} = useScryfallCache();
-  
+
   const card = tryGetCard(oracleId);
   const maxCount = card ? maximumCardAmount(card, repository.format) : maximumCardAmountWithoutCard(repository.format);
 
@@ -50,6 +56,10 @@ function CardAmountEditor({branchName, oracleId, deckSection = "Main"}: CardAmou
 
           <Text fw={500} w={40} ta="center">
             {currentCount}
+
+            {
+              originalCardAmount && ` / ${originalCardAmount}`
+            }
           </Text>
 
           <ActionIcon
