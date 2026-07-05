@@ -29,14 +29,14 @@ export function GroupedCards() {
 
 
   const {
-    setSelectedLocation,
-    selectedId,
-    navigateLeft,
-    navigateRight,
-    setSelectedId,
+    oracleId,
+    openModal,
+    closeModal,
+    moveLeft,
+    moveRight,
     hasNextLeft,
     hasNextRight
-  } = useCardSelectionManager(pageCards);
+  } = useCardSelectionManager();
 
 
   return (
@@ -83,7 +83,7 @@ export function GroupedCards() {
                     group={group}
                     groupKey={`${section.name}-${group.heading}`}
                     onCardSelect={cardLoc => {
-                      setSelectedLocation(cardLoc);
+                      openModal(pageCards, cardLoc);
                     }}
                     onCardHover={setHoveredCardImageUrl}
                     sectionName={section.name}/>
@@ -95,13 +95,12 @@ export function GroupedCards() {
       </Stack>
 
       {/* Card details modal for selected card, supports navigation */}
-      <CardDetailsModal oracle_id={selectedId}
-        onClose={() => setSelectedId(null)}
-        onPrev={navigateLeft}
-        onNext={navigateRight}
+      <CardDetailsModal oracle_id={oracleId}
+        onClose={() => closeModal()}
+        onPrev={moveLeft}
+        onNext={moveRight}
         hasPrevious={hasNextLeft}
         hasNext={hasNextRight}
-        deckSectionName="Main"
       />
     </>
   );

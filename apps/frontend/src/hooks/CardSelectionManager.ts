@@ -11,15 +11,18 @@ function equalRecords(
   return true;
 }
 
-export function useCardSelectionManager(
-  cards: CardLocation[]
-) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [leftLocation, setLeftLocation] = useState<CardLocation | null>(null);
-  const [rightLocation, setRightLocation] = useState<CardLocation | null>(null);
+export function useCardSelectionManager() {
+  const [locations, setLocations] = useState<CardLocation[]>([]);
 
-  function index(location: CardLocation): number {
-    const foundIndex = cards.findIndex(
+  const [index, setIndex] = useState<number | null>();
+
+  const hasNextLeft = index > 0;
+  const hasNextRight = index < locations.length - 1;
+
+  const oracleId = index != null ? locations[index]?.oracle_id : null;
+
+  function findIndexInArray(location: CardLocation, locations: CardLocation[]) {
+    const foundIndex = locations.findIndex(
       card => card.oracle_id === location.oracle_id
         &&
         equalRecords(card.location, location.location)
@@ -32,41 +35,82 @@ export function useCardSelectionManager(
     return foundIndex;
   }
 
-  function setIndex(idx: number) {
-    setLeftLocation(
-      cards[idx - 1] ?? null
-    );
-    setRightLocation(
-      cards[idx + 1] ?? null
-    );
-
-    setSelectedId(
-      cards[idx].oracle_id
+  function openModal(
+    allLocations: CardLocation[],
+    selectedLocation: CardLocation
+  ) {
+    setLocations(allLocations);
+    setIndex(
+      findIndexInArray(selectedLocation, allLocations)
     );
   }
 
-  function navigateLeft() {
-    setSelectedLocation(leftLocation);
+  function closeModal() {
+    setIndex(null);
   }
 
-  function navigateRight() {
-    setSelectedLocation(rightLocation);
+  function moveLeft() {
+    setIndex(index - 1);
   }
 
-  function setSelectedLocation(location: CardLocation) {
-    setIndex(index(location));
+  function moveRight() {
+    setIndex(index + 1);
   }
-
-  const hasNextLeft = leftLocation !== null;
-  const hasNextRight = rightLocation !== null;
 
   return {
-    selectedId,
-    setSelectedLocation,
+    oracleId,
+    openModal,
+    closeModal,
+    moveLeft,
+    moveRight,
     hasNextLeft,
-    hasNextRight,
-    navigateLeft,
-    navigateRight,
-    setSelectedId
+    hasNextRight
   };
+
+
+  //
+  //
+  // const [selectedId, setSelectedId] = useState<string | null>(null);
+  // const [leftLocation, setLeftLocation] = useState<CardLocation | null>(null);
+  // const [rightLocation, setRightLocation] = useState<CardLocation | null>(null);
+  //
+
+  //
+  // function setIndex(idx: number) {
+  //   setLeftLocation(
+  //     cards[idx - 1] ?? null
+  //   );
+  //   setRightLocation(
+  //     cards[idx + 1] ?? null
+  //   );
+  //
+  //   setSelectedId(
+  //     cards[idx].oracle_id
+  //   );
+  // }
+  //
+  // function navigateLeft() {
+  //   setSelectedLocation(leftLocation);
+  // }
+  //
+  // function navigateRight() {
+  //   setSelectedLocation(rightLocation);
+  // }
+  //
+  // function setSelectedLocation(location: CardLocation) {
+  //   setIndex(index(location));
+  // }
+  //
+  // const hasNextLeft = leftLocation !== null;
+  // const hasNextRight = rightLocation !== null;
+  //
+  // return {
+  //   selectedId,
+  //   setSelectedLocation,
+  //   hasNextLeft,
+  //   hasNextRight,
+  //   navigateLeft,
+  //   navigateRight,
+  //   setSelectedId
+  // };
 }

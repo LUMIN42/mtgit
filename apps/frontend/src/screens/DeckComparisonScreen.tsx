@@ -4,9 +4,12 @@ import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOption
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {DeckCardCounts, HydratedDeck, withoutIdenticalParts} from "@mtgit/shared";
-import {compareDecks} from "../utils/deckComparison.ts";
+import {HydratedDeck, withoutIdenticalParts} from "@mtgit/shared";
+import {compareDecks, DeckComparisonResult} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
+import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
+import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
+import {DeckGroupLocation} from "../types/addressedCards.ts";
 
 export function DeckComparisonScreen() {
   const {comparisonBranchName, groupingMode, sortingMode, selectedBranchName} = useDeckUiContext();
@@ -14,9 +17,6 @@ export function DeckComparisonScreen() {
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
-
-
-  // fetchMissingDeckCards(comparisonBranchContent); // todo think through where exactly this should be called
 
   const [leftCardCounts, rightCardCounts] = withoutIdenticalParts(
     selectedBranchContent,
@@ -52,6 +52,62 @@ export function DeckComparisonScreen() {
     },
     [groupingMode, originalLeftDeck, originalRightDeck, sortingMode]
   );
+
+  type ComparisonLocation = DeckGroupLocation & {
+    half: "left" | "right";
+  };
+
+  type ComparisonCardLocation = {
+    oracle_id: string;
+    location: ComparisonLocation;
+  };
+
+  function flatten(comparison: DeckComparisonResult): ComparisonCardLocation[] {
+    const leftGroups: ComparisonCardLocation[] = comparison.flatMap(
+      section => section.groups.flatMap(
+        group => group.leftCards
+          .map(card => {
+            return {
+              oracle_id: card.oracle_id,
+              location:
+                {
+                  section: section.sectionName,
+                  group: group.heading,
+                  half: "left"
+                }
+            };
+          })
+      )
+    );
+
+    const rightGroups: ComparisonCardLocation[] = comparison.flatMap(
+      section =>
+        section.groups.flatMap(group =>
+          group.rightCards.map(card => ({
+            oracle_id: card.oracle_id,
+            location: {
+              section: section.sectionName,
+              group: group.heading,
+              half: "right"
+            }
+          }))
+        )
+    );
+
+    return [...leftGroups, ...rightGroups];
+  }
+
+  const flattened = flatten(comparison);
+
+  const {
+    oracleId,
+    openModal,
+    closeModal,
+    moveLeft,
+    moveRight,
+    hasNextLeft,
+    hasNextRight
+  } = useCardSelectionManager();
 
 
   // const comparison = compareDecks(
@@ -94,6 +150,19 @@ export function DeckComparisonScreen() {
                               sticky={true}
                               rightToLeft={true}
                               quicklyAdjustable={true}
+                              onCardSelect={location => {
+                                const loc: ComparisonCardLocation = {
+                                  oracle_id: location.oracle_id,
+                                  location: {
+                                    ...location.location,
+                                    half: "left"
+                                  }
+                                };
+                                openModal(
+                                  flattened,
+                                  loc
+                                );
+                              }}
                             />
                           </Stack>
                         </Grid.Col>
@@ -110,11 +179,23 @@ export function DeckComparisonScreen() {
                               groupKey={group.heading}
                               sticky={true}
                               quicklyAdjustable={true}
+
+                              onCardSelect={location => {
+                                const loc: ComparisonCardLocation = {
+                                  oracle_id: location.oracle_id,
+                                  location: {
+                                    ...location.location,
+                                    half: "right"
+                                  }
+                                };
+                                openModal(
+                                  flattened,
+                                  loc
+                                );
+                              }}
                             />
                           </Stack>
                         </Grid.Col>
-
-
                       </>)
                   )
                 }
@@ -123,6 +204,13 @@ export function DeckComparisonScreen() {
           )
         }
       </Grid>
+
+      <CardDetailsModal onClose={closeModal}
+        oracle_id={oracleId}
+        onPrev={moveLeft}
+        onNext={moveRight}
+        hasPrevious={hasNextLeft}
+        hasNext={hasNextRight}/>
     </Stack>
 
   );

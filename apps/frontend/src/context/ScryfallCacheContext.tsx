@@ -41,6 +41,8 @@ type ScryfallCacheValue = {
   ) => HydratedDeck;
 
   map: Record<string, ScryfallOracleCard>;
+
+  fetchMissingCards: (ids:string[]) => Promise<void>;
 };
 
 const ScryfallCacheContext =
@@ -172,7 +174,8 @@ export function ScryfallCacheProvider({
         fetchMissingDeckCards,
         tryGetCard,
         buildPartiallyReconstructedDeck,
-        map
+        map,
+        fetchMissingCards
       }}
     >
       {children}

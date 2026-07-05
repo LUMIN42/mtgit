@@ -26,15 +26,14 @@ export function CardDetailsModal({
   onPrev,
   onNext,
   hasPrevious,
-  hasNext,
-  deckSectionName = "Main"
+  hasNext
 }: CardDetailsModalProps) {
 
   const cache = useScryfallCache();
 
   const card: ScryfallOracleCard | undefined = cache.tryGetCard(oracle_id);
 
-  const {repository, selectedBranchContent} = useRepositoryContext();
+  const {repository} = useRepositoryContext();
 
   const tagSearchInputRef = useRef(undefined);
   const cardImageUrl = card ? getCardImageUrl(card) : undefined;

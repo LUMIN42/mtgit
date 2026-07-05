@@ -6,6 +6,8 @@ import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
+import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
+import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -27,8 +29,18 @@ export function SearchResultsScreen() {
 
   const submittedSearch = uiContext.submittedSearch;
   const [searchInput, setSearchInput] = useState(submittedSearch);
-  const [selection, setSelection] = useState<number | null>(null);
 
+  const {fetchMissingCards} = useScryfallCache();
+
+  const {
+    oracleId,
+    openModal,
+    closeModal,
+    moveLeft,
+    moveRight,
+    hasNextLeft,
+    hasNextRight
+  } = useCardSelectionManager();
 
 
   useEffect(() => {
@@ -48,6 +60,10 @@ export function SearchResultsScreen() {
     [searchQuery.data]
   );
 
+  useEffect(() => {
+    fetchMissingCards(cards.map(card => card.oracle_id));
+  }, [cards]);
+
   const showInitialLoading = searchQuery.isPending && submittedSearch.trim().length > 0 && cards.length === 0;
   const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
 
@@ -61,12 +77,10 @@ export function SearchResultsScreen() {
     [cardsWithTags]
   );
 
-  const safeSelection = selection !== null && selection < cardsWithTags.length ? selection : null;
 
   const handleSearchSubmit = (value: string) => {
     const trimmedValue = value.trim();
     uiContext.setSubmittedSearch(trimmedValue);
-    setSelection(null);
   };
 
   return (
@@ -89,14 +103,14 @@ export function SearchResultsScreen() {
 
       {showRefreshLoading ? (
         <Center>
-          <Loader type="dots" size="sm" />
+          <Loader type="dots" size="sm"/>
         </Center>
       ) : null}
 
       {showInitialLoading ? (
         <Center py="xl">
           <Stack gap="xs" align="center">
-            <Loader type="dots" size="lg" />
+            <Loader type="dots" size="lg"/>
             <Text size="sm" c="dimmed">Loading cards from Scryfall...</Text>
           </Stack>
         </Center>
@@ -121,18 +135,24 @@ export function SearchResultsScreen() {
           groupKey={submittedSearch || "search-results"}
           quicklyAdjustable
           onCardSelect={location => {
-            const index = cardsWithTags.findIndex(card => card.oracle_id === location.oracleId);
-            setSelection(index >= 0 ? index : null);
+            openModal(
+              // location set to empty as it is not needed
+              cards.map(card => {
+                  return {oracle_id: card.oracle_id, location: {}};
+                }
+              ),
+              {oracle_id: location.oracle_id, location: {}}
+            );
           }}
         />
       ) : null}
 
-      <CardDetailsModal
-        cards={cardsWithTags}
-        index={safeSelection ?? 0}
-        isOpened={safeSelection !== null}
-        onClose={() => setSelection(null)}
-        onIndexChange={setSelection}
+      <CardDetailsModal onClose={closeModal}
+        oracle_id={oracleId}
+        onPrev={moveLeft}
+        onNext={moveRight}
+        hasPrevious={hasNextLeft}
+        hasNext={hasNextRight}
       />
     </Stack>
   );

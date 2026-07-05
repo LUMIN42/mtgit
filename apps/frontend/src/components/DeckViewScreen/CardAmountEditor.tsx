@@ -39,7 +39,6 @@ function CardAmountEditor({
           onChange={event =>
             setCardAmount(event.currentTarget.checked ? 1 : 0)
           }
-          disabled={currentCount > 1}
         />
       )}
       {maxCount > 1 && (
