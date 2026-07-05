@@ -1,34 +1,54 @@
 import {ActionIcon, Box, Divider, Group, Modal, Tabs, Text, Image} from "@mantine/core";
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
-import {getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
+import {DeckSectionName, getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
 import CardAddingPanel from "./CardAddingPanel.tsx";
+import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
 
 interface CardDetailsModalProps {
-  cards: ScryfallOracleCard[];
-  index: number;
-  opened: boolean;
+  isOpened: boolean;
   onClose: () => void;
-  onIndexChange: (index: number) => void;
+
+  oracle_id: string;
+  onLeftArrow: () => void;
+  onRightArrow: () => void;
+
+  hasPrevious: boolean;
+  hasNext: boolean;
+
+  deckSectionName?: DeckSectionName | undefined;
 }
 
-export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}: CardDetailsModalProps) {
-  const card = cards[index] ?? null;
-  const cardImageUrl = card ? getCardImageUrl(card) : null;
-  const hasPrevious = index > 0;
-  const hasNext = index < cards.length - 1;
- 
+export function CardDetailsModal({
+  oracle_id,
+  isOpened,
+  onClose,
+  onLeftArrow,
+  onRightArrow,
+  hasPrevious,
+  hasNext,
+  deckSectionName = "Main"
+}: CardDetailsModalProps) {
+
+  const cache = useScryfallCache();
+
+  const card: ScryfallOracleCard | undefined = cache.tryGetCard(oracle_id);
+
   const {repository, selectedBranchContent} = useRepositoryContext();
-  const tags = repository?.tags ?? {};
-  const cardId = card?.oracle_id ?? card?.id ?? null;
-  const currentTags = cardId ? (tags[cardId] ?? []) : [];
-  const tagSearchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const tagSearchInputRef = useRef(undefined);
+  const cardImageUrl = card ? getCardImageUrl(card) : undefined;
+
+  const count = (selectedBranchContent[deckSectionName] ?? {})[oracle_id] ?? 0;
+
+  const currentTags = repository.tags[oracle_id] ?? [];
+
 
   // Keyboard navigation: a = left, d = right
   useEffect(() => {
-    if (!opened) {
+    if (!isOpened) {
       return;
     }
     const handler = (e: KeyboardEvent) => {
@@ -39,23 +59,23 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
       if (e.key === "a" || e.key === "A") {
         if (hasPrevious) {
           e.preventDefault();
-          onIndexChange(index - 1);
+          onLeftArrow();
         }
       }
       else if (e.key === "d" || e.key === "D") {
         if (hasNext) {
           e.preventDefault();
-          onIndexChange(index + 1);
+          onRightArrow();
         }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [opened, hasPrevious, hasNext, index, onIndexChange]);
+  });
 
   return (
     <Modal
-      opened={opened}
+      opened={isOpened}
       onClose={onClose}
       centered
       title={card?.name ?? "Card details"}
@@ -72,7 +92,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
             w={80}
             h="100%"
             style={{borderRadius: 0}}
-            onClick={() => onIndexChange(index - 1)}
+            onClick={() => onLeftArrow()}
             disabled={!hasPrevious}
             aria-label="Previous card"
           >
@@ -98,7 +118,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
               </Tabs.List>
 
               <Tabs.Panel value="details">
-                <CardAddingPanel cardAmount={{...card, count:selectedBranchContent.Main[card.oracle_id] ?? 0}}/>
+                <CardAddingPanel oracle_id={oracle_id}/>
                 {/*<Stack gap="sm">*/}
                 {/*  <Text fw={700}>{card.name}</Text>*/}
                 {/*  <Text><strong>Type:</strong> {card.type_line}</Text>*/}
@@ -116,7 +136,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
 
               <Tabs.Panel value="tags">
                 <CardDetailsTagsPanel
-                  cardId={cardId}
+                  cardId={oracle_id}
                   currentTags={currentTags}
                   tagSearchInputRef={tagSearchInputRef}
                 />
@@ -133,7 +153,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
             w={80}
             h="100%"
             style={{borderRadius: 0}}
-            onClick={() => onIndexChange(index + 1)}
+            onClick={() => onRightArrow()}
             disabled={!hasNext}
             aria-label="Next card"
           >

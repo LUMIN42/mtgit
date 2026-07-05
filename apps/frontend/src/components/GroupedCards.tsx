@@ -14,7 +14,7 @@ import {useDeckDataContext} from "../context/DeckDataContext.tsx";
 import {cardCount} from "@mtgit/shared";
 
 export function GroupedCards() {
-  const {displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
+  const {groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
 
   const {filteredDeck} = useDeckDataContext();
 
@@ -30,13 +30,13 @@ export function GroupedCards() {
 
   const sections = groups;
   console.log("groups:", sections);
-  const pageCards = flatten(groups);
+  const pageCards: CardWithLocation[] = flatten(groups);
 
 
   const [selectedCardLocation, setSelectedCardLocation] = useState<CardLocation | undefined>(undefined);
 
 
-  function sameLocation(a: CardLocation, b: CardLocation | undefined): boolean {
+  function sameCardLocation(a: CardLocation, b: CardLocation | undefined): boolean {
     return (
       b !== undefined &&
       a.sectionName === b.sectionName &&
@@ -45,20 +45,10 @@ export function GroupedCards() {
     );
   }
 
-  function findByOracleId(a: CardLocation, b: CardLocation | undefined): boolean {
-    return b !== undefined && a.oracleId === b.oracleId;
-  }
+  const selectedIndex = pageCards.findIndex(cardWithLocation => sameCardLocation(cardWithLocation.location, selectedCardLocation));
 
-  const selectedCardIndex: number = pageCards
-    .findIndex(card => sameLocation(card.location, selectedCardLocation));
+  const leftLocation = 
 
-  const fallbackCardIndex: number = selectedCardIndex === -1
-    ? pageCards.findIndex(card => findByOracleId(card.location, selectedCardLocation))
-    : selectedCardIndex;
-
-  // todo try removing the null coalescence in the end
-  const selectedCard: CardWithLocation | undefined =
-    fallbackCardIndex === -1 ? undefined : pageCards[fallbackCardIndex] ?? undefined;
 
   return (
     <>
@@ -102,8 +92,6 @@ export function GroupedCards() {
                   {/* Render cards in the group */}
                   <CardGroup
                     group={group}
-                    displayMode={displayMode}
-                    sortingMode={sortingMode}
                     groupKey={`${section.name}-${group.heading}`}
                     onCardSelect={card => {
                       setSelectedCardLocation(card);
@@ -119,15 +107,12 @@ export function GroupedCards() {
 
       {/* Card details modal for selected card, supports navigation */}
       <CardDetailsModal
-        cards={pageCards}
-        index={fallbackCardIndex}
-        opened={fallbackCardIndex !== -1}
-        onClose={() => {
-          setSelectedCardLocation(undefined);
-        }}
-        onIndexChange={nextIndex => {
-          setSelectedCardLocation(pageCards[nextIndex].location);
-        }}
+        oracle_id={selectedCardLocation.oracleId},
+      onLeftArrow,
+      onRightArrow,
+      hasPrevious,
+      hasNext,
+      deckSectionName = "Main"
       />
     </>
   );
