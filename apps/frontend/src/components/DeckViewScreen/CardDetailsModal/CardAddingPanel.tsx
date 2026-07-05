@@ -1,21 +1,28 @@
 import React from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
-import {DeckCard, relevantSections} from "@mtgit/shared";
+import {relevantSections} from "@mtgit/shared";
 import {Table} from "@mantine/core";
 import CardAmountEditor from "../CardAmountEditor.tsx";
+import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
 
 
-type CardAddingPanelProps = {
-  cardAmount: DeckCard;
-};
+type CardAddingPanelProps =
+  {
+    oracle_id: string;
+  };
 
-function CardAddingPanel({cardAmount}: CardAddingPanelProps) {
+function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
   const {repository} = useRepositoryContext();
+  const {tryGetCard} = useScryfallCache();
 
-  const {oracle_id} = cardAmount;
+  const cardAmount = tryGetCard(oracle_id);
 
-  const canBeCommander = cardAmount.type_line.includes("Legendary") &&
-    cardAmount.type_line.includes("Creature");
+  // todo extract to a proper place
+  const canBeCommander =
+    cardAmount ?
+      cardAmount.type_line.includes("Legendary") &&
+      cardAmount.type_line.includes("Creature") : false;
+
 
   return (
     <Table w={"fit-content"} style={{whiteSpace: "nowrap", textAlign: "center"}}>
@@ -40,11 +47,6 @@ function CardAddingPanel({cardAmount}: CardAddingPanelProps) {
           }
         </Table.Tr>
       </Table.Thead>
-
-      <colgroup>
-        <col style={{width: "10%"}}/>
-        <col style={{width: "10%"}}/>
-      </colgroup>
 
       <Table.Tbody>
         {Object.keys(repository.branches).map(branchName => {

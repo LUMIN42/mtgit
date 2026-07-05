@@ -130,7 +130,7 @@ export function SearchResultsScreen() {
       <CardDetailsModal
         cards={cardsWithTags}
         index={safeSelection ?? 0}
-        opened={safeSelection !== null}
+        isOpened={safeSelection !== null}
         onClose={() => setSelection(null)}
         onIndexChange={setSelection}
       />
