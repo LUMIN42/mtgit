@@ -74,8 +74,10 @@ export function compareSections(
 export function compareDecks(deck1: HydratedDeck, deck2: HydratedDeck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): DeckComparisonResult {
   const output: DeckComparisonResult = [];
 
+  const isEmpty = (obj: any) => Object.keys(obj).length === 0;
+
   for (const sectionName of SECTION_SCREEN_SORT_ORDER) {
-    if (deck1[sectionName] || deck2[sectionName]) {
+    if (!isEmpty(deck2[sectionName] ?? {})) {
       output.push(
         compareSections(
           deck1[sectionName] ?? {},
