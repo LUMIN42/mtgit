@@ -97,7 +97,10 @@ export function DeckComparisonScreen() {
     return [...leftGroups, ...rightGroups];
   }
 
-  const flattened = flatten(comparison);
+  const flattened = useMemo(
+    () => flatten(comparison),
+    [comparison]
+  );
 
   const {
     oracleId,
