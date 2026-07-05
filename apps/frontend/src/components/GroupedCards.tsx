@@ -102,8 +102,6 @@ export function GroupedCards() {
                   {/* Render cards in the group */}
                   <CardGroup
                     group={group}
-                    displayMode={displayMode}
-                    sortingMode={sortingMode}
                     groupKey={`${section.name}-${group.heading}`}
                     onCardSelect={card => {
                       setSelectedCardLocation(card);

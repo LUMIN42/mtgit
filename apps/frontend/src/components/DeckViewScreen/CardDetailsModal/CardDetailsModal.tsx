@@ -1,25 +1,29 @@
 import {ActionIcon, Box, Divider, Group, Modal, Tabs, Text, Image} from "@mantine/core";
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
 import CardAddingPanel from "./CardAddingPanel.tsx";
+import {CardLocation} from "../../../types/addressedCards.ts";
 
 interface CardDetailsModalProps {
-  cards: ScryfallOracleCard[];
-  index: number;
-  opened: boolean;
-  onClose: () => void;
-  onIndexChange: (index: number) => void;
+  cards: CardLocation[];
+  lastSelectedCard: CardLocation | null;
 }
 
-export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}: CardDetailsModalProps) {
-  const card = cards[index] ?? null;
+export function CardDetailsModal({cards, lastSelectedCard}: CardDetailsModalProps) {
+  const [card, setCard] = useState<CardLocation | null>(lastSelectedCard);
+
+  useEffect(() => {
+    setCard(lastSelectedCard);
+  }, [lastSelectedCard]);
+
+
   const cardImageUrl = card ? getCardImageUrl(card) : null;
   const hasPrevious = index > 0;
   const hasNext = index < cards.length - 1;
- 
+
   const {repository, selectedBranchContent} = useRepositoryContext();
   const tags = repository?.tags ?? {};
   const cardId = card?.oracle_id ?? card?.id ?? null;
@@ -98,7 +102,7 @@ export function CardDetailsModal({cards, index, opened, onClose, onIndexChange}:
               </Tabs.List>
 
               <Tabs.Panel value="details">
-                <CardAddingPanel cardAmount={{...card, count:selectedBranchContent.Main[card.oracle_id] ?? 0}}/>
+                <CardAddingPanel cardAmount={{...card, count: selectedBranchContent.Main[card.oracle_id] ?? 0}}/>
                 {/*<Stack gap="sm">*/}
                 {/*  <Text fw={700}>{card.name}</Text>*/}
                 {/*  <Text><strong>Type:</strong> {card.type_line}</Text>*/}

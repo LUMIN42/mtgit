@@ -41,10 +41,6 @@ export type CardLocation = {
   oracleId: string;
 };
 
-export type CardWithLocation = TaggedDeckCard & {
-  location: CardLocation;
-};
-
 const MANA_VALUE_LANDS_GROUP = "Lands";
 const MANA_VALUE_TEN_PLUS_GROUP = "10+";
 const RARITY_ORDER: Record<string, number> = {
