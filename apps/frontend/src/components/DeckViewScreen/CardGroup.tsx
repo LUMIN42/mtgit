@@ -2,19 +2,20 @@ import {Box, Stack} from "@mantine/core";
 import style from "../../assets/index.module.css";
 // import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import {Card} from "./Card.tsx";
-import type {CardLocation, SortedGroup} from "../../utils/cardGrouping.ts";
+import type {SortedGroup} from "../../utils/cardGrouping.ts";
 import type {DeckSectionName} from "@mtgit/shared";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import type {CardSortMode} from "../../types/grouping.ts";
 import {useElementSize} from "@mantine/hooks";
 import {useMemo} from "react";
+import {DeckGroupCardLocation} from "../../types/addressedCards.ts";
 
 interface CardGroupProps {
   group: SortedGroup;
   sectionName: DeckSectionName;
   sortingMode?: CardSortMode;
   groupKey: string;
-  onCardSelect?: (location: CardLocation) => void;
+  onCardSelect?: (location: DeckGroupCardLocation) => void;
   onCardHover?: (imageUrl: string | null) => void;
   quicklyAdjustable?: boolean;
   rightToLeft?: boolean;
@@ -53,7 +54,13 @@ export function CardGroup({
             card={card}
             displayMode={displayMode}
             className={style.cardNameItem}
-            onSelect={() => onCardSelect({oracleId: card.oracle_id, groupName: group.heading, sectionName})}
+            onSelect={() => onCardSelect({
+              oracle_id: card.oracle_id,
+              location: {
+                group: group.heading,
+                section: sectionName
+              }
+            })}
             onHoverImage={onCardHover}
           />
         ))}
@@ -82,7 +89,15 @@ export function CardGroup({
             key={`${groupKey}-${card.id}-${index}`}
             card={card}
             displayMode={displayMode}
-            onSelect={() => onCardSelect({oracleId: card.oracle_id, groupName: group.heading, sectionName})}
+            onSelect={() => onCardSelect(
+              {
+                oracle_id: card.oracle_id,
+                location: {
+                  group: group.heading,
+                  section: sectionName
+                }
+              }
+            )}
             quicklyAdjustable={quicklyAdjustable}
             deckSection={sectionName}
           />

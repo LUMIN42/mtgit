@@ -8,10 +8,9 @@ import CardAddingPanel from "./CardAddingPanel.tsx";
 import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
 
 interface CardDetailsModalProps {
-  isOpened: boolean;
   onClose: () => void;
 
-  oracle_id: string;
+  oracle_id: string | null;
   onPrev: () => void;
   onNext: () => void;
 
@@ -23,7 +22,6 @@ interface CardDetailsModalProps {
 
 export function CardDetailsModal({
   oracle_id,
-  isOpened,
   onClose,
   onPrev,
   onNext,
@@ -42,6 +40,8 @@ export function CardDetailsModal({
   const cardImageUrl = card ? getCardImageUrl(card) : undefined;
 
   const currentTags = repository.tags[oracle_id] ?? [];
+
+  const isOpened = oracle_id !== null;
 
 
   // Keyboard navigation: a = left, d = right

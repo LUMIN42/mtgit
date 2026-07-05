@@ -7,7 +7,7 @@ import {
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
 import {MAIN_TYPE_ORDER} from "@mtgit/shared";
-import {CardLocation} from "../types/addressedCards.ts";
+import {CardLocation, DeckGroupCardLocation} from "../types/addressedCards.ts";
 
 /**
  * Represents a group of cards with a heading and the associated cards.
@@ -306,8 +306,8 @@ export function sectionCardCount(section: SortedSection) {
   );
 }
 
-export function flatten(grouping: GroupingResult): CardLocation[] {
-  const output: CardLocation[] = [];
+export function flatten(grouping: GroupingResult): DeckGroupCardLocation[] {
+  const output: DeckGroupCardLocation[] = [];
 
   for (const section of grouping) {
     for (const group of section.groups) {

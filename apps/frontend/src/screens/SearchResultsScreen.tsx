@@ -29,6 +29,8 @@ export function SearchResultsScreen() {
   const [searchInput, setSearchInput] = useState(submittedSearch);
   const [selection, setSelection] = useState<number | null>(null);
 
+
+
   useEffect(() => {
     setSearchInput(submittedSearch);
   }, [submittedSearch]);
@@ -116,8 +118,6 @@ export function SearchResultsScreen() {
         <CardGroup
           group={resultsGroup}
           sectionName="Main"
-          displayMode={uiContext.displayMode}
-          sortingMode={usesServerOrder ? undefined : uiContext.sortingMode}
           groupKey={submittedSearch || "search-results"}
           quicklyAdjustable
           onCardSelect={location => {

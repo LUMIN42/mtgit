@@ -1,14 +1,12 @@
 import {Stack, Text} from "@mantine/core";
-import {useState} from "react";
 import {
   getGroupHeadingId,
   performGrouping,
-  flatten, type CardWithLocation, type CardLocation, cardCountSortedGroup
+  flatten, cardCountSortedGroup
 } from "../utils/cardGrouping.ts";
 import {CardGroup} from "./DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "./DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useDeckDataContext} from "../context/DeckDataContext.tsx";
 import {cardCount} from "@mtgit/shared";
@@ -19,10 +17,6 @@ export function GroupedCards() {
 
   const {filteredDeck} = useDeckDataContext();
 
-  const {repository} = useRepositoryContext();
-  const tags = repository?.tags ?? {};
-  // Track currently selected card for the modal
-
   const groups = performGrouping(
     filteredDeck,
     groupingMode,
@@ -31,10 +25,18 @@ export function GroupedCards() {
 
   const sections = groups;
   console.log("groups:", sections);
-  const pageCards: CardWithLocation[] = flatten(groups);
+  const pageCards = flatten(groups);
 
 
-  const {} = useCardSelectionManager(pageCards);
+  const {
+    setSelectedLocation,
+    selectedId,
+    navigateLeft,
+    navigateRight,
+    setSelectedId,
+    hasNextLeft,
+    hasNextRight
+  } = useCardSelectionManager(pageCards);
 
 
   return (
@@ -80,8 +82,8 @@ export function GroupedCards() {
                   <CardGroup
                     group={group}
                     groupKey={`${section.name}-${group.heading}`}
-                    onCardSelect={card => {
-                      setSelectedCardLocation(card);
+                    onCardSelect={cardLoc => {
+                      setSelectedLocation(cardLoc);
                     }}
                     onCardHover={setHoveredCardImageUrl}
                     sectionName={section.name}/>
@@ -93,13 +95,13 @@ export function GroupedCards() {
       </Stack>
 
       {/* Card details modal for selected card, supports navigation */}
-      <CardDetailsModal
-        oracle_id={selectedCardLocation.oracleId},
-      onLeftArrow,
-      onRightArrow,
-      hasPrevious,
-      hasNext,
-      deckSectionName = "Main"
+      <CardDetailsModal oracle_id={selectedId}
+        onClose={() => setSelectedId(null)}
+        onPrev={navigateLeft}
+        onNext={navigateRight}
+        hasPrevious={hasNextLeft}
+        hasNext={hasNextRight}
+        deckSectionName="Main"
       />
     </>
   );

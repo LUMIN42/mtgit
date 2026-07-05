@@ -14,7 +14,7 @@ function equalRecords(
 export function useCardSelectionManager(
   cards: CardLocation[]
 ) {
-  const [selectedId, setSelectedId] = useState<string | null>();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [leftLocation, setLeftLocation] = useState<CardLocation | null>(null);
   const [rightLocation, setRightLocation] = useState<CardLocation | null>(null);
 
@@ -46,22 +46,27 @@ export function useCardSelectionManager(
   }
 
   function navigateLeft() {
-    setIndex(index(leftLocation));
+    setSelectedLocation(leftLocation);
   }
 
   function navigateRight() {
-    setIndex(index(rightLocation));
+    setSelectedLocation(rightLocation);
   }
 
-  const hasNextLeft = leftLocation === null;
-  const hasNextRight = rightLocation === null;
+  function setSelectedLocation(location: CardLocation) {
+    setIndex(index(location));
+  }
+
+  const hasNextLeft = leftLocation !== null;
+  const hasNextRight = rightLocation !== null;
 
   return {
     selectedId,
-    setSelectedId,
+    setSelectedLocation,
     hasNextLeft,
     hasNextRight,
     navigateLeft,
-    navigateRight
+    navigateRight,
+    setSelectedId
   };
 }
