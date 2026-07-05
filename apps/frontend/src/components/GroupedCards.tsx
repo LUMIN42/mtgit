@@ -12,6 +12,7 @@ import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useDeckDataContext} from "../context/DeckDataContext.tsx";
 import {cardCount} from "@mtgit/shared";
+import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 
 export function GroupedCards() {
   const {groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
@@ -33,21 +34,7 @@ export function GroupedCards() {
   const pageCards: CardWithLocation[] = flatten(groups);
 
 
-  const [selectedCardLocation, setSelectedCardLocation] = useState<CardLocation | undefined>(undefined);
-
-
-  function sameCardLocation(a: CardLocation, b: CardLocation | undefined): boolean {
-    return (
-      b !== undefined &&
-      a.sectionName === b.sectionName &&
-      a.groupName === b.groupName &&
-      a.oracleId === b.oracleId
-    );
-  }
-
-  const selectedIndex = pageCards.findIndex(cardWithLocation => sameCardLocation(cardWithLocation.location, selectedCardLocation));
-
-  const leftLocation = 
+  const {} = useCardSelectionManager(pageCards);
 
 
   return (

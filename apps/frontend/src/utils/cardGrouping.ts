@@ -7,6 +7,7 @@ import {
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
 import {MAIN_TYPE_ORDER} from "@mtgit/shared";
+import {CardLocation} from "../types/addressedCards.ts";
 
 /**
  * Represents a group of cards with a heading and the associated cards.
@@ -33,12 +34,6 @@ export function cardCountSortedSection(sortedSection: SortedSection) {
 export type SortedGroup = {
   heading: string;
   cards: TaggedDeckCard[];
-};
-
-export type CardLocation = {
-  sectionName: DeckSectionName;
-  groupName: string;
-  oracleId: string;
 };
 
 const MANA_VALUE_LANDS_GROUP = "Lands";
@@ -311,15 +306,18 @@ export function sectionCardCount(section: SortedSection) {
   );
 }
 
-export function flatten(grouping: GroupingResult): CardWithLocation[] {
-  const output: CardWithLocation[] = [];
+export function flatten(grouping: GroupingResult): CardLocation[] {
+  const output: CardLocation[] = [];
 
   for (const section of grouping) {
     for (const group of section.groups) {
       for (const card of group.cards) {
         output.push({
-          ...card,
-          location: {sectionName: section.name, groupName: group.heading, oracleId: card.oracle_id}
+          oracle_id: card.oracle_id,
+          location: {
+            "section": section.name,
+            "group": group.heading
+          }
         });
       }
     }

@@ -12,8 +12,8 @@ interface CardDetailsModalProps {
   onClose: () => void;
 
   oracle_id: string;
-  onLeftArrow: () => void;
-  onRightArrow: () => void;
+  onPrev: () => void;
+  onNext: () => void;
 
   hasPrevious: boolean;
   hasNext: boolean;
@@ -25,8 +25,8 @@ export function CardDetailsModal({
   oracle_id,
   isOpened,
   onClose,
-  onLeftArrow,
-  onRightArrow,
+  onPrev,
+  onNext,
   hasPrevious,
   hasNext,
   deckSectionName = "Main"
@@ -40,8 +40,6 @@ export function CardDetailsModal({
 
   const tagSearchInputRef = useRef(undefined);
   const cardImageUrl = card ? getCardImageUrl(card) : undefined;
-
-  const count = (selectedBranchContent[deckSectionName] ?? {})[oracle_id] ?? 0;
 
   const currentTags = repository.tags[oracle_id] ?? [];
 
@@ -59,13 +57,13 @@ export function CardDetailsModal({
       if (e.key === "a" || e.key === "A") {
         if (hasPrevious) {
           e.preventDefault();
-          onLeftArrow();
+          onPrev();
         }
       }
       else if (e.key === "d" || e.key === "D") {
         if (hasNext) {
           e.preventDefault();
-          onRightArrow();
+          onNext();
         }
       }
     };
@@ -92,7 +90,7 @@ export function CardDetailsModal({
             w={80}
             h="100%"
             style={{borderRadius: 0}}
-            onClick={() => onLeftArrow()}
+            onClick={() => onPrev()}
             disabled={!hasPrevious}
             aria-label="Previous card"
           >
@@ -153,7 +151,7 @@ export function CardDetailsModal({
             w={80}
             h="100%"
             style={{borderRadius: 0}}
-            onClick={() => onRightArrow()}
+            onClick={() => onNext()}
             disabled={!hasNext}
             aria-label="Next card"
           >
