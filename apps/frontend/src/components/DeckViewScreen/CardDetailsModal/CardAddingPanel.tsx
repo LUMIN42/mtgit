@@ -1,7 +1,7 @@
 import React from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {relevantSections} from "@mtgit/shared";
-import {Table} from "@mantine/core";
+import {Paper, Table} from "@mantine/core";
 import CardAmountEditor from "../CardAmountEditor.tsx";
 import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
 
@@ -25,56 +25,59 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
 
 
   return (
-    <Table w={"fit-content"} style={{whiteSpace: "nowrap", textAlign: "center"}}>
-      <Table.Thead>
-        <Table.Tr>
-          <Table.Th ta={"center"}>Branch name</Table.Th>
+    <Paper withBorder>
+      <Table w={"fit-content"} style={{whiteSpace: "nowrap", textAlign: "center"}}>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th ta={"center"}>Branch name</Table.Th>
 
-          {
-            relevantSections(repository.format)
-              .map(
-                sectionName => {
-                  if (sectionName == "Commander" && !canBeCommander) {
-                    return null;
-                  }
-
-                  return (
-                    <Table.Th key={sectionName}>
-                      {sectionName}
-                    </Table.Th>);
-                }
-              )
-          }
-        </Table.Tr>
-      </Table.Thead>
-
-      <Table.Tbody>
-        {Object.keys(repository.branches).map(branchName => {
-          return (
-            <Table.Tr key={branchName}>
-              <Table.Td ta={"center"}>{branchName}</Table.Td>
-
-              {
-                relevantSections(repository.format)
-                  .map(
-                    sectionName => {
-                      if (sectionName == "Commander" && !canBeCommander) {
-                        return null;
-                      }
-
-                      return (<Table.Td ta={"center"} key={sectionName}>
-                        <CardAmountEditor branchName={branchName} oracleId={oracle_id} deckSection={sectionName}/>
-                      </Table.Td>);
+            {
+              relevantSections(repository.format)
+                .map(
+                  sectionName => {
+                    if (sectionName == "Commander" && !canBeCommander) {
+                      return null;
                     }
-                  )
-              }
+
+                    return (
+                      <Table.Th key={sectionName}>
+                        {sectionName}
+                      </Table.Th>);
+                  }
+                )
+            }
+          </Table.Tr>
+        </Table.Thead>
+
+        <Table.Tbody>
+          {Object.keys(repository.branches).map(branchName => {
+            return (
+              <Table.Tr key={branchName}>
+                <Table.Td ta={"center"}>{branchName}</Table.Td>
+
+                {
+                  relevantSections(repository.format)
+                    .map(
+                      sectionName => {
+                        if (sectionName == "Commander" && !canBeCommander) {
+                          return null;
+                        }
+
+                        return (<Table.Td ta={"center"} key={sectionName}>
+                          <CardAmountEditor branchName={branchName} oracleId={oracle_id} deckSection={sectionName}/>
+                        </Table.Td>);
+                      }
+                    )
+                }
 
 
-            </Table.Tr>
-          );
-        })}
-      </Table.Tbody>
-    </Table>
+              </Table.Tr>
+            );
+          })}
+        </Table.Tbody>
+      </Table>
+    </Paper>
+
   );
 }
 

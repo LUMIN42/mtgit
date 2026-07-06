@@ -1,4 +1,4 @@
-import {ActionIcon, Box, Divider, Group, Modal, Tabs, Text, Image} from "@mantine/core";
+import {ActionIcon, Divider, Group, Modal, Tabs, Text, Image, Stack, Box, Title} from "@mantine/core";
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {DeckSectionName, getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
@@ -76,9 +76,9 @@ export function CardDetailsModal({
       onClose={onClose}
       centered
       title={card?.name ?? "Card details"}
-      size={"100%"}
+      size={1000}
       styles={{
-        content: {height: "95vh", maxHeight: "95vh", display: "flex", flexDirection: "column"},
+        content: {height: "65vh", display: "flex", flexDirection: "column"},
         body: {overflowY: "auto", flex: 1}
       }}
     >
@@ -98,52 +98,65 @@ export function CardDetailsModal({
           {/*main central part (image + description)*/}
           <Group flex={1} px={"xs"} wrap={"nowrap"} gap={"xl"} align={"flex-start"}>
             {/*image*/}
-            <Box style={{maxWidth: 420, width: "100%"}}>
+            <Stack style={{maxWidth: 420}} h={"100%"} align={"center"} gap={"xl"}>
               {cardImageUrl ? (
-                <Image src={cardImageUrl} maw={"400px"} alt={card.name} style={{width: "100%", borderRadius: 8}}/>
+                <Image src={cardImageUrl} /*maw={"400px"}*/
+                  alt={card.name}
+                  h={"60%"}
+                  style={{borderRadius: 8}}
+                  fit={"contain"}
+                />
               ) : (
                 <Text c="dimmed">No card image available.</Text>
               )}
-            </Box>
+
+              <CardAddingPanel oracle_id={oracle_id}/>
+
+            </Stack>
             <Divider orientation="vertical"/>
-            <Tabs defaultValue="details" flex={1}
-              styles={{panel: {marginTop: "var(--mantine-spacing-xl)"}}}>
-              <Tabs.List grow>
-                <Tabs.Tab value="details" onMouseDown={event => event.preventDefault()}>Details</Tabs.Tab>
-                <Tabs.Tab value="tags" onMouseDown={event => event.preventDefault()}>Tags</Tabs.Tab>
-                <Tabs.Tab value="related" onMouseDown={event => event.preventDefault()}>Related</Tabs.Tab>
-              </Tabs.List>
+            {/*<Tabs defaultValue="tags" flex={1}*/}
+            {/*  styles={{panel: {marginTop: "var(--mantine-spacing-xl)"}}}>*/}
+            {/*  <Tabs.List grow>*/}
+            {/*    /!*<Tabs.Tab value="details" onMouseDown={event => event.preventDefault()}>Details</Tabs.Tab>*!/*/}
+            {/*    <Tabs.Tab value="tags" onMouseDown={event => event.preventDefault()}>Tags</Tabs.Tab>*/}
+            {/*    <Tabs.Tab value="related" onMouseDown={event => event.preventDefault()}>Related</Tabs.Tab>*/}
+            {/*  </Tabs.List>*/}
 
-              <Tabs.Panel value="details">
-                <CardAddingPanel oracle_id={oracle_id}/>
-                {/*<Stack gap="sm">*/}
-                {/*  <Text fw={700}>{card.name}</Text>*/}
-                {/*  <Text><strong>Type:</strong> {card.type_line}</Text>*/}
-                {/*  <Text><strong>Tags:</strong> {currentTags.length ? currentTags.join(", ") : "-"}</Text>*/}
-                {/*  <Text style={{whiteSpace: "pre-wrap"}}>*/}
-                {/*    <strong>OracleText:</strong><br/>*/}
-                {/*    {card.oracle_text || "-"}*/}
-                {/*  </Text>*/}
-                {/*  <Text>*/}
-                {/*    <strong>Price (USD):</strong> {card.prices?.usd ? `$${card.prices.usd}` : "-"}*/}
-                {/*  </Text>*/}
-                {/*</Stack>*/}
-              </Tabs.Panel>
-
-
-              <Tabs.Panel value="tags">
-                <CardDetailsTagsPanel
-                  cardId={oracle_id}
-                  currentTags={currentTags}
-                  tagSearchInputRef={tagSearchInputRef}
-                />
-              </Tabs.Panel>
+            {/*<Tabs.Panel value="details">*/}
+            {/*<Stack gap="sm">*/}
+            {/*  <Text fw={700}>{card.name}</Text>*/}
+            {/*  <Text><strong>Type:</strong> {card.type_line}</Text>*/}
+            {/*  <Text><strong>Tags:</strong> {currentTags.length ? currentTags.join(", ") : "-"}</Text>*/}
+            {/*  <Text style={{whiteSpace: "pre-wrap"}}>*/}
+            {/*    <strong>OracleText:</strong><br/>*/}
+            {/*    {card.oracle_text || "-"}*/}
+            {/*  </Text>*/}
+            {/*  <Text>*/}
+            {/*    <strong>Price (USD):</strong> {card.prices?.usd ? `$${card.prices.usd}` : "-"}*/}
+            {/*  </Text>*/}
+            {/*</Stack>*/}
+            {/*</Tabs.Panel>*/}
 
 
-              <Tabs.Panel value="related">
-                <Text>Related cards or information go here.</Text>
-              </Tabs.Panel>
-            </Tabs>
+            {/*<Tabs.Panel value="tags">*/}
+            <Stack flex={1}>
+              <Title order={2}>
+                Tags
+              </Title>
+              <CardDetailsTagsPanel
+                cardId={oracle_id}
+                currentTags={currentTags}
+                tagSearchInputRef={tagSearchInputRef}
+              />
+            </Stack>
+
+            {/*  </Tabs.Panel>*/}
+
+
+            {/*  <Tabs.Panel value="related">*/}
+            {/*    <Text>Related cards or information go here.</Text>*/}
+            {/*  </Tabs.Panel>*/}
+            {/*</Tabs>*/}
           </Group>
           <ActionIcon
             variant="subtle"
