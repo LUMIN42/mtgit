@@ -47,7 +47,7 @@ function BranchSelector() {
     <Flex wrap="nowrap" align="center" gap="sm">
       <Select
         size="xs"
-        label="Editing"
+        label="Editing Branch"
         data={editedBranchOptions}
         value={selectedBranch}
         onChange={value => {
@@ -73,7 +73,7 @@ function BranchSelector() {
 
       <Select
         size="xs"
-        label="Compare"
+        label="Comparison Branch"
         data={comparisonBranchOptions}
         value={comparisonBranch ?? "None"}
         onChange={value =>

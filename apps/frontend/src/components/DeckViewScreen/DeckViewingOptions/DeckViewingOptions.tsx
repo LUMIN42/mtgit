@@ -1,4 +1,4 @@
-import {Group, Paper, ScrollArea, Stack, Box} from "@mantine/core";
+import {Group, Paper, ScrollArea, Stack, Box, Switch} from "@mantine/core";
 import {DeckPreviewImage} from "./DeckPreviewImage.tsx";
 import {CardSearchSection} from "./CardSearchSection.tsx";
 import {DeckFilterSection} from "./DeckFilterSection.tsx";
@@ -9,20 +9,37 @@ import {DeckMainCountBadge} from "./DeckMainCountBadge.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 import BranchSelector from "./BranchSelector.tsx";
+import {FieldSection} from "./FieldSection.tsx";
 
-export function DeckViewingOptions({horizontal = false}: {horizontal?: boolean}) {
+export function DeckViewingOptions({horizontal = false, comparison = false}: {
+  horizontal?: boolean;
+  comparison?: boolean;
+}) {
   const {
     displayMode,
-    hoveredCardImageUrl
+    hoveredCardImageUrl,
+    diffsOnly,
+    setDiffsOnly
   } = useDeckUiContext();
 
 
   const commonContent = (
     <>
       <DeckPreviewImage visible={displayMode !== "Images"} imageUrl={hoveredCardImageUrl}/>
-      <CardSearchSection/>
+      {comparison || <CardSearchSection/>}
       <DeckFilterSection/>
       <BranchSelector/>
+
+      {
+        comparison &&
+          (<FieldSection label={"Diffs only:"}>
+            <Switch
+              checked={diffsOnly}
+              onChange={event => setDiffsOnly(event.currentTarget.checked)}
+            />
+          </FieldSection>)
+      }
+
       <DeckGroupingSection/>
       <DeckSortingSection/>
       <DeckMainCountBadge/>

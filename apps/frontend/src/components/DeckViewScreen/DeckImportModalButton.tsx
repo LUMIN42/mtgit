@@ -6,7 +6,7 @@ import {useDeckDataContext} from "../../context/DeckDataContext.tsx";
 import {isEmpty} from "@mtgit/shared";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 
-export function DeckImportModal() {
+export function DeckImportModalButton() {
   const {repository} = useRepositoryContext();
   const {selectedBranchName} = useDeckUiContext();
 

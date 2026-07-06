@@ -1,14 +1,13 @@
 // Deck-related fully functional model (no classes, no mutation)
 
 import type {ScryfallOracleCard} from "./scryfall.js";
-import {DECK_SECTION_NAMES, DeckSectionName} from "./repositoryTypes.js";
+import {DECK_SECTION_NAMES, DeckSectionName, OracleId} from "./repositoryTypes.js";
 
 export const SECTION_BY_LABEL: Record<string, DeckSectionName> =
   Object.fromEntries(
     DECK_SECTION_NAMES.map(name => [name.toLowerCase(), name])
   );
 
-export type OracleId = string;
 
 export type TaggedCard = ScryfallOracleCard & {
   tags: string[];

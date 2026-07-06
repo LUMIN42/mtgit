@@ -1,8 +1,6 @@
-import {Dispatch, ReactNode, SetStateAction} from "react";
-import {createContext, useContext, useState} from "react";
-import type {DeckSectionName} from "@mtgit/shared";
+import {Dispatch, ReactNode, SetStateAction, createContext, useContext, useState} from "react";
+import type {DeckExportMode, DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
-import type {DeckDataContextValue} from "./DeckDataContext.tsx";
 
 export type CardDisplayMode = "Images" | "Text";
 export type DeckViewMode = "Deck" | "Branches";
@@ -39,6 +37,15 @@ interface DeckUIContextValue {
 
   selectedBranchName: string | null;
   setSelectedBranchName: (n: string | null) => void;
+
+  diffsOnly: boolean;
+  setDiffsOnly: (value: boolean) => void;
+
+  deckExportModalOpen: boolean;
+  setDeckExportModalOpen: (value: boolean) => void;
+
+  deckExportMode: DeckExportMode;
+  setDeckExportMode: (value: DeckExportMode) => void;
 }
 
 
@@ -57,6 +64,12 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [submittedSearch, setSubmittedSearch] = useState("");
   const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
   const [selectedBranchName, setSelectedBranchName] = useState(null);
+  const [diffsOnly, setDiffsOnly] = useState<boolean>(true);
+
+  const [deckExportModalOpen, setDeckExportModalOpen] = useState<boolean>();
+
+  // todo set to mtga if deck format is standard
+  const [deckExportMode, setDeckExportMode] = useState<DeckExportMode>("MTGO");
 
   const value: DeckUIContextValue = {
     sectionOrder: SECTION_ORDER,
@@ -80,7 +93,16 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
     setComparisonBranchName,
 
     selectedBranchName,
-    setSelectedBranchName
+    setSelectedBranchName,
+
+    diffsOnly,
+    setDiffsOnly,
+
+    deckExportModalOpen,
+    setDeckExportModalOpen,
+
+    deckExportMode,
+    setDeckExportMode
   };
 
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;

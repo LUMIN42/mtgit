@@ -4,7 +4,7 @@ import {Button, Grid, Group, Stack, Title} from "@mantine/core";
 import {useState} from "react";
 
 import style from "../../assets/index.module.css";
-import {DeckImportModal} from "../../components/DeckViewScreen/DeckImportModal.tsx";
+import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
 import {DeckDisplayModeSection} from "../../components/DeckViewScreen/DeckViewingOptions/DeckDisplayModeSection.tsx";
 import {CreateBranchModal} from "../../components/DeckViewScreen/CreateBranchModal.tsx";
 
@@ -13,6 +13,7 @@ import {
 } from "../../context/DeckUiContext.tsx";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import DeckExportModalButton from "../../components/DeckViewScreen/DeckExportModalButton.tsx";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
@@ -34,7 +35,8 @@ export function DeckViewScreen() {
       </Title>
 
       <Group>
-        <DeckImportModal/>
+        <DeckImportModalButton/>
+        <DeckExportModalButton/>
 
         <DeckDisplayModeSection
           value={ui.displayMode}

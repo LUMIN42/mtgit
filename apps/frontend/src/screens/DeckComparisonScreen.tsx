@@ -4,7 +4,7 @@ import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOption
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {HydratedDeck, withoutIdenticalParts} from "@mtgit/shared";
+import {withoutIdenticalParts} from "@mtgit/shared";
 import {compareDecks, DeckComparisonResult} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
@@ -12,34 +12,52 @@ import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/Ca
 import {DeckGroupLocation} from "../types/addressedCards.ts";
 
 export function DeckComparisonScreen() {
-  const {comparisonBranchName, groupingMode, sortingMode, selectedBranchName} = useDeckUiContext();
+  const {
+    comparisonBranchName,
+    groupingMode,
+    sortingMode,
+    selectedBranchName,
+    diffsOnly
+  } = useDeckUiContext();
   const {repository, selectedBranchContent} = useRepositoryContext();
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
 
-  const [leftCardCounts, rightCardCounts] = withoutIdenticalParts(
-    selectedBranchContent,
-    comparisonBranchContent
+
+
+  const originalLeftCardCounts = useMemo(
+    () => selectedBranchContent,
+    [map, selectedBranchName, comparisonBranchName]
   );
 
-  const leftDeck = usePartiallyReconstructedDeck(leftCardCounts, repository.tags);
-  const rightDeck = usePartiallyReconstructedDeck(rightCardCounts, repository.tags);
+  const originalRightCardCounts = useMemo(
+    () => comparisonBranchContent,
+    [map, selectedBranchName, comparisonBranchName]
+  );
+
+  const [leftCardCounts, rightCardCounts] = diffsOnly ? withoutIdenticalParts(
+    originalLeftCardCounts,
+    originalRightCardCounts
+  ) : [originalLeftCardCounts, originalRightCardCounts];
+
+  const originalLeftDeck = usePartiallyReconstructedDeck(leftCardCounts, repository.tags);
+  const originalRightDeck = usePartiallyReconstructedDeck(rightCardCounts, repository.tags);
 
   // todo maybe remove the other branch name from the memo
-  const originalLeftDeck: HydratedDeck = useMemo(
-    () => {
-      return leftDeck;
-    },
-    [map, selectedBranchName, comparisonBranchName]
-  );
-
-  const originalRightDeck: HydratedDeck = useMemo(
-    () => {
-      return rightDeck;
-    },
-    [map, selectedBranchName, comparisonBranchName]
-  );
+  // const originalLeftDeck: HydratedDeck = useMemo(
+  //   () => {
+  //     return leftDeck;
+  //   },
+  //   [map, selectedBranchName, comparisonBranchName]
+  // );
+  //
+  // const originalRightDeck: HydratedDeck = useMemo(
+  //   () => {
+  //     return rightDeck;
+  //   },
+  //   [map, selectedBranchName, comparisonBranchName]
+  // );
 
   const comparison = useMemo(
     () => {
@@ -127,7 +145,7 @@ export function DeckComparisonScreen() {
 
   return (
     <Stack>
-      <DeckViewingOptions horizontal={true}/>
+      <DeckViewingOptions horizontal={true} comparison={true}/>
       <Grid columns={11}>
         {
           comparison.map(

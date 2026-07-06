@@ -1,4 +1,4 @@
-import {ActionIcon, Divider, Group, Modal, Tabs, Text, Image, Stack, Box, Title} from "@mantine/core";
+import {ActionIcon, Divider, Group, Modal, Text, Image, Stack, Title} from "@mantine/core";
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {DeckSectionName, getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
