@@ -1,39 +1,41 @@
-import {Table} from "@mantine/core";
+import {Group, Text} from "@mantine/core";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {DeckSectionName, expectedSectionCardCounts} from "@mtgit/shared";
+import PriceOverviewBadge from "./PriceOverviewBadge.tsx";
 
-export function DeckCardCountTable() {
+export function DeckOverview() {
   const {selectedBranchContent, repository} = useRepositoryContext();
 
   const expected = expectedSectionCardCounts(repository.format);
 
-  const rows = Object.entries(expected)
-    .map(([sectionName, expectedCount]: [DeckSectionName, number]) => {
-      const actualCount = Object.values(selectedBranchContent[sectionName])
-        .reduce(
-          (cum, cur) => cum + cur,
-          0
-        );
-
-
-      return (
-        <Table.Tr key={sectionName}>
-          <Table.Td>{sectionName}</Table.Td>
-          <Table.Td>{actualCount} / {expectedCount}</Table.Td>
-        </Table.Tr>
-      );
-    });
-
   return (
-    <Table w={"fit-content"} ta={"center"} withTableBorder withColumnBorders>
-      <Table.Thead>
-        <Table.Tr>
-          <Table.Th colSpan={2}>Card Count</Table.Th>
-        </Table.Tr>
-      </Table.Thead>
-      <Table.Tbody>
-        {rows}
-      </Table.Tbody>
-    </Table>
+    <Group
+      gap="xl"
+      wrap="nowrap"
+      justify={"space-evenly"}
+    >
+      {Object.entries(expected).map(([sectionName, expectedCount]: [DeckSectionName, number]) => {
+        const actualCount = Object.values(selectedBranchContent[sectionName])
+          .reduce((sum, count) => sum + count, 0);
+
+        return (
+          <Group
+            key={sectionName}
+            gap="xs"
+            wrap="nowrap"
+          >
+            <Text fw={600}>
+              {sectionName}:
+            </Text>
+            <Text>
+              {actualCount} / {expectedCount}
+            </Text>
+          </Group>
+        );
+      })}
+
+      <PriceOverviewBadge/>
+
+    </Group>
   );
 }

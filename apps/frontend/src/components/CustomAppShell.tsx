@@ -1,9 +1,9 @@
-import type { ReactNode } from "react";
-import { Text, Button, Group, Menu, Paper } from "@mantine/core";
-import { useAuth } from "../hooks/LoginInfo.ts";
-import { useNavigate } from "react-router-dom";
+import type {ReactNode} from "react";
+import {Text, Button, Group, Menu, Paper} from "@mantine/core";
+import {useAuth} from "../hooks/LoginInfo.ts";
+import {useNavigate} from "react-router-dom";
 
-export function CustomAppShell({ children }: { children: ReactNode }) {
+export function CustomAppShell({children}: {children: ReactNode}) {
   const auth = useAuth();
   const navigate = useNavigate();
 

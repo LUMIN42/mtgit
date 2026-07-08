@@ -31,6 +31,10 @@ export function DeckSectionsToc() {
           selector: "[data-deck-heading='true']"
         }}
 
+        style={{
+          alignSelf: "center"
+        }}
+
         w={"fit-content"}
 
         // todo understand this line

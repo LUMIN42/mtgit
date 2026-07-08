@@ -9,7 +9,7 @@ function PriceOverviewBadge() {
     Object.values(deck)
       .flatMap(section => Object.values(section))
       .reduce(
-        (total, card) => total + (parseFloat(card?.prices?.usd ?? "0") || 0),
+        (total, card) => total + (parseFloat(card?.prices?.usd ?? "0") * card.count || 0),
         0
       ) * 100
   ) / 100;
