@@ -17,7 +17,7 @@ export function DeckMainCountBadge() {
     );
 
   return (
-    <Badge mt="xs" variant="outline" radius="sm">
+    <Badge variant="outline">
       {count} / 100 cards
     </Badge>
   );

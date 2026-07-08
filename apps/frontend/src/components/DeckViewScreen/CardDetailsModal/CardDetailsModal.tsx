@@ -99,16 +99,25 @@ export function CardDetailsModal({
           <Group flex={1} px={"xs"} wrap={"nowrap"} gap={"xl"} align={"flex-start"}>
             {/*image*/}
             <Stack style={{maxWidth: 420}} h={"100%"} align={"center"} gap={"xl"}>
-              {cardImageUrl ? (
-                <Image src={cardImageUrl} /*maw={"400px"}*/
-                  alt={card.name}
-                  h={"60%"}
-                  style={{borderRadius: 8}}
-                  fit={"contain"}
-                />
-              ) : (
-                <Text c="dimmed">No card image available.</Text>
-              )}
+
+              <Stack h={"60%"} align={"center"} gap={0}>
+                {cardImageUrl ? (
+                  <Image src={cardImageUrl} /*maw={"400px"}*/
+                    alt={card.name}
+                    h={"90%"}
+                    style={{borderRadius: 8}}
+                    fit={"contain"}
+                  />
+                ) : (
+                  <Text c="dimmed">No card image available.</Text>
+                )}
+
+                <Text>
+                  {card?.prices?.usd && `${card?.prices?.usd} $`}
+                </Text>
+              </Stack>
+
+
 
               <CardAddingPanel oracle_id={oracle_id}/>
 

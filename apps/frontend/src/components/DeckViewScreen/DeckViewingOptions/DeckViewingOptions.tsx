@@ -10,6 +10,7 @@ import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 import BranchSelector from "./BranchSelector.tsx";
 import {FieldSection} from "./FieldSection.tsx";
+import PriceOverviewBadge from "./PriceOverviewBadge.tsx";
 
 export function DeckViewingOptions({horizontal = false, comparison = false}: {
   horizontal?: boolean;
@@ -44,6 +45,7 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
       <DeckGroupingSection/>
       <DeckSortingSection/>
       <DeckMainCountBadge/>
+      <PriceOverviewBadge/>
     </>
   );
 
