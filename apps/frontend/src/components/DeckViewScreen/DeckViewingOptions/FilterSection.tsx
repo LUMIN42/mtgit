@@ -2,7 +2,7 @@ import {DebouncedTextInput} from "../../DebouncedTextInput.tsx";
 import {FieldSection} from "./FieldSection.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
-export function DeckFilterSection() {
+export function FilterSection() {
   const {cardFilterQuery, setCardFilterQuery} = useDeckUiContext();
 
   return (

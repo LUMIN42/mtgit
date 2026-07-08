@@ -1,11 +1,11 @@
-import {Group, Paper, ScrollArea, Stack, Box, Switch, Divider} from "@mantine/core";
+import {Group, Paper, Stack, Box, Switch} from "@mantine/core";
 import {DeckPreviewImage} from "./DeckPreviewImage.tsx";
 import {CardSearchSection} from "./CardSearchSection.tsx";
-import {DeckFilterSection} from "./DeckFilterSection.tsx";
+import {FilterSection} from "./FilterSection.tsx";
 import {DeckGroupingSection} from "./DeckGroupingSection.tsx";
-import {DeckSortingSection} from "./DeckSortingSection.tsx";
+import {SortingSelector} from "./SortingSelector.tsx";
 import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
-import {DeckMainCountBadge} from "./DeckMainCountBadge.tsx";
+import {DeckCardCountTable} from "./DeckCardCount.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 import BranchSelector from "./BranchSelector.tsx";
@@ -29,7 +29,7 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
     <>
       <DeckPreviewImage visible={displayMode !== "Images"} imageUrl={hoveredCardImageUrl}/>
       {comparison || <CardSearchSection/>}
-      <DeckFilterSection/>
+      <FilterSection/>
       <BranchSelector/>
 
       {
@@ -43,8 +43,8 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
       }
 
       <DeckGroupingSection/>
-      <DeckSortingSection/>
-      <DeckMainCountBadge/>
+      <SortingSelector/>
+      <DeckCardCountTable/>
       <PriceOverviewBadge/>
     </>
   );

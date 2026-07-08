@@ -1,6 +1,5 @@
 import {z} from "zod";
-import {Format, FormatSchema} from "./deckFormats.js";
-import {relevantSections} from "./cardTypes.js";
+import {Format, FormatSchema, relevantSections} from "./deckFormats.js";
 
 export type TagsMap = Record<string, string[]>;
 

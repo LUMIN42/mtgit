@@ -2,7 +2,7 @@ import {SegmentedControl} from "@mantine/core";
 import {FieldSection} from "./FieldSection.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
-export function DeckSortingSection() {
+export function SortingSelector() {
   const {sortingMode, setSortingMode} = useDeckUiContext();
 
   return (
