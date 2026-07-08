@@ -44,7 +44,7 @@ export function ManaCurvePlot() {
         return;
       }
 
-      const headingId = getGroupHeadingId("manaValue", heading);
+      const headingId = getGroupHeadingId("manaValue", "Main", heading);
       if (!headingId) {
         return;
       }

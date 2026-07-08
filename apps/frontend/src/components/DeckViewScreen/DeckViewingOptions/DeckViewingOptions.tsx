@@ -1,4 +1,4 @@
-import {Group, Paper, ScrollArea, Stack, Box, Switch} from "@mantine/core";
+import {Group, Paper, ScrollArea, Stack, Box, Switch, Divider} from "@mantine/core";
 import {DeckPreviewImage} from "./DeckPreviewImage.tsx";
 import {CardSearchSection} from "./CardSearchSection.tsx";
 import {DeckFilterSection} from "./DeckFilterSection.tsx";
@@ -19,7 +19,8 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
     displayMode,
     hoveredCardImageUrl,
     diffsOnly,
-    setDiffsOnly
+    setDiffsOnly,
+    groupingMode
   } = useDeckUiContext();
 
 
@@ -32,12 +33,12 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
 
       {
         comparison &&
-          (<FieldSection label={"Diffs only:"}>
-            <Switch
-              checked={diffsOnly}
-              onChange={event => setDiffsOnly(event.currentTarget.checked)}
-            />
-          </FieldSection>)
+        (<FieldSection label={"Diffs only:"}>
+          <Switch
+            checked={diffsOnly}
+            onChange={event => setDiffsOnly(event.currentTarget.checked)}
+          />
+        </FieldSection>)
       }
 
       <DeckGroupingSection/>
@@ -72,6 +73,7 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
       </Paper>
     );
   }
+
   else {
     return (
       <Paper pos={"relative"} top={"-0.75rem"} h={"100%"} style={{zIndex: 3}}>
@@ -80,16 +82,29 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
           top={0}
           h="100vh"
           py={"sm"}
+          style={{
+            boxShadow: [
+              "6px",              // x offset
+              "0px",              // y offset
+              "12px",             // blur
+              "-6px",             // spread
+              "rgba(0,0,0,0.25)"  // color
+            ].join(" ")
+          }}
+          radius={0}
         >
-          <Paper withBorder h="100%" px={"sm"} py={"xs"}>
-            <ScrollArea h="100%" type="auto">
-              <Stack align="stretch" gap="xl" justify="space-between" h="100%">
-                {commonContent}
-                <DeckSectionsToc/>
-                <ManaCurvePlot/>
-              </Stack>
-            </ScrollArea>
+          <Paper h="100%" px={"sm"} py={"xs"}>
+            <Stack align="stretch" gap="xl" h="100%">
+              {commonContent}
+
+              {
+                groupingMode === "manaValue" ?
+                  <ManaCurvePlot/> :
+                  <DeckSectionsToc/>
+              }
+            </Stack>
           </Paper>
+
         </Paper>
       </Paper>
     );

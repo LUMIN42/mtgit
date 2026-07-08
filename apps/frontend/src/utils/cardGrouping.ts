@@ -7,7 +7,7 @@ import {
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
 import {MAIN_TYPE_ORDER} from "@mtgit/shared";
-import {CardLocation, DeckGroupCardLocation} from "../types/addressedCards.ts";
+import {DeckGroupCardLocation} from "../types/addressedCards.ts";
 
 /**
  * Represents a group of cards with a heading and the associated cards.
@@ -114,18 +114,8 @@ export function getTagGroupKeys(card: TaggedDeckCard): string[] {
   return Array.from(new Set(card.tags));
 }
 
-/**
- * Returns a unique HTML id for a group heading, if needed for accessibility.
- * @param groupingMode The grouping mode (e.g. "manaValue").
- * @param heading The heading string.
- * @returns The id string or undefined.
- */
-export function getGroupHeadingId(groupingMode: CardGroupingMode, heading: string): string | undefined {
-  if (groupingMode === "manaValue") {
-    return `mana-value-heading-${heading.replace(/\+/g, "plus")}`;
-  }
-
-  return undefined;
+export function getGroupHeadingId(groupingMode: CardGroupingMode, deckSection: DeckSectionName, heading: string): string | undefined {
+  return `${groupingMode}-${deckSection}-${heading}`;
 }
 
 /**

@@ -1,4 +1,4 @@
-import {Stack, Text} from "@mantine/core";
+import {Stack, Title} from "@mantine/core";
 import {
   getGroupHeadingId,
   performGrouping,
@@ -52,43 +52,56 @@ export function GroupedCards() {
           return (
             <Stack key={section.name} gap="xs">
               {/* Section heading with card count */}
-              <Text
-                component="h3"
+              <Title
+                order={3}
                 fw={700}
                 size="lg"
                 id={`deck-section-${section.name.toLowerCase()}`}
-                data-deck-heading="true"
+                data-deck-heading
+                data-card-count={cardCount(filteredDeck[section.name])}
+                data-heading-text={section.name}
               >
                 {section.name} ({cardCount(filteredDeck[section.name])})
-              </Text>
+              </Title>
 
               {/* Render groups within the section */}
-              {section.groups.map(group => (
-                <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
-                  {/* Group heading if grouping is enabled */}
-                  {(groupingMode !== "none" && section.name != "Commander") ? (
-                    <Text
-                      fw={600}
-                      id={getGroupHeadingId(groupingMode, group.heading)}
-                      style={groupingMode === "manaValue" ? {scrollMarginTop: "1rem"} : undefined}
-                    >
-                      {groupingMode === "manaValue" && group.heading !== "Lands"
-                        ? `Mana Value ${group.heading}`
-                        : group.heading} ({cardCountSortedGroup(group)} {cardCountSortedGroup(group) === 1 ? "card" : "cards"})
-                    </Text>
-                  ) : null}
+              {section.groups.map(group => {
+                const cardCount = cardCountSortedGroup(group);
+                const headingText =
+                  groupingMode === "manaValue" && group.heading !== "Lands"
+                    ? `Mana Value ${group.heading}`
+                    : group.heading;
 
-                  {/* Render cards in the group */}
-                  <CardGroup
-                    group={group}
-                    groupKey={`${section.name}-${group.heading}`}
-                    onCardSelect={cardLoc => {
-                      openModal(pageCards, cardLoc);
-                    }}
-                    onCardHover={setHoveredCardImageUrl}
-                    sectionName={section.name}/>
-                </Stack>
-              ))}
+                return (
+                  <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
+                    {/* Group heading if grouping is enabled */}
+                    {(groupingMode !== "none" && section.name != "Commander") ? (
+                      <Title
+                        fw={600}
+                        order={4}
+                        id={getGroupHeadingId(groupingMode, section.name, group.heading)}
+                        style={groupingMode === "manaValue" ? {scrollMarginTop: "1rem"} : undefined}
+                        data-deck-heading
+                        data-card-count={cardCount}
+                        data-heading-text={headingText}
+                      >
+                        {headingText} ({cardCount} {cardCount === 1 ? "card" : "cards"})
+                      </Title>
+                    ) : null}
+
+                    {/* Render cards in the group */}
+                    <CardGroup
+                      group={group}
+                      groupKey={`${section.name}-${group.heading}`}
+                      onCardSelect={cardLoc => {
+                        openModal(pageCards, cardLoc);
+                      }}
+                      onCardHover={setHoveredCardImageUrl}
+                      sectionName={section.name}
+                    />
+                  </Stack>
+                );
+              })}
             </Stack>
           );
         })}
