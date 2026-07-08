@@ -10,6 +10,7 @@ import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {DeckGroupLocation} from "../types/addressedCards.ts";
+import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 
 export function DeckComparisonScreen() {
   const {
@@ -17,13 +18,13 @@ export function DeckComparisonScreen() {
     groupingMode,
     sortingMode,
     selectedBranchName,
-    diffsOnly
+    diffsOnly,
+    cardFilterQuery
   } = useDeckUiContext();
   const {repository, selectedBranchContent} = useRepositoryContext();
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
-
 
 
   const originalLeftCardCounts = useMemo(
@@ -41,8 +42,24 @@ export function DeckComparisonScreen() {
     originalRightCardCounts
   ) : [originalLeftCardCounts, originalRightCardCounts];
 
-  const originalLeftDeck = usePartiallyReconstructedDeck(leftCardCounts, repository.tags);
-  const originalRightDeck = usePartiallyReconstructedDeck(rightCardCounts, repository.tags);
+
+  const originalLeftDeck = usePartiallyReconstructedDeck(
+    leftCardCounts,
+    repository.tags
+  );
+  const filteredLeftDeck = filterDeckByScryfallQuery(
+    originalLeftDeck,
+    cardFilterQuery
+  );
+
+  const originalRightDeck = usePartiallyReconstructedDeck(
+    rightCardCounts,
+    repository.tags
+  );
+  const filteredRightDeck = filterDeckByScryfallQuery(
+    originalRightDeck,
+    cardFilterQuery
+  );
 
   // todo maybe remove the other branch name from the memo
   // const originalLeftDeck: HydratedDeck = useMemo(
@@ -62,8 +79,8 @@ export function DeckComparisonScreen() {
   const comparison = useMemo(
     () => {
       return compareDecks(
-        originalLeftDeck,
-        originalRightDeck,
+        filteredLeftDeck,
+        filteredRightDeck,
         groupingMode,
         sortingMode
       );

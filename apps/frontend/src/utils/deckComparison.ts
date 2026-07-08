@@ -71,7 +71,11 @@ export function compareSections(
   return result;
 }
 
-export function compareDecks(deck1: HydratedDeck, deck2: HydratedDeck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): DeckComparisonResult {
+export function compareDecks(
+  deck1: HydratedDeck,
+  deck2: HydratedDeck,
+  groupingMode: CardGroupingMode,
+  sortingMode: CardSortMode): DeckComparisonResult {
   const output: DeckComparisonResult = [];
 
   const isEmpty = (obj: any) => Object.keys(obj).length === 0;

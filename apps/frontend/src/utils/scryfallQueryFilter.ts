@@ -332,9 +332,11 @@ export function filterDeckByScryfallQuery(deck: HydratedDeck, query: string): Hy
     .map(([sectionName, section]) =>
       [
         sectionName,
-        Object.values(section)
-          .filter(matcher)
-          .map(card => [card.oracle_id, card])
+        Object.fromEntries(
+          Object.values(section)
+            .filter(matcher)
+            .map(card => [card.oracle_id, card])
+        )
       ]
     );
 
