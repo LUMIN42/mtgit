@@ -100,17 +100,32 @@ export function RepositoryProvider({
   });
 
 
-  const updateDeck = trpc.decks.update
-    .useMutation(
-      {
-        onSuccess: (updatedRepo: Repository) => {
-          utils.decks.get.setData(
-            {deckId: updatedRepo._id},
-            updatedRepo
-          );
-        }
+  const updateDeck = trpc.decks.update.useMutation({
+    onMutate: async (updatedRepo: Repository) => {
+      const queryKey = {deckId: updatedRepo._id};
+
+      await utils.decks.get.cancel(queryKey);
+
+      const previousRepo = utils.decks.get.getData(queryKey);
+
+      utils.decks.get.setData(queryKey, updatedRepo);
+
+      return {
+        queryKey,
+        previousRepo
+      };
+    },
+
+    onError: (_error, _updatedRepo, context) => {
+      // rollback
+      if (context?.previousRepo) {
+        utils.decks.get.setData(
+          context.queryKey,
+          context.previousRepo
+        );
       }
-    );
+    }
+  });
 
 
   const selectedBranchContent =

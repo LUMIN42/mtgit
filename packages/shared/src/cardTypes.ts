@@ -5,7 +5,6 @@ export const MainCardTypes = [
   "Artifact",
   "Battle",
   "Creature",
-  "Dungeon",
   "Enchantment",
   "Instant",
   "Land",
@@ -14,17 +13,7 @@ export const MainCardTypes = [
 ] as const;
 
 
-export const MainCardTypeSchema = z.enum([
-  "Artifact",
-  "Battle",
-  "Creature",
-  "Dungeon",
-  "Enchantment",
-  "Instant",
-  "Land",
-  "Planeswalker",
-  "Sorcery"
-]);
+export const MainCardTypeSchema = z.enum(MainCardTypes);
 
 export type MainCardType = z.infer<typeof MainCardTypeSchema>;
 
@@ -32,7 +21,6 @@ export const MAIN_TYPE_ORDER: MainCardType[] = [
   "Artifact",
   "Battle",
   "Creature",
-  "Dungeon",
   "Enchantment",
   "Instant",
   "Sorcery",
