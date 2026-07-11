@@ -167,14 +167,14 @@ export function DeckComparisonScreen() {
         {
           comparison.map(
             section => (
-              <>
+              <React.Fragment key={`${section.sectionName}-fragment`}>
                 <Grid.Col span={11} key={section.sectionName}>
                   <Title style={{textAlign: "center"}} order={2}>{section.sectionName}</Title>
                 </Grid.Col>
                 {
                   section.groups.map(
                     group =>
-                      (<>
+                      (<React.Fragment key={`${section.sectionName}-${group.heading}-fragment`}>
                         <Grid.Col span={11} key={`${section.sectionName}-${group.heading}-heading`}>
                           <Title style={{textAlign: "center"}} order={3}>{group.heading}</Title>
                         </Grid.Col>
@@ -206,7 +206,7 @@ export function DeckComparisonScreen() {
                         </Grid.Col>
 
                         {/*align={"center"}*/}
-                        <Grid.Col span={1} key={`${section.sectionName}-${group.heading}-center`}>
+                        <Grid.Col span={1} key={`${section.sectionName}-${group.heading}-divider`}>
                           <Divider h={"100%"} mx={"auto"} w={"fit-content"} orientation={"vertical"}/>
                         </Grid.Col>
 
@@ -234,10 +234,10 @@ export function DeckComparisonScreen() {
                             />
                           </Stack>
                         </Grid.Col>
-                      </>)
+                      </React.Fragment>)
                   )
                 }
-              </>
+              </React.Fragment>
             )
           )
         }

@@ -84,9 +84,8 @@ export function CardGroup({
         justifySelf: "flex-end"
       }}>
       {group.cards.map((card, index) => (
-        <div style={{direction: "ltr"}}>
+        <div style={{direction: "ltr"}} key={`${groupKey}-${card.id}`}>
           <Card
-            key={`${groupKey}-${card.id}-${index}`}
             card={card}
             displayMode={displayMode}
             onSelect={() => onCardSelect(
