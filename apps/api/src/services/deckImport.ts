@@ -159,15 +159,18 @@ export async function parseDeckImportText(
     (card.normalized_name).map(nName => [nName, card.oracle_id])
   );
 
-  const cardsLookup = Object.fromEntries(cardsEntries);
+  const cardsLookup: Record<string, string> = Object.fromEntries(cardsEntries);
 
   const resultingDeck: DeckCardCounts = {};
 
   for (const parsedLine of parsedLines) {
-    resultingDeck[parsedLine.deckSection] ??= {};
+    const oracleId = cardsLookup[parsedLine.cardName];
 
-    resultingDeck[parsedLine.deckSection]![cardsLookup[parsedLine.cardName]] ??= 0;
-    resultingDeck[parsedLine.deckSection]![cardsLookup[parsedLine.cardName]] += parsedLine.quantity;
+    resultingDeck[parsedLine.deckSection] ??= {};
+    resultingDeck[parsedLine.deckSection]![oracleId] ??= 0;
+    resultingDeck[parsedLine.deckSection]![oracleId] += parsedLine.quantity;
+
+    oracleTagsMap[oracleId] = parsedLine.tags;
   }
 
 
