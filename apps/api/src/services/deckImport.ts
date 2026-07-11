@@ -93,6 +93,8 @@ export async function parseDeckImportText(
   const sectionHeaderPattern =
     /^(Commander|Main|Sideboard|Considering)\s*:?$/i;
 
+  const hasExplicitSectionNames = lines.some(line => sectionHeaderPattern.test(line));
+
   let currentSection: DeckSectionName = "Main";
 
   const oracleTagsMap: Record<string, string[]> = {};
@@ -103,7 +105,7 @@ export async function parseDeckImportText(
     const line = rawLine.trim();
 
     // comments
-    if (!line || line.startsWith("//") || line.startsWith("#")) {
+    if ((!line && hasExplicitSectionNames) || line.startsWith("//") || line.startsWith("#")) {
       continue;
     }
 
@@ -118,9 +120,13 @@ export async function parseDeckImportText(
 
 
     if (!parsingResult) {
-      continue;
+      if (line.trim() === "" && !hasExplicitSectionNames) {
+        currentSection = "Commander";
+      }
     }
-    parsedLines.push(parsingResult);
+    else {
+      parsedLines.push(parsingResult);
+    }
   }
 
   const allNames = parsedLines.map(line => line.cardName);
@@ -155,7 +161,7 @@ export async function parseDeckImportText(
 
   const cardsLookup = Object.fromEntries(cardsEntries);
 
-  const resultingDeck:DeckCardCounts = {};
+  const resultingDeck: DeckCardCounts = {};
 
   for (const parsedLine of parsedLines) {
     resultingDeck[parsedLine.deckSection] ??= {};
