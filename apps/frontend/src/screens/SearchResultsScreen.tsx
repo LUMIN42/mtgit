@@ -1,11 +1,13 @@
 import {useEffect, useMemo, useState} from "react";
 import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
-import {useDeckContext} from "../context/DeckUiContext.tsx";
 import {SearchBox} from "../components/SearchBox.tsx";
-import {CardGroup} from "../components/CardGroup.tsx";
-import {CardDetailsModal} from "../components/CardDetailsModal.tsx";
+import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
+import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
+import {useDeckUiContext} from "../context/DeckUiContext.tsx";
+import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
+import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -21,12 +23,25 @@ function hasScryfallOrderClause(query: string): boolean {
     );
 }
 
-function SearchResultsScreen() {
-  const deck = useDeckContext();
+export function SearchResultsScreen() {
 
-  const submittedSearch = deck.submittedSearch;
+  const uiContext = useDeckUiContext();
+
+  const submittedSearch = uiContext.submittedSearch;
   const [searchInput, setSearchInput] = useState(submittedSearch);
-  const [selection, setSelection] = useState<number | null>(null);
+
+  const {fetchMissingCards} = useScryfallCache();
+
+  const {
+    oracleId,
+    openModal,
+    closeModal,
+    moveLeft,
+    moveRight,
+    hasNextLeft,
+    hasNextRight
+  } = useCardSelectionManager();
+
 
   useEffect(() => {
     setSearchInput(submittedSearch);
@@ -45,6 +60,10 @@ function SearchResultsScreen() {
     [searchQuery.data]
   );
 
+  useEffect(() => {
+    fetchMissingCards(cards.map(card => card.oracle_id));
+  }, [cards]);
+
   const showInitialLoading = searchQuery.isPending && submittedSearch.trim().length > 0 && cards.length === 0;
   const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
 
@@ -58,17 +77,15 @@ function SearchResultsScreen() {
     [cardsWithTags]
   );
 
-  const safeSelection = selection !== null && selection < cardsWithTags.length ? selection : null;
 
   const handleSearchSubmit = (value: string) => {
     const trimmedValue = value.trim();
-    deck.setSubmittedSearch(trimmedValue);
-    setSelection(null);
+    uiContext.setSubmittedSearch(trimmedValue);
   };
 
   return (
     <Stack gap={"md"}>
-      <Button onClick={() => deck.setIsSearching(false)} w={"fit-content"}>
+      <Button onClick={() => uiContext.setIsSearching(false)} w={"fit-content"}>
         Return to Deck View
       </Button>
       <SearchBox
@@ -86,14 +103,14 @@ function SearchResultsScreen() {
 
       {showRefreshLoading ? (
         <Center>
-          <Loader type="dots" size="sm" />
+          <Loader type="dots" size="sm"/>
         </Center>
       ) : null}
 
       {showInitialLoading ? (
         <Center py="xl">
           <Stack gap="xs" align="center">
-            <Loader type="dots" size="lg" />
+            <Loader type="dots" size="lg"/>
             <Text size="sm" c="dimmed">Loading cards from Scryfall...</Text>
           </Stack>
         </Center>
@@ -115,22 +132,27 @@ function SearchResultsScreen() {
         <CardGroup
           group={resultsGroup}
           sectionName="Main"
-          displayMode={deck.displayMode}
-          sortingMode={usesServerOrder ? undefined : deck.sortingMode}
           groupKey={submittedSearch || "search-results"}
+          quicklyAdjustable
           onCardSelect={location => {
-            const index = cardsWithTags.findIndex(card => card.oracle_id === location.oracleId);
-            setSelection(index >= 0 ? index : null);
+            openModal(
+              // location set to empty as it is not needed
+              cards.map(card => {
+                  return {oracle_id: card.oracle_id, location: {}};
+                }
+              ),
+              {oracle_id: location.oracle_id, location: {}}
+            );
           }}
         />
       ) : null}
 
-      <CardDetailsModal
-        cards={cardsWithTags}
-        index={safeSelection ?? 0}
-        opened={safeSelection !== null}
-        onClose={() => setSelection(null)}
-        onIndexChange={setSelection}
+      <CardDetailsModal onClose={closeModal}
+        oracle_id={oracleId}
+        onPrev={moveLeft}
+        onNext={moveRight}
+        hasPrevious={hasNextLeft}
+        hasNext={hasNextRight}
       />
     </Stack>
   );

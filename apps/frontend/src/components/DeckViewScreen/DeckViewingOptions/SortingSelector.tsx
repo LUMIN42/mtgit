@@ -1,21 +1,18 @@
 import {SegmentedControl} from "@mantine/core";
-import type {CardSortMode} from "../../types/grouping.ts";
 import {FieldSection} from "./FieldSection.tsx";
+import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
-interface DeckSortingSectionProps {
-  value: CardSortMode;
-  onChange: (value: CardSortMode) => void;
-}
+export function SortingSelector() {
+  const {sortingMode, setSortingMode} = useDeckUiContext();
 
-export function DeckSortingSection({value, onChange}: DeckSortingSectionProps) {
   return (
     <FieldSection label="Card Sorting:">
       <SegmentedControl
         mt="xs"
         fullWidth
         size="xs"
-        value={value}
-        onChange={nextValue => onChange(nextValue as CardSortMode)}
+        value={sortingMode}
+        onChange={nextValue => setSortingMode(nextValue)}
         data={[
           {label: "Name", value: "name"},
           {label: "Price", value: "priceUsd"},

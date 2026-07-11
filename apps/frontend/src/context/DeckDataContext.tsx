@@ -1,22 +1,28 @@
-import {createContext, useContext, useEffect, useState} from "react";
+import {
+  createContext,
+  useContext,
+  useEffect
+} from "react";
 import type {ReactNode} from "react";
-import {Deck, DeckSection} from "@mtgit/shared";
+
+import {HydratedDeck} from "@mtgit/shared";
 import type {
-  CardCounts,
-  DeckCard,
-  DeckCardCounts,
-  DeckSectionName,
-  DeckSections
+  DeckCardCounts
 } from "@mtgit/shared";
-import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
+
 import {useScryfallCache} from "./ScryfallCacheContext";
+import {useRepositoryContext} from "./RepositoryContext.tsx";
+import {useDeckUiContext} from "./DeckUiContext.tsx";
+
+import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 
 export interface DeckDataContextValue {
-  deck: Deck;
+  deck: HydratedDeck;
   isLoading: boolean;
+  filteredDeck: HydratedDeck;
 }
 
-interface DeckDataProviderProps {
+export interface DeckDataProviderProps {
   sections?: DeckCardCounts | null;
   children: ReactNode;
 }
@@ -25,120 +31,111 @@ const DeckDataContext = createContext<DeckDataContextValue | undefined>(
   undefined
 );
 
-export function DeckDataProvider({
+/**
+ * -----------------------------
+ * Helpers (kept OUTSIDE component)
+ * -----------------------------
+ */
+// async function buildCardsAsync(
+//   counts: CardCounts,
+//   getCards: (ids: string[]) => Promise<(ScryfallOracleCard | undefined)[]>
+// ): Promise<DeckCard[]> {
+//   const ids = Object.keys(counts);
+//   const cards = await getCards(ids);
+//
+//   const out: DeckCard[] = [];
+//
+//   for (let i = 0; i < ids.length; i++) {
+//     const card = cards[i];
+//     const count = counts[ids[i]];
+//
+//     if (card) {
+//       out.push({
+//         ...card,
+//         count
+//       });
+//     }
+//   }
+//
+//   return out;
+// }
+
+// async function buildSectionsAsync(
+//   sections: DeckCardCounts,
+//   getCards: (ids: string[]) => Promise<(ScryfallOracleCard | undefined)[]>,
+//   tags: Record<string, string[]>
+// ): Promise<DeckSections> {
+//   const built: Partial<Record<DeckSectionName, DeckSection>> = {};
+//
+//   for (const [sectionName, counts] of Object.entries(sections)) {
+//     const cards = await buildCardsAsync(counts as CardCounts, getCards);
+//
+//     const enriched = cards.map(card => ({
+//       ...card,
+//       tags: tags?.[card.oracle_id] ?? []
+//     }));
+//
+//     built[sectionName as DeckSectionName] = new DeckSection(
+//       sectionName as DeckSectionName,
+//       enriched
+//     );
+//   }
+//
+//   if (!built.Main) {
+//     built.Main = new DeckSection("Main", []);
+//   }
+//
+//   return built as DeckSections;
+// }
+
+/**
+ * -----------------------------
+ * Context
+ * -----------------------------
+ */
+export function DeckDataProviderInner({
   sections,
   children
 }: DeckDataProviderProps) {
-  const {getCards} = useScryfallCache();
+  const {fetchMissingDeckCards, usePartiallyReconstructedDeck} = useScryfallCache();
+  const {repository} = useRepositoryContext();
+  const ui = useDeckUiContext();
 
-  const [deck, setDeck] = useState<Deck>(() =>
-    Deck.empty("Loading deck")
-  );
+  const deck = usePartiallyReconstructedDeck(sections, repository.tags);
 
-  const [isLoading, setIsLoading] = useState(true);
+  let filteredDeck = {};
+  if (deck !== null) {
+    filteredDeck = filterDeckByScryfallQuery(deck, ui.cardFilterQuery);
+  }
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function hydrate() {
-      if (!sections) {
-        setDeck(Deck.empty("Sample deck"));
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-
-      const deckSections = await buildSectionsAsync(
-        sections,
-        getCards
-      );
-
-      if (cancelled) {
-        return;
-      }
-
-      setDeck(new Deck("Imported", deckSections));
-      setIsLoading(false);
-    }
-
-    hydrate();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [sections, getCards]);
+    fetchMissingDeckCards(sections);
+  }, [sections]);
 
   return (
-    <DeckDataContext.Provider value={{deck, isLoading}}>
+    <DeckDataContext.Provider
+      value={{
+        deck: deck ?? {},
+        isLoading: deck !== null,
+        filteredDeck
+      }}
+    >
       {children}
     </DeckDataContext.Provider>
   );
 }
 
 /**
- * 🔥 async version (bulk fetch friendly)
+ * -----------------------------
+ * Hook
+ * -----------------------------
  */
-async function buildSectionsAsync(
-  sections: DeckCardCounts,
-  getCards: (
-    ids: string[]
-  ) => Promise<(ScryfallOracleCard | undefined)[]>
-): Promise<DeckSections> {
-  const built: Partial<Record<DeckSectionName, DeckSection>> = {};
-
-  for (const [sectionName, counts] of Object.entries(sections)) {
-    const cards = await buildCardsAsync(counts as CardCounts, getCards);
-
-    built[sectionName as DeckSectionName] = new DeckSection(
-      sectionName as DeckSectionName,
-      cards
-    );
-  }
-
-  if (!built.Main) {
-    built.Main = new DeckSection("Main", []);
-  }
-
-  return built as DeckSections;
-}
-
-/**
- * 🔥 batch-resolved card construction
- */
-async function buildCardsAsync(
-  counts: CardCounts,
-  getCards: (
-    ids: string[]
-  ) => Promise<(ScryfallOracleCard | undefined)[]>
-): Promise<DeckCard[]> {
-  const ids = Object.keys(counts);
-
-  const cards = await getCards(ids);
-
-  const out: DeckCard[] = [];
-
-  for (let i = 0; i < ids.length; i++) {
-    const card = cards[i];
-    const count = counts[ids[i]];
-
-    if (card) {
-      out.push({
-        ...card,
-        count
-      });
-    }
-  }
-
-  return out;
-}
-
 export function useDeckDataContext(): DeckDataContextValue {
   const context = useContext(DeckDataContext);
 
   if (!context) {
     throw new Error(
-      "useDeckDataContext must be used within DeckProvider"
+      "useDeckDataContext must be used within DeckDataProvider"
     );
   }
 

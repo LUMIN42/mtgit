@@ -7,7 +7,7 @@ import DeckOverviewScreen from "./screens/DeckOverviewScreen.tsx";
 import {useAuth} from "./hooks/LoginInfo.ts";
 import {JSX} from "react";
 import React from "react";
-import {DeckViewScreenWrapper} from "./screens/DeckViewScreenWrapper.tsx";
+import {DeckViewScreenWrapper} from "./screens/DeckViewScreen/DeckViewScreenWrapper.tsx";
 
 /**
  * 🧠 Auth gate

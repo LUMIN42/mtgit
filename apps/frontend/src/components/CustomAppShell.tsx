@@ -1,36 +1,49 @@
 import type {ReactNode} from "react";
-import {Text} from "@mantine/core";
-
-import {Button, Group, Menu, Paper} from "@mantine/core";
+import {Text, Button, Group, Menu, Paper} from "@mantine/core";
 import {useAuth} from "../hooks/LoginInfo.ts";
-
-// import style from "./assets/index.module.css"
+import {useNavigate} from "react-router-dom";
 
 export function CustomAppShell({children}: {children: ReactNode}) {
-
   const auth = useAuth();
+  const navigate = useNavigate();
 
-  return <>
-    <Paper withBorder>
-      <Group px={"md"} justify={"space-between"}>
-        <Paper>
-          (App logo)
-        </Paper>
+  return (
+    <>
+      <Paper withBorder>
+        <Group px="md" justify="space-between">
 
-        <Menu variant={"gradient"}>
-          {/*todo what does this element do?*/}
-        </Menu>
+          {/* LEFT SIDE */}
+          <Group gap="sm">
+            <Paper>(App logo)</Paper>
 
+            <Button
+              variant="subtle"
+              size="xs"
+              onClick={() => navigate("/app/decks")}
+            >
+              Decks
+            </Button>
+          </Group>
 
-        <Group align={"center"}>
-          <Text>Logged in as: {auth?.user?.username}</Text> // todo fix when logged out
-          <Button variant="filled"
-            color={"red"}>Logout</Button>
+          {/* CENTER / MENU */}
+          <Menu variant="gradient">
+            {/* todo */}
+          </Menu>
+
+          {/* RIGHT SIDE */}
+          <Group align="center">
+            <Text>
+              Logged in as: {auth?.user?.username ?? "Guest"}
+            </Text>
+
+            <Button variant="filled" color="red">
+              Logout
+            </Button>
+          </Group>
         </Group>
-      </Group>
-    </Paper>
-    <Paper p={"md"}>
-      {children}
-    </Paper>
-  </>;
+      </Paper>
+
+      <Paper p="md">{children}</Paper>
+    </>
+  );
 }

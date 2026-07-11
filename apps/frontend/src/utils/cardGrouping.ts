@@ -1,12 +1,13 @@
-import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
+import {CardGroupingMode, CardSortMode, SECTION_SCREEN_SORT_ORDER} from "../types/grouping.ts";
 import {
-  type Deck,
-  type DeckSection,
-  type DeckSectionName,
-  type ScryfallOracleCard,
-  type TaggedDeck
+  type HydratedDeck,
+  type HydratedDeckSection,
+  type DeckSectionName, isMainCardType, MainCardType,
+  type ScryfallOracleCard
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
+import {MAIN_TYPE_ORDER} from "@mtgit/shared";
+import {DeckGroupCardLocation} from "../types/addressedCards.ts";
 
 /**
  * Represents a group of cards with a heading and the associated cards.
@@ -19,51 +20,22 @@ export type SortedSection = {
   groups: SortedGroup[];
 };
 
+export function cardCountSortedGroup(sortedGroup: SortedGroup) {
+  return sortedGroup.cards.reduce((prev, current) => prev + current.count, 0);
+}
+
+export function cardCountSortedSection(sortedSection: SortedSection) {
+  return sortedSection.groups.reduce(
+    (prev, current) => prev + cardCountSortedGroup(current),
+    0
+  );
+}
+
 export type SortedGroup = {
   heading: string;
   cards: TaggedDeckCard[];
 };
 
-export type CardLocation = {
-  sectionName: DeckSectionName;
-  groupName: string;
-  oracleId: string;
-};
-
-export type CardWithLocation = TaggedDeckCard & {
-  location: CardLocation;
-};
-
-
-// todo move to proper global types
-export const MainCardType = {
-  Artifact: "Artifact",
-  Battle: "Battle",
-  Creature: "Creature",
-  Dungeon: "Dungeon",
-  Enchantment: "Enchantment",
-  Instant: "Instant",
-  Land: "Land",
-  Planeswalker: "Planeswalker",
-  Sorcery: "Sorcery"
-} as const;
-
-export type MainCardType = (typeof MainCardType)[keyof typeof MainCardType];
-
-// todo just sort alphabetically ?
-const MAIN_TYPE_ORDER: MainCardType[] = [
-  MainCardType.Artifact,
-  MainCardType.Battle,
-  MainCardType.Creature,
-  MainCardType.Dungeon,
-  MainCardType.Enchantment,
-  MainCardType.Instant,
-  MainCardType.Sorcery,
-  MainCardType.Planeswalker,
-  MainCardType.Land
-];
-
-const MAIN_TYPE_SET = new Set<string>(MAIN_TYPE_ORDER);
 const MANA_VALUE_LANDS_GROUP = "Lands";
 const MANA_VALUE_TEN_PLUS_GROUP = "10+";
 const RARITY_ORDER: Record<string, number> = {
@@ -102,15 +74,16 @@ function toTitleCase(word: string): string {
 export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
   const {mainPart} = parseTypeLineParts(card.type_line);
   const words = mainPart.match(/[A-Za-z]+/g) ?? [];
-  const keys = new Set<string>();
-  
+  const keys = new Set<MainCardType>();
+
   for (const word of words) {
     const normalizedWord = toTitleCase(word);
-    if (MAIN_TYPE_SET.has(normalizedWord)) {
+
+    if (isMainCardType(normalizedWord)) {
       keys.add(normalizedWord);
     }
   }
-  
+
   return keys.size > 0 ? Array.from(keys) : ["Other"];
 }
 
@@ -123,7 +96,7 @@ export function getManaValueGroupKey(card: ScryfallOracleCard): string {
   if (card.type_line.toLowerCase().includes("land")) {
     return MANA_VALUE_LANDS_GROUP;
   }
-  
+
   const manaValue = Math.floor(card.cmc);
   return manaValue >= 10 ? MANA_VALUE_TEN_PLUS_GROUP : `${manaValue}`;
 }
@@ -137,22 +110,12 @@ export function getTagGroupKeys(card: TaggedDeckCard): string[] {
   if (!card.tags?.length) {
     return ["Untagged"];
   }
-  
+
   return Array.from(new Set(card.tags));
 }
 
-/**
- * Returns a unique HTML id for a group heading, if needed for accessibility.
- * @param groupingMode The grouping mode (e.g. "manaValue").
- * @param heading The heading string.
- * @returns The id string or undefined.
- */
-export function getGroupHeadingId(groupingMode: CardGroupingMode, heading: string): string | undefined {
-  if (groupingMode === "manaValue") {
-    return `mana-value-heading-${heading.replace(/\+/g, "plus")}`;
-  }
-  
-  return undefined;
+export function getGroupHeadingId(groupingMode: CardGroupingMode, deckSection: DeckSectionName, heading: string): string | undefined {
+  return `${groupingMode}-${deckSection}-${heading}`;
 }
 
 /**
@@ -161,39 +124,39 @@ export function getGroupHeadingId(groupingMode: CardGroupingMode, heading: strin
  * @param mode The grouping mode.
  * @returns The sorted array of headings.
  */
-function sortGroupedHeadings(headings: string[], mode: CardGroupingMode): string[] {
+export function sortGroupHeadings(headings: string[], mode: CardGroupingMode): string[] {
   return headings.sort((left, right) => {
     if (mode === "manaValue") {
       if (left === MANA_VALUE_LANDS_GROUP) {
         return 1;
       }
-      
+
       if (right === MANA_VALUE_LANDS_GROUP) {
         return -1;
       }
-      
+
       const leftValue = left === MANA_VALUE_TEN_PLUS_GROUP ? 10 : Number.parseInt(left, 10);
       const rightValue = right === MANA_VALUE_TEN_PLUS_GROUP ? 10 : Number.parseInt(right, 10);
       return leftValue - rightValue;
     }
-    
+
     if (mode === "type") {
       const leftIndex = MAIN_TYPE_ORDER.findIndex(type => type === left);
       const rightIndex = MAIN_TYPE_ORDER.findIndex(type => type === right);
-      
+
       if (leftIndex >= 0 && rightIndex >= 0) {
         return leftIndex - rightIndex;
       }
-      
+
       if (leftIndex >= 0) {
         return -1;
       }
-      
+
       if (rightIndex >= 0) {
         return 1;
       }
     }
-    
+
     return left.localeCompare(right);
   });
 }
@@ -207,9 +170,9 @@ export function groupCardsByMode(cards: TaggedDeckCard[], mode: CardGroupingMode
   if (mode === "none") {
     return [{heading: "", cards}];
   }
-  
+
   const groups = new Map<string, TaggedDeckCard[]>();
-  
+
   for (const card of cards) {
     const keys =
       mode === "type"
@@ -217,20 +180,19 @@ export function groupCardsByMode(cards: TaggedDeckCard[], mode: CardGroupingMode
         : mode === "manaValue"
           ? [getManaValueGroupKey(card)]
           : getTagGroupKeys(card);
-    
+
     for (const key of keys) {
       const currentCards = groups.get(key) ?? [];
       currentCards.push(card);
       groups.set(key, currentCards);
     }
   }
-  
-  const sortedHeadings = sortGroupedHeadings(Array.from(groups.keys()), mode);
-  
+
+  const sortedHeadings = sortGroupHeadings(Array.from(groups.keys()), mode);
+
   return sortedHeadings.map(heading => ({
     heading,
-    cards: groups.get(heading) ?? [],
-    offset: -1
+    cards: groups.get(heading) ?? []
   }));
 }
 
@@ -245,7 +207,7 @@ function getUsdPrice(card: TaggedDeckCard): number {
   if (!rawUsd) {
     return -1;
   }
-  
+
   const parsedValue = Number.parseFloat(rawUsd);
   return Number.isFinite(parsedValue) ? parsedValue : -1;
 }
@@ -286,65 +248,70 @@ function sortCardsInGroup(cards: TaggedDeckCard[], mode: CardSortMode): TaggedDe
         return rarityDelta;
       }
     }
-    
+
     return left.name.localeCompare(right.name);
   });
 }
 
-function handleSection(section: DeckSection<TaggedDeckCard>, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
-  const groups = groupCardsByMode(section.toArray(), groupingMode);
-  
+export function handleSection(section: HydratedDeckSection, sectionName: DeckSectionName, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
+  const groups = groupCardsByMode(Object.values(section), groupingMode);
+
   let sortedGroups = groups.map(group => {
     return {
       heading: group.heading,
       cards: sortCardsInGroup(group.cards, sortingMode)
     };
   });
-  
-  const headingOrder = sortGroupedHeadings(groups.map(group => group.heading), groupingMode);
-  
+
+  const headingOrder = sortGroupHeadings(groups.map(group => group.heading), groupingMode);
+
   sortedGroups = headingOrder.map(heading => sortedGroups.find(group => group.heading == heading));
-  
-  
+
+
   return {
-    name: section.name,
+    name: sectionName,
     groups: sortedGroups
   };
 }
 
-export function performGrouping(deck: Deck<TaggedDeckCard>, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
+export function performGrouping(deck: HydratedDeck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
   const outputSections: SortedSection[] = [];
-  
-  for (const section of Object.values(deck.sections)) {
-    outputSections.push(handleSection(section, groupingMode, sortingMode));
+
+  for (const sectionName of SECTION_SCREEN_SORT_ORDER) {
+    if (sectionName in deck) {
+      outputSections.push(handleSection(deck[sectionName], sectionName, groupingMode, sortingMode));
+    }
   }
-  
+
   return outputSections;
 }
 
-export function groupCardCount<T extends TaggedDeckCard>(group: SortedGroup) {
+export function groupCardCount(group: SortedGroup) {
   return group.cards.reduce((sum, card) => sum + card.count, 0);
 }
 
-export function sectionCardCount<T extends TaggedDeckCard>(section: SortedSection) {
+export function sectionCardCount(section: SortedSection) {
   return section.groups.reduce(
     (sum, group) => sum + groupCardCount(group), 0
   );
 }
 
-export function flatten(grouping: GroupingResult): CardWithLocation[] {
-  const output: CardWithLocation[] = [];
-  
+export function flatten(grouping: GroupingResult): DeckGroupCardLocation[] {
+  const output: DeckGroupCardLocation[] = [];
+
   for (const section of grouping) {
     for (const group of section.groups) {
       for (const card of group.cards) {
         output.push({
-          ...card,
-          location: {sectionName: section.name, groupName: group.heading, oracleId: card.oracle_id}
+          oracle_id: card.oracle_id,
+          location: {
+            "section": section.name,
+            "group": group.heading
+          }
         });
       }
     }
   }
-  
+
   return output;
 }

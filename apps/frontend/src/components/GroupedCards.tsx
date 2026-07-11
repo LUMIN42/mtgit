@@ -1,63 +1,43 @@
-import {useDeckContext} from "../context/DeckUiContext.tsx";
-import {Stack, Text} from "@mantine/core";
-import {useMemo, useState} from "react";
+import {Stack, Title} from "@mantine/core";
 import {
   getGroupHeadingId,
   performGrouping,
-  flatten, type CardWithLocation, type CardLocation
+  flatten, cardCountSortedGroup
 } from "../utils/cardGrouping.ts";
-import {CardGroup} from "./CardGroup.tsx";
-import {CardDetailsModal} from "./CardDetailsModal.tsx";
+import {CardGroup} from "./DeckViewScreen/CardGroup.tsx";
+import {CardDetailsModal} from "./DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
-import {withTags} from "@mtgit/shared";
+import {useDeckUiContext} from "../context/DeckUiContext.tsx";
+import {useDeckDataContext} from "../context/DeckDataContext.tsx";
+import {cardCount} from "@mtgit/shared";
+import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 
 export function GroupedCards() {
-  const {filteredDeck, displayMode, groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckContext();
-  const {repository} = useRepositoryContext();
-  const tags = repository?.tags ?? {};
-  // Track currently selected card for the modal
-  
-  /**
-   * Memoized preparation of deck sections and a flat card list for the modal.
-   */
-  const {sections, pageCards} = useMemo(
-    () => {
-      
-      const tagged = withTags(filteredDeck, tags);
-      const groups = performGrouping(tagged.deck, groupingMode, sortingMode);
-      return {sections: groups, pageCards: flatten(groups)};
-    },
-    [filteredDeck, groupingMode, sortingMode, tags]
+  const {groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
+
+  const {filteredDeck} = useDeckDataContext();
+
+  const groups = performGrouping(
+    filteredDeck,
+    groupingMode,
+    sortingMode
   );
-  
-  
-  const [selectedCardLocation, setSelectedCardLocation] = useState<CardLocation | undefined>(undefined);
-  
-  
-  function sameLocation(a: CardLocation, b: CardLocation | undefined): boolean {
-    return (
-      b !== undefined &&
-      a.sectionName === b.sectionName &&
-      a.groupName === b.groupName &&
-      a.oracleId === b.oracleId
-    );
-  }
 
-  function findByOracleId(a: CardLocation, b: CardLocation | undefined): boolean {
-    return b !== undefined && a.oracleId === b.oracleId;
-  }
+  const sections = groups;
+  console.log("groups:", sections);
+  const pageCards = flatten(groups);
 
-  const selectedCardIndex: number = pageCards
-    .findIndex(card => sameLocation(card.location, selectedCardLocation));
 
-  const fallbackCardIndex: number = selectedCardIndex === -1
-    ? pageCards.findIndex(card => findByOracleId(card.location, selectedCardLocation))
-    : selectedCardIndex;
+  const {
+    oracleId,
+    openModal,
+    closeModal,
+    moveLeft,
+    moveRight,
+    hasNextLeft,
+    hasNextRight
+  } = useCardSelectionManager();
 
-  // todo try removing the null coalescence in the end
-  const selectedCard: CardWithLocation | undefined =
-    fallbackCardIndex === -1 ? undefined : pageCards[fallbackCardIndex] ?? undefined;
 
   return (
     <>
@@ -68,65 +48,72 @@ export function GroupedCards() {
           // if (section.cards.length === 0) {
           //   return null;
           // }
-          
+
           return (
             <Stack key={section.name} gap="xs">
               {/* Section heading with card count */}
-              <Text
-                component="h3"
+              <Title
+                order={3}
                 fw={700}
                 size="lg"
                 id={`deck-section-${section.name.toLowerCase()}`}
-                data-deck-heading="true"
+                data-deck-heading
+                data-card-count={cardCount(filteredDeck[section.name])}
+                data-heading-text={section.name}
               >
-                {section.name} ({filteredDeck.sections[section.name].getCardCount()})
-              </Text>
-              
+                {section.name} ({cardCount(filteredDeck[section.name])})
+              </Title>
+
               {/* Render groups within the section */}
-              {section.groups.map(group => (
-                <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
-                  {/* Group heading if grouping is enabled */}
-                  {groupingMode !== "none" ? (
-                    <Text
-                      fw={600}
-                      id={getGroupHeadingId(groupingMode, group.heading)}
-                      style={groupingMode === "manaValue" ? {scrollMarginTop: "1rem"} : undefined}
-                    >
-                      {groupingMode === "manaValue" && group.heading !== "Lands"
-                        ? `Mana Value ${group.heading}`
-                        : group.heading} ({group.cards.length})
-                    </Text>
-                  ) : null}
-                  
-                  {/* Render cards in the group */}
-                  <CardGroup
-                    group={group}
-                    displayMode={displayMode}
-                    sortingMode={sortingMode}
-                    groupKey={`${section.name}-${group.heading}`}
-                    onCardSelect={card => {
-                      setSelectedCardLocation(card);
-                    }}
-                    onCardHover={setHoveredCardImageUrl}
-                    sectionName={section.name}/>
-                </Stack>
-              ))}
+              {section.groups.map(group => {
+                const cardCount = cardCountSortedGroup(group);
+                const headingText =
+                  groupingMode === "manaValue" && group.heading !== "Lands"
+                    ? `Mana Value ${group.heading}`
+                    : group.heading;
+
+                return (
+                  <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
+                    {/* Group heading if grouping is enabled */}
+                    {(groupingMode !== "none" && section.name != "Commander") ? (
+                      <Title
+                        fw={600}
+                        order={4}
+                        id={getGroupHeadingId(groupingMode, section.name, group.heading)}
+                        style={groupingMode === "manaValue" ? {scrollMarginTop: "1rem"} : undefined}
+                        data-deck-heading
+                        data-card-count={cardCount}
+                        data-heading-text={headingText}
+                      >
+                        {headingText} ({cardCount} {cardCount === 1 ? "card" : "cards"})
+                      </Title>
+                    ) : null}
+
+                    {/* Render cards in the group */}
+                    <CardGroup
+                      group={group}
+                      groupKey={`${section.name}-${group.heading}`}
+                      onCardSelect={cardLoc => {
+                        openModal(pageCards, cardLoc);
+                      }}
+                      onCardHover={setHoveredCardImageUrl}
+                      sectionName={section.name}
+                    />
+                  </Stack>
+                );
+              })}
             </Stack>
           );
         })}
       </Stack>
-      
+
       {/* Card details modal for selected card, supports navigation */}
-      <CardDetailsModal
-        cards={pageCards}
-        index={fallbackCardIndex}
-        opened={fallbackCardIndex !== -1}
-        onClose={() => {
-          setSelectedCardLocation(undefined);
-        }}
-        onIndexChange={nextIndex => {
-          setSelectedCardLocation(pageCards[nextIndex].location);
-        }}
+      <CardDetailsModal oracle_id={oracleId}
+        onClose={() => closeModal()}
+        onPrev={moveLeft}
+        onNext={moveRight}
+        hasPrevious={hasNextLeft}
+        hasNext={hasNextRight}
       />
     </>
   );

@@ -1,0 +1,185 @@
+import {ActionIcon, Divider, Group, Modal, Text, Image, Stack, Title} from "@mantine/core";
+import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
+import {DeckSectionName, getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
+import {useEffect, useRef} from "react";
+import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
+import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
+import CardAddingPanel from "./CardAddingPanel.tsx";
+import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
+
+interface CardDetailsModalProps {
+  onClose: () => void;
+
+  oracle_id: string | null;
+  onPrev: () => void;
+  onNext: () => void;
+
+  hasPrevious: boolean;
+  hasNext: boolean;
+
+  deckSectionName?: DeckSectionName | undefined;
+}
+
+export function CardDetailsModal({
+  oracle_id,
+  onClose,
+  onPrev,
+  onNext,
+  hasPrevious,
+  hasNext
+}: CardDetailsModalProps) {
+
+  const cache = useScryfallCache();
+
+  const card: ScryfallOracleCard | undefined = cache.tryGetCard(oracle_id);
+
+  const {repository} = useRepositoryContext();
+
+  const tagSearchInputRef = useRef(undefined);
+  const cardImageUrl = card ? getCardImageUrl(card) : undefined;
+
+  const currentTags = repository.tags[oracle_id] ?? [];
+
+  const isOpened = oracle_id !== null;
+
+
+  // Keyboard navigation: a = left, d = right
+  useEffect(() => {
+    if (!isOpened) {
+      return;
+    }
+    const handler = (e: KeyboardEvent) => {
+      // Disable A/D only when typing in the tags search input.
+      if (document.activeElement === tagSearchInputRef.current) {
+        return;
+      }
+      if (e.key === "a" || e.key === "A") {
+        if (hasPrevious) {
+          e.preventDefault();
+          onPrev();
+        }
+      }
+      else if (e.key === "d" || e.key === "D") {
+        if (hasNext) {
+          e.preventDefault();
+          onNext();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
+
+  return (
+    <Modal
+      opened={isOpened}
+      onClose={onClose}
+      centered
+      title={card?.name ?? "Card details"}
+      size={1000}
+      styles={{
+        content: {height: "65vh", display: "flex", flexDirection: "column"},
+        body: {overflowY: "auto", flex: 1}
+      }}
+    >
+      {card ? (
+        <Group align="stretch" gap={0} wrap="nowrap" style={{height: "100%"}}>
+          <ActionIcon
+            variant="subtle"
+            w={80}
+            h="100%"
+            style={{borderRadius: 0}}
+            onClick={() => onPrev()}
+            disabled={!hasPrevious}
+            aria-label="Previous card"
+          >
+            <IconChevronLeft size={18}/>
+          </ActionIcon>
+          {/*main central part (image + description)*/}
+          <Group flex={1} px={"xs"} wrap={"nowrap"} gap={"xl"} align={"flex-start"}>
+            {/*image*/}
+            <Stack style={{maxWidth: 420}} h={"100%"} align={"center"} gap={"xl"}>
+
+              <Stack h={"60%"} align={"center"} gap={0}>
+                {cardImageUrl ? (
+                  <Image src={cardImageUrl} /*maw={"400px"}*/
+                    alt={card.name}
+                    h={"90%"}
+                    style={{borderRadius: 8}}
+                    fit={"contain"}
+                  />
+                ) : (
+                  <Text c="dimmed">No card image available.</Text>
+                )}
+
+                <Text>
+                  {card?.prices?.usd && `${card?.prices?.usd} $`}
+                </Text>
+              </Stack>
+
+
+
+              <CardAddingPanel oracle_id={oracle_id}/>
+
+            </Stack>
+            <Divider orientation="vertical"/>
+            {/*<Tabs defaultValue="tags" flex={1}*/}
+            {/*  styles={{panel: {marginTop: "var(--mantine-spacing-xl)"}}}>*/}
+            {/*  <Tabs.List grow>*/}
+            {/*    /!*<Tabs.Tab value="details" onMouseDown={event => event.preventDefault()}>Details</Tabs.Tab>*!/*/}
+            {/*    <Tabs.Tab value="tags" onMouseDown={event => event.preventDefault()}>Tags</Tabs.Tab>*/}
+            {/*    <Tabs.Tab value="related" onMouseDown={event => event.preventDefault()}>Related</Tabs.Tab>*/}
+            {/*  </Tabs.List>*/}
+
+            {/*<Tabs.Panel value="details">*/}
+            {/*<Stack gap="sm">*/}
+            {/*  <Text fw={700}>{card.name}</Text>*/}
+            {/*  <Text><strong>Type:</strong> {card.type_line}</Text>*/}
+            {/*  <Text><strong>Tags:</strong> {currentTags.length ? currentTags.join(", ") : "-"}</Text>*/}
+            {/*  <Text style={{whiteSpace: "pre-wrap"}}>*/}
+            {/*    <strong>OracleText:</strong><br/>*/}
+            {/*    {card.oracle_text || "-"}*/}
+            {/*  </Text>*/}
+            {/*  <Text>*/}
+            {/*    <strong>Price (USD):</strong> {card.prices?.usd ? `$${card.prices.usd}` : "-"}*/}
+            {/*  </Text>*/}
+            {/*</Stack>*/}
+            {/*</Tabs.Panel>*/}
+
+
+            {/*<Tabs.Panel value="tags">*/}
+            <Stack flex={1}>
+              <Title order={2}>
+                Tags
+              </Title>
+              <CardDetailsTagsPanel
+                cardId={oracle_id}
+                currentTags={currentTags}
+                tagSearchInputRef={tagSearchInputRef}
+              />
+            </Stack>
+
+            {/*  </Tabs.Panel>*/}
+
+
+            {/*  <Tabs.Panel value="related">*/}
+            {/*    <Text>Related cards or information go here.</Text>*/}
+            {/*  </Tabs.Panel>*/}
+            {/*</Tabs>*/}
+          </Group>
+          <ActionIcon
+            variant="subtle"
+            w={80}
+            h="100%"
+            style={{borderRadius: 0}}
+            onClick={() => onNext()}
+            disabled={!hasNext}
+            aria-label="Next card"
+          >
+            <IconChevronRight size={18}/>
+          </ActionIcon>
+        </Group>
+      ) : null}
+    </Modal>
+  );
+}

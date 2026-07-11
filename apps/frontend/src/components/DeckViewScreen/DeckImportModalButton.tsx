@@ -1,10 +1,14 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
-import {trpc} from "../trpcClient.ts";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import {trpc} from "../../trpcClient.ts";
+import {useDeckDataContext} from "../../context/DeckDataContext.tsx";
+import {isEmpty} from "@mtgit/shared";
+import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 
-export function DeckImportModal() {
-  const {repository, selectedBranchName} = useRepositoryContext();
+export function DeckImportModalButton() {
+  const {repository} = useRepositoryContext();
+  const {selectedBranchName} = useDeckUiContext();
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importDeckText, setImportDeckText] = useState("");
@@ -12,6 +16,8 @@ export function DeckImportModal() {
   const [importError, setImportError] = useState<string | null>(null);
 
   const utils = trpc.useUtils();
+
+  const {deck} = useDeckDataContext();
 
   const importDeckMutation = trpc.deckImport.parse.useMutation({
     onSuccess: async () => {
@@ -48,9 +54,14 @@ export function DeckImportModal() {
     }
   };
 
+  const empty = isEmpty(deck);
+
   return (
     <>
-      <Button onClick={() => setIsImportModalOpen(true)}>
+      <Button
+        onClick={() => setIsImportModalOpen(true)}
+        variant={empty ? "gradient" : "default"}
+      >
         Import deck
       </Button>
 

@@ -1,9 +1,9 @@
-import {useDeckContext} from "../../context/DeckUiContext.tsx";
-import {DebouncedTextInput} from "../DebouncedTextInput.tsx";
+import {DebouncedTextInput} from "../../DebouncedTextInput.tsx";
 import {FieldSection} from "./FieldSection.tsx";
+import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
-export function DeckFilterSection() {
-  const {cardFilterQuery, setCardFilterQuery} = useDeckContext();
+export function FilterSection() {
+  const {cardFilterQuery, setCardFilterQuery} = useDeckUiContext();
 
   return (
     <FieldSection label="Card Filter:">

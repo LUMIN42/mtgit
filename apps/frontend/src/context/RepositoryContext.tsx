@@ -1,18 +1,20 @@
-import {createContext, useContext, useState} from "react";
+import {createContext, useContext, useEffect} from "react";
 import type {ReactNode} from "react";
-import type {DeckCardCounts, Repository, TagsMap} from "@mtgit/shared";
+import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
+import {trpc} from "../trpcClient.ts";
+import {useDeckUiContext} from "./DeckUiContext.tsx";
 
 type RepositoryContextValue = {
   repository: Repository | null;
 
-  selectedBranchName: string | null;
-  setSelectedBranchName: (n: string | null) => void;
-
   selectedBranchContent: DeckCardCounts | undefined;
 
   setBranchValue: (branchName: string, branchValue: DeckCardCounts) => void;
-  setTags: (tagsMap: TagsMap) => void;
+  updateTag: (oracleId: string, tagName: string, value: boolean) => void;
   createBranch: (branchName: string, branchContent: DeckCardCounts) => void;
+  setCardAmount: (oracleId: string, branchName: string, newAmount: number, deckSection: DeckSectionName) => void;
+
+  setRepositoryValue: (repository: Repository) => void;
 };
 
 const RepositoryContext = createContext<RepositoryContextValue | undefined>(
@@ -24,22 +26,97 @@ export function RepositoryProvider({
   repository
 }: {
   children: ReactNode;
-  repository: Repository | null;
+  repository: Repository;
 }) {
-  const [selectedBranchName, setSelectedBranchName] = useState<string | null>(
-    "main"
+  const utils = trpc.useUtils();
+
+  const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
+
+  useEffect(
+    () => {
+      if (selectedBranchName === null) {
+        setSelectedBranchName(Object.keys(repository.branches)[0]);
+      }
+    }
   );
+
+  const updateTagEndpoint = trpc.decks.setTag.useMutation({
+    async onMutate(variables) {
+      if (!variables) {
+        return;
+      }
+
+      const {deckId, tagKey, value, oracleId} = variables;
+
+      // 1. stop conflicting refetches
+      // await utils.decks.get.cancel({deckId});
+
+      // 2. snapshot previous state
+      const previousDeck = utils.decks.get.getData({deckId});
+
+      // 3. optimistic update
+      utils.decks.get.setData({deckId}, old => {
+        if (!old) {
+          return old;
+        }
+
+        const current = old.tags[oracleId] ?? [];
+
+        return {
+          ...old,
+          tags: {
+            ...old.tags,
+            [oracleId]: value
+              ? [...current, tagKey]
+              : current.filter(tag => tag !== tagKey)
+          }
+        };
+      });
+
+      // 4. return rollback context
+      return {previousDeck, deckId};
+    },
+
+    onError(_err, _vars, ctx) {
+      if (!ctx) {
+        return;
+      }
+
+      // rollback
+      utils.decks.get.setData(
+        {deckId: ctx.deckId},
+        ctx.previousDeck
+      );
+    }
+
+    // onSettled(_data, _err, vars) {
+    //   if (!vars) {
+    //     return;
+    //   }
+    //
+    // //   optional: ensure server truth
+    //   utils.decks.get.invalidate({deckId: vars.deckId});
+    // }
+  });
+
+
+  const updateDeck = trpc.decks.update
+    .useMutation(
+      {
+        onSuccess: (updatedRepo: Repository) => {
+          utils.decks.get.setData(
+            {deckId: updatedRepo._id},
+            updatedRepo
+          );
+        }
+      }
+    );
+
 
   const selectedBranchContent =
     repository && selectedBranchName
       ? repository.branches[selectedBranchName]
       : undefined;
-
-  /**
-   * ⚠️ TEMP IMPLEMENTATION NOTES:
-   * These mutate nothing for now because repository is server-owned.
-   * They are kept to preserve API compatibility.
-   */
 
   const setBranchValue = (
     branchName: string,
@@ -49,26 +126,54 @@ export function RepositoryProvider({
       return;
     }
 
-    repository.branches[branchName] = branchValue;
+    const repoCopy = structuredClone(repository);
+
+    repoCopy.branches[branchName] = branchValue;
+
+    setRepositoryValue(repoCopy);
   };
 
-  const setTags = (tagsMap: TagsMap) => {
-    if (!repository) {
-      return;
-    }
-
-    repository.tags = tagsMap;
+  const updateTag = async (oracleId: string, tagName: string, value: boolean) => {
+    updateTagEndpoint.mutateAsync({deckId: repository._id, tagKey: tagName, oracleId, value});
   };
 
-  const createBranch = (
+  const createBranch = async (
     branchName: string,
     branchContent: DeckCardCounts
   ) => {
-    if (!repository) {
-      return;
+    const newRepo = structuredClone(repository);
+
+
+    newRepo.branches[branchName] = branchContent;
+
+    await setRepositoryValue(newRepo);
+    setSelectedBranchName(branchName);
+  };
+
+  const setCardAmount = async (
+    oracleId: string,
+    branchName: string,
+    newAmount: number,
+    deckSection = "Main"
+  ) => {
+    const repoCopy = structuredClone(repository);
+
+    repoCopy.branches[branchName][deckSection] ??= {};
+
+    const section = repoCopy.branches[branchName][deckSection];
+
+    if (newAmount > 0) {
+      section[oracleId] = newAmount;
+    }
+    else {
+      delete section[oracleId];
     }
 
-    repository.branches[branchName] = branchContent;
+    await setRepositoryValue(repoCopy);
+  };
+
+  const setRepositoryValue = async (repository: Repository) => {
+    await updateDeck.mutateAsync(repository);
   };
 
   return (
@@ -76,14 +181,15 @@ export function RepositoryProvider({
       value={{
         repository,
 
-        selectedBranchName,
-        setSelectedBranchName,
+        setCardAmount,
 
         selectedBranchContent,
 
         setBranchValue,
-        setTags,
-        createBranch
+        createBranch,
+        updateTag,
+
+        setRepositoryValue
       }}
     >
       {children}

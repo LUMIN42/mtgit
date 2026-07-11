@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {Format, FormatSchema, relevantSections} from "./deckFormats.js";
 
 export type TagsMap = Record<string, string[]>;
 
@@ -24,7 +25,7 @@ export const TagsMapSchema = z.record(z.string(), z.array(z.string()));
 
 export const OracleIdSchema = z.string();
 
-export const CardCountsSchema = z.record(OracleIdSchema, z.number());
+export const CardCountsSchema = z.record(OracleIdSchema, z.number().int().positive());
 
 export const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
 
@@ -47,8 +48,15 @@ export const DeckCardCountsSchema = z
     }
   });
 
-export function emptyDeckCardCounts(): DeckCardCounts {
-  return {Main: {}};
+export function emptyDeckCardCounts(format?: Format): DeckCardCounts {
+  if (format === undefined) {
+    return {Main: {}};
+  }
+
+  return Object.fromEntries(
+    relevantSections(format)
+      .map(sectionName => [sectionName, {}])
+  );
 }
 
 export const BranchesSchema = z.record(
@@ -61,7 +69,8 @@ export const RepositorySchema = z.object({
   _id: ObjectIdSchema,
   owner_id: z.string(),
   tags: TagsMapSchema,
-  branches: BranchesSchema
+  branches: BranchesSchema,
+  format: FormatSchema
 });
 
 export type OracleId = z.infer<typeof OracleIdSchema>;
@@ -70,20 +79,31 @@ export type DeckCardCounts = z.infer<typeof DeckCardCountsSchema>;
 export type Branches = z.infer<typeof BranchesSchema>;
 export type Repository = z.infer<typeof RepositorySchema>;
 
-/**
- * 🔥 FIXED: restore original shape compatibility
- */
-export function createEmptyRepositoryTemplate(name: string, owner_id: string) {
+
+export function createEmptyRepositoryTemplate(name: string, owner_id: string, format: Format) {
   return {
     name,
     owner_id,
     tags: {},
     branches: {
-      main: {
-        Main: {}
-      }
-    }
+      main: emptyDeckCardCounts(format)
+    },
+    format
   };
+}
+
+export function allDeckOracleIds(cardCounts: DeckCardCounts) {
+  const result = new Set<string>();
+
+  for (const sectionNameRaw in cardCounts) {
+    const sectionName = sectionNameRaw as DeckSectionName;
+
+    for (const oracleId of Object.keys(cardCounts[sectionName]!)) {
+      result.add(oracleId);
+    }
+  }
+
+  return [...result.keys()];
 }
 
 export function copyDeckCardAmounts(cardAmounts: DeckCardCounts) {
@@ -109,4 +129,56 @@ export function mergeCardCounts(a: CardCounts, b: CardCounts): CardCounts {
   }
 
   return result;
+}
+
+export function withoutIdenticalParts(
+  deck1: DeckCardCounts,
+  deck2: DeckCardCounts
+): [DeckCardCounts, DeckCardCounts] {
+  const result1: DeckCardCounts = {};
+  const result2: DeckCardCounts = {};
+
+  const sections = new Set([
+    ...Object.keys(deck1),
+    ...Object.keys(deck2)
+  ]) as Set<DeckSectionName>;
+
+  for (const section of sections) {
+    const section1 = deck1[section] ?? {};
+    const section2 = deck2[section] ?? {};
+
+    const ids = new Set([
+      ...Object.keys(section1),
+      ...Object.keys(section2)
+    ]);
+
+    const sectionCardCounts1: CardCounts = {};
+    const sectionCardCounts2: CardCounts = {};
+
+    for (const id of ids) {
+      const cardCount1 = section1[id];
+      const cardCount2 = section2[id];
+
+      if (cardCount1 === undefined && cardCount2 === undefined) {
+        continue;
+      }
+
+      if (cardCount1 === cardCount2) {
+        // identical → drop from both
+        continue;
+      }
+
+      if (cardCount1 !== undefined) {
+        sectionCardCounts1[id] = cardCount1;
+      }
+      if (cardCount2 !== undefined) {
+        sectionCardCounts2[id] = cardCount2;
+      }
+    }
+
+    result1[section] = sectionCardCounts1;
+    result2[section] = sectionCardCounts2;
+  }
+
+  return [result1, result2];
 }

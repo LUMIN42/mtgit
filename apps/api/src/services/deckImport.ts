@@ -1,7 +1,8 @@
-import type {DeckCardCounts, DeckSectionName} from "@mtgit/shared";
+import {DeckCardCounts, DeckSectionName} from "@mtgit/shared";
 import {SECTION_BY_LABEL} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {ScryfallOracleCardSchema} from "@mtgit/shared";
+import {z} from "zod";
 
 /**
  * Parsed raw line
@@ -9,31 +10,58 @@ import {ScryfallOracleCardSchema} from "@mtgit/shared";
 type ParsedDeckEntry = {
   quantity: number;
   cardName: string;
+  tags: string[];
+  deckSection: DeckSectionName;
 };
-
-function parseDeckEntry(rawLine: string): ParsedDeckEntry {
-  const lineRegex = /(\d+)\s+(.+)/;
-
-  const match = rawLine.match(lineRegex);
-  if (!match) {
-    throw new Error(`Invalid line: ${rawLine}`);
-  }
-
-  return {
-    quantity: Number(match[1]),
-    cardName: match[2].trim()
-  };
-}
 
 /**
  * Normalize name for DB lookup
  */
 function normalizeCardName(name: string): string {
+  if (name === "Order of Midnight / Alter Fate") {
+    console.log("here we go!");
+  }
+
   return name
     .toLowerCase()
     .replace(/\s*\/\/\s*/g, " // ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function parseDeckEntry(rawLine: string, deckSection: DeckSectionName): ParsedDeckEntry | null {
+  const lineRegex = /^(\d+)\s+([^(#]+)(?:\s+[^#]*(#.*)?)?$/;
+
+  const match = rawLine.match(lineRegex);
+
+  if (!match) {
+    return null;
+  }
+
+  const quantity = Number(match[1]);
+
+  // ----------------------------
+  // 1. Clean card name
+  // ----------------------------
+  const cardName = normalizeCardName(match[2].trim());
+
+  // ----------------------------
+  // 2. Tags
+  // ----------------------------
+  const tags = match[3]
+    ? match[3]
+      .trim()
+      .split(/\s+/)
+      .map(tag => tag.replace(/^#+/, "").trim())
+      .filter(Boolean)
+    : [];
+
+  return {
+    quantity,
+    cardName,
+    tags,
+    deckSection
+  };
 }
 
 /**
@@ -59,7 +87,7 @@ async function lookupOracleId(name: string): Promise<string | null> {
  */
 export async function parseDeckImportText(
   importText: string
-): Promise<DeckCardCounts> {
+) {
   const lines = importText.split(/\r?\n/);
 
   const sectionHeaderPattern =
@@ -67,22 +95,14 @@ export async function parseDeckImportText(
 
   let currentSection: DeckSectionName = "Main";
 
-  const result: DeckCardCounts = {
-    Main: {}
-  };
+  const oracleTagsMap: Record<string, string[]> = {};
 
-  function add(section: DeckSectionName, oracleId: string, qty: number) {
-    if (!result[section]) {
-      result[section] = {};
-    }
-
-    const map = result[section]!;
-    map[oracleId] = (map[oracleId] ?? 0) + qty;
-  }
+  const parsedLines: ParsedDeckEntry[] = [];
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
 
+    // comments
     if (!line || line.startsWith("//") || line.startsWith("#")) {
       continue;
     }
@@ -94,18 +114,56 @@ export async function parseDeckImportText(
       continue;
     }
 
-    const {quantity, cardName} = parseDeckEntry(line);
+    const parsingResult = parseDeckEntry(line, currentSection);
 
-    const oracleId = await lookupOracleId(
-      normalizeCardName(cardName)
-    );
 
-    if (!oracleId) {
-      continue; // or collect missing cards if you want
+    if (!parsingResult) {
+      continue;
     }
-
-    add(currentSection, oracleId, quantity);
+    parsedLines.push(parsingResult);
   }
 
-  return result;
+  const allNames = parsedLines.map(line => line.cardName);
+
+  const cardsCollection = getCollection("scryfall_cards");
+  const searchResult = await cardsCollection
+    .find(
+      {
+        normalized_name: {$in: allNames}
+      },
+      {
+        projection: {
+          normalized_name: 1,
+          oracle_id: 1,
+          _id: 0
+        }
+      }
+    )
+    .toArray();
+
+  const CardSearchResultSchema = z.array(
+    z.object({
+      normalized_name: z.array(z.string()),
+      oracle_id: z.string()
+    }));
+
+  const cardIds = CardSearchResultSchema.parse(searchResult);
+
+  const cardsEntries = cardIds.flatMap(card =>
+    (card.normalized_name).map(nName => [nName, card.oracle_id])
+  );
+
+  const cardsLookup = Object.fromEntries(cardsEntries);
+
+  const resultingDeck:DeckCardCounts = {};
+
+  for (const parsedLine of parsedLines) {
+    resultingDeck[parsedLine.deckSection] ??= {};
+
+    resultingDeck[parsedLine.deckSection]![cardsLookup[parsedLine.cardName]] ??= 0;
+    resultingDeck[parsedLine.deckSection]![cardsLookup[parsedLine.cardName]] += parsedLine.quantity;
+  }
+
+
+  return {resultingDeck, oracleTagsMap};
 }

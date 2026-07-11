@@ -1,7 +1,7 @@
 import {Button, Group, Modal, Radio, Stack, TextInput, UnstyledButton} from "@mantine/core";
 import {useState} from "react";
 import {DeckCardCounts, emptyDeckCardCounts} from "@mtgit/shared";
-import {useRepositoryContext} from "../context/RepositoryContext.tsx";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 
 type CreateBranchModalProps = {
   opened: boolean;
@@ -21,12 +21,9 @@ export function CreateBranchModal({opened, onClose}: CreateBranchModalProps) {
       return;
     }
 
-    const sections: DeckCardCounts = emptyDeckCardCounts();
-    const source = repo.repository.branches[baseBranchName];
+    const cardCounts: DeckCardCounts = repo.repository.branches[baseBranchName] ?? emptyDeckCardCounts();
 
-    repo.repository.branches[trimmedName] = sections;
-
-    repo.createBranch(trimmedName, source);
+    repo.createBranch(trimmedName, cardCounts);
 
     setNewBranchName("");
     setBaseBranchName("Empty");

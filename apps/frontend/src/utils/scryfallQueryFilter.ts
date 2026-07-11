@@ -1,5 +1,4 @@
-import {Deck, DeckSection} from "@mtgit/shared";
-import type {DeckCard, DeckSectionName} from "@mtgit/shared";
+import {HydratedDeck} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared";
 
 // todo move file to shared code
@@ -321,23 +320,27 @@ export function filterCardsByScryfallQuery(cards: ScryfallOracleCard[], query: s
   return cards.filter(matcher);
 }
 
-export function filterDeckByScryfallQuery(deck: Deck, query: string): Deck {
+export function filterDeckByScryfallQuery(deck: HydratedDeck, query: string): HydratedDeck {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return deck;
   }
 
   const matcher = createScryfallCardMatcher(trimmedQuery);
-  const sectionNames = Object.keys(deck.sections) as DeckSectionName[];
-  const sectionsEntries = sectionNames.map(sectionName => {
-    const section = deck.sections[sectionName]!;
-    const cardsArray: DeckCard[] = section instanceof DeckSection ? section.toArray() : (section as DeckCard[]);
-    const filtered = cardsArray.filter(card => matcher(card));
-    return [sectionName, new DeckSection(sectionName, filtered)] as [DeckSectionName, DeckSection];
-  });
 
-  const newSections = Object.fromEntries(sectionsEntries) as Deck["sections"];
-  return new Deck(deck.name, newSections);
+  const sectionEntries = Object.entries(deck)
+    .map(([sectionName, section]) =>
+      [
+        sectionName,
+        Object.fromEntries(
+          Object.values(section)
+            .filter(matcher)
+            .map(card => [card.oracle_id, card])
+        )
+      ]
+    );
+
+  return Object.fromEntries(sectionEntries);
 }
 
 

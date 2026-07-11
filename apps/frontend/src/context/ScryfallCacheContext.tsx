@@ -1,17 +1,48 @@
 import {
   createContext,
   useContext,
+  useEffect,
+  useMemo,
+  useRef,
   useState,
-  useRef
+  useCallback
 } from "react";
 import type {ReactNode} from "react";
-import {ScryfallOracleCard, ScryfallOracleCardSchema} from "@mtgit/shared/scryfall";
+
+import {
+  ScryfallOracleCard,
+  ScryfallOracleCardSchema
+} from "@mtgit/shared/scryfall";
+
 import {trpcClient} from "../trpcClient.ts";
 
+import {
+  allDeckOracleIds,
+  HydratedDeck,
+  DeckCardCounts,
+  TagsMap
+} from "@mtgit/shared";
+
+import {z} from "zod";
+
 type ScryfallCacheValue = {
-  getCard: (id: string) => Promise<ScryfallOracleCard | undefined>;
-  getCards: (ids: string[]) => Promise<(ScryfallOracleCard | undefined)[]>;
-  clear: () => void;
+  usePartiallyReconstructedDeck: (
+    cardCounts: DeckCardCounts,
+    tags: TagsMap
+  ) => HydratedDeck;
+
+  fetchMissingDeckCards: (deckCardCounts: DeckCardCounts) => Promise<void>;
+
+  tryGetCard: (oracleId: string) => ScryfallOracleCard | undefined;
+
+  buildPartiallyReconstructedDeck: (
+    cardCounts: DeckCardCounts,
+    tags: TagsMap
+  ) => HydratedDeck;
+
+  map: Record<string, ScryfallOracleCard>;
+
+  fetchMissingCards: (ids:string[]) => Promise<void>;
 };
 
 const ScryfallCacheContext =
@@ -26,114 +57,125 @@ export function ScryfallCacheProvider({
     Record<string, ScryfallOracleCard>
   >({});
 
+  /**
+   * IMPORTANT:
+   * useRef instead of useState for in-flight tracking
+   * (state is too slow + causes race conditions)
+   */
   const inflight = useRef<Set<string>>(new Set());
 
-  const setCard = (card: ScryfallOracleCard) => {
-    setMap(prev => ({
-      ...prev,
-      [card.oracle_id]: card
-    }));
-  };
+  const fetchMissingCards = useCallback(async (ids: string[]) => {
+    const missing = ids.filter(
+      id => !map[id] && !inflight.current.has(id)
+    );
 
-  const setCards = (cards: ScryfallOracleCard[]) => {
-    setMap(prev => {
-      const next = {...prev};
-      for (const c of cards) {
-        next[c.oracle_id] = c;
-      }
-      return next;
-    });
-  };
-
-  const clear = () => {
-    setMap({});
-  };
-
-  /**
-   * 🔥 single card with cache + fallback fetch
-   */
-  const getCard = async (id: string): Promise<ScryfallOracleCard> => {
-    const cached = map[id];
-    if (cached) {
-      return cached;
+    if (missing.length === 0) {
+      return;
     }
 
-    if (inflight.current.has(id)) {
-      return undefined;
-    }
-
-    inflight.current.add(id);
+    missing.forEach(id => inflight.current.add(id));
 
     try {
-      const res = await trpcClient.cards.get.query({cardId: id});
-
-      const parsed = ScryfallOracleCardSchema.parse(res);
-
-      setCard(parsed);
-      return parsed;
-    }
-    catch (err) {
-      console.error("Failed to fetch or validate card:", err);
-      return undefined;
-    }
-    finally {
-      inflight.current.delete(id);
-    }
-  };
-
-  /**
-   * 🔥 bulk fetch with partial cache hit
-   */
-  const getCards = async (ids: string[]) => {
-    const result: (ScryfallOracleCard | undefined)[] = [];
-    const missing: string[] = [];
-
-    for (const id of ids) {
-      const cached = map[id];
-      if (cached) {
-        result.push(cached);
-      }
-      else {
-        result.push(undefined);
-        missing.push(id);
-      }
-    }
-
-    if (missing.length > 0) {
-      const fetched = await trpcClient.cards.getMany.query({
+      const result = await trpcClient.cards.getMany.query({
         cardIds: missing
       });
 
-      // 🔒 validate every returned card
-      const parsed = fetched
-        .map(c => ScryfallOracleCardSchema.safeParse(c))
-        .filter(r => {
-          if (!r.success) {
-            console.warn("Invalid card from API:", r.error);
-            return false;
-          }
-          return true;
-        })
-        .map(r => r.data);
-
-      setCards(parsed);
-
-      const fetchedMap = new Map(
-        parsed.map(c => [c.oracle_id, c])
+      const CardsMapSchema = z.record(
+        z.string(),
+        ScryfallOracleCardSchema
       );
 
-      return ids.map(id => map[id] ?? fetchedMap.get(id));
+      setMap(prev => ({
+        ...prev,
+        ...CardsMapSchema.parse(result)
+      }));
+    }
+    finally {
+      missing.forEach(id =>
+        inflight.current.delete(id)
+      );
+    }
+  }, [map]);
+
+  const fetchMissingDeckCards = useCallback(
+    (deckCardCounts: DeckCardCounts) => {
+      return fetchMissingCards(
+        allDeckOracleIds(deckCardCounts)
+      );
+    },
+    [fetchMissingCards]
+  );
+
+  const tryGetCard = useCallback(
+    (oracleId: string) => map[oracleId],
+    [map]
+  );
+
+  function buildPartiallyReconstructedDeck(
+    cardCounts: DeckCardCounts,
+    tags: TagsMap
+  ): HydratedDeck {
+    const result: HydratedDeck = {};
+
+    for (const section in cardCounts) {
+      result[section] = {};
+
+      for (const id in cardCounts[section]) {
+        const card = map[id];
+        if (!card) continue;
+
+        result[section][id] = {
+          ...card,
+          count: cardCounts[section][id],
+          tags: tags[id] ?? []
+        };
+      }
     }
 
     return result;
+  }
+
+  /**
+   * Hook: derive hydrated deck + trigger fetching
+   */
+  const usePartiallyReconstructedDeck = (
+    cardCounts: DeckCardCounts,
+    tags: TagsMap
+  ): HydratedDeck => {
+    const missing = useMemo(() => {
+      const ids: string[] = [];
+
+      for (const section in cardCounts) {
+        for (const id in cardCounts[section]) {
+          if (!map[id]) {
+            ids.push(id);
+          }
+        }
+      }
+
+      return ids;
+    }, [cardCounts, map]);
+
+    useEffect(() => {
+      if (missing.length > 0) {
+        void fetchMissingCards(missing);
+      }
+    }, [missing]);
+
+    return useMemo(() => {
+      return buildPartiallyReconstructedDeck(cardCounts, tags);
+    }, [cardCounts, tags, map]);
   };
 
   return (
     <ScryfallCacheContext.Provider
       value={{
-        getCard,
-        getCards,
-        clear
+        usePartiallyReconstructedDeck,
+        fetchMissingDeckCards,
+        tryGetCard,
+        buildPartiallyReconstructedDeck,
+        map,
+        fetchMissingCards
       }}
     >
       {children}

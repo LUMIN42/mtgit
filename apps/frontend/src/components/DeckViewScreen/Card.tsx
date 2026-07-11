@@ -1,7 +1,10 @@
-import {Box, Text, Image, Overlay} from "@mantine/core";
-import {type DeckCard, getCardImageUrl, isDeckCard} from "@mtgit/shared";
+import {Box, Text, Image, Overlay, Paper} from "@mantine/core";
+import {type DeckCard, DeckSectionName, getCardImageUrl, isDeckCard} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
-import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
+import {CardDisplayMode, useDeckUiContext} from "../../context/DeckUiContext.tsx";
+import React from "react";
+import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+import CardAmountEditor from "./CardAmountEditor.tsx";
 
 
 type CardProps = {
@@ -10,6 +13,9 @@ type CardProps = {
   className?: string;
   onSelect?: (card: ScryfallOracleCard) => void;
   onHoverImage?: (imageUrl: string | null) => void;
+  quicklyAdjustable?: boolean;
+  actualCardCount?: number;
+  deckSection?:DeckSectionName;
 };
 
 
@@ -18,12 +24,19 @@ export function Card({
   displayMode = "Images",
   className,
   onSelect,
-  onHoverImage
+  onHoverImage,
+  quicklyAdjustable = false,
+  deckSection = "Main"
 }: CardProps) {
   const imageUrl = getCardImageUrl(card);
-  
+  const {selectedBranchContent} = useRepositoryContext();
+  const {selectedBranchName} = useDeckUiContext();
+
+
   const cardAmount: number | undefined = isDeckCard(card) ? card.count : undefined;
-  
+
+
+
   if (displayMode === "Text") {
     return (
       <Box
@@ -36,15 +49,15 @@ export function Card({
       </Box>
     );
   }
-  
+
   if (!imageUrl) {
     return null;
   }
-  
+
   return (
     <Box style={{position: "relative", width: "100%"}}>
       <Overlay color="black" opacity={1} zIndex={0} style={{backgroundColor: "black"}}/>
-      
+
       <Image
         src={imageUrl}
         alt={card.name}
@@ -56,9 +69,9 @@ export function Card({
         }}
         radius="lg"
       />
-      
+
       {/*// display card amount if there's more than one of it*/}
-      {(isDeckCard(card) && cardAmount !== 1) && (
+      {(isDeckCard(card) && cardAmount !== 1 && !quicklyAdjustable) && (
         <Box
           style={{
             position: "absolute",
@@ -76,6 +89,20 @@ export function Card({
           {card.count}x
         </Box>
       )}
+
+      {quicklyAdjustable && (
+        <Paper
+          bg="gray.1"
+          style={{zIndex: 1}}
+          pos="absolute"
+          right="8%"
+          top="11%"
+        >
+          <CardAmountEditor originalCardAmount={cardAmount} branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={deckSection}/>
+        </Paper>
+      )}
+
+
     </Box>
   );
 }
