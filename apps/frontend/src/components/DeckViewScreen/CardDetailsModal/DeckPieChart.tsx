@@ -1,10 +1,10 @@
 import React from "react";
-import {PieChart, PieChartCell} from "@mantine/charts";
+import {ChartLegend, PieChart, PieChartCell} from "@mantine/charts";
 import {useDeckDataContext} from "../../../context/DeckDataContext.tsx";
 import {performGrouping} from "../../../utils/cardGrouping.ts";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
-import {MantineColor} from "@mantine/core";
-import {MainCardType} from "@mtgit/shared";
+import {Group, MantineColor} from "@mantine/core";
+import {MAIN_TYPE_SET, MainCardType, mainTypes} from "@mtgit/shared";
 
 export function DeckPieChart() {
   const {filteredDeck} = useDeckDataContext();
@@ -54,26 +54,65 @@ export function DeckPieChart() {
     return randomColorGenerator(groupHeading);
   }
 
-  const chartData: PieChartCell[] = main.groups.map(
-    group => {
-      return {
-        "name": group.heading,
-        "value": group.cards.reduce((cum, cur) => cum + cur.count, 0),
-        "color": getColor(group.heading)
-      };
+  let chartData: PieChartCell[];
+
+  if (groupingMode === "type") {
+    const weights: Partial<Record<MainCardType, number>> = {};
+
+    for (const card of Object.values(filteredDeck.Main)) {
+      const types: Set<MainCardType> = mainTypes(card.type_line);
+
+      for (const type of types) {
+        weights[type] ??= 0;
+
+        weights[type] += card.count / types.size;
+      }
     }
-  );
+
+    chartData = Object.entries(weights)
+      .map(([type, weight]) => {
+        return {
+          name: type,
+          value: weight,
+          color: getColor(type)
+        };
+      });
+  }
+  else {
+    chartData = main.groups.filter(group => group.heading !== "Untagged").map(
+      group => {
+        return {
+          "name": group.heading,
+          "value": group.cards.reduce((cum, cur) => cum + cur.count, 0),
+          "color": getColor(group.heading)
+        };
+      }
+    );
+  }
 
   return (
-    <PieChart data={chartData}
-      withTooltip
-      tooltipDataSource="segment"
-      mx="auto"
-      // labelsPosition="outside"
-      // labelsType="name"
-      // withLabels
-      withLegend
-    />
+    <Group>
+      <PieChart data={chartData}
+        withTooltip
+        tooltipDataSource="segment"
+        mx="auto"
+        w={"100%"}
+        // labelsPosition="outside"
+        // labelsType="name"
+        // withLabels
+
+        legendProps={{
+          layout: "vertical",
+          align: "right",
+          verticalAlign: "middle",
+          wrapperStyle: {
+            maxWidth: "50%"
+          }
+        }}
+        withLegend
+      />
+    </Group>
+
   );
 
 }

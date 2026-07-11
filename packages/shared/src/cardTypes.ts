@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {TaggedCard} from "./deckTypes.ts";
 
 
 export const MainCardTypes = [
@@ -32,4 +33,16 @@ export const MAIN_TYPE_SET = new Set(MainCardTypes);
 
 export function isMainCardType(value: string): value is MainCardType {
   return MAIN_TYPE_SET.has(value as MainCardType);
+}
+
+export function mainTypes(typeLine: string): Set<MainCardType> {
+  const output = new Set<MainCardType>();
+
+  for (const mainCardType of MainCardTypes) {
+    if (typeLine.includes(mainCardType)) {
+      output.add(mainCardType);
+    }
+  }
+
+  return output;
 }
