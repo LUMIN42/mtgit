@@ -14,20 +14,18 @@ function BranchSelector() {
   const selectedBranch = uiState.selectedBranchName;
   const comparisonBranch = uiState.comparisonBranchName;
 
-  const editedBranchOptions = React.useMemo(() => {
-    return branches.filter(b => b !== comparisonBranch);
-  }, [branches, comparisonBranch]);
+  const editedBranchOptions = React.useMemo(
+    () => branches.filter(b => b !== comparisonBranch),
+    [branches, comparisonBranch]
+  );
 
-  const comparisonBranchOptions = React.useMemo(() => {
-    return [
-      ...branches.filter(b => b !== selectedBranch),
-      "None"
-    ];
-  }, [branches, selectedBranch]);
+  const comparisonBranchOptions = React.useMemo(
+    () => branches.filter(b => b !== selectedBranch),
+    [branches, selectedBranch]
+  );
 
   const swapBranches = () => {
     if (!selectedBranch || !comparisonBranch) return;
-    if (selectedBranch === comparisonBranch) return;
 
     uiState.setSelectedBranchName(comparisonBranch);
     uiState.setComparisonBranchName(selectedBranch);
@@ -50,7 +48,7 @@ function BranchSelector() {
         label="Editing Branch"
         data={editedBranchOptions}
         value={selectedBranch}
-        onChange={value => {
+        onChange={(value) => {
           if (!value) return;
 
           uiState.setSelectedBranchName(value);
@@ -75,13 +73,12 @@ function BranchSelector() {
         size="xs"
         label="Comparison Branch"
         data={comparisonBranchOptions}
-        value={comparisonBranch ?? "None"}
-        onChange={value =>
-          uiState.setComparisonBranchName(
-            value === "None" ? null : value
-          )
-        }
+        value={comparisonBranch}
+        onChange={value => {
+          uiState.setComparisonBranchName(value);
+        }}
         searchable
+        clearable
       />
     </Flex>
   );
