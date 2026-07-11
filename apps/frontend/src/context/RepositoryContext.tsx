@@ -126,7 +126,11 @@ export function RepositoryProvider({
       return;
     }
 
-    repository.branches[branchName] = branchValue;
+    const repoCopy = structuredClone(repository);
+
+    repoCopy.branches[branchName] = branchValue;
+
+    setRepositoryValue(repoCopy);
   };
 
   const updateTag = async (oracleId: string, tagName: string, value: boolean) => {

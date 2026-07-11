@@ -1,5 +1,5 @@
 import React, {useMemo} from "react";
-import {Divider, Grid, Stack, Title} from "@mantine/core";
+import {Button, Divider, Grid, Stack, Title} from "@mantine/core";
 import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
@@ -21,7 +21,8 @@ export function DeckComparisonScreen() {
     diffsOnly,
     cardFilterQuery
   } = useDeckUiContext();
-  const {repository, selectedBranchContent} = useRepositoryContext();
+  const {repository, selectedBranchContent, setBranchValue} = useRepositoryContext();
+
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
@@ -137,6 +138,14 @@ export function DeckComparisonScreen() {
     [comparison]
   );
 
+  function selectChanged() {
+    setBranchValue(selectedBranchName, originalRightCardCounts);
+  }
+
+  function selectOriginal() {
+    setBranchValue(selectedBranchName, originalLeftCardCounts);
+  }
+
   const {
     oracleId,
     openModal,
@@ -164,6 +173,19 @@ export function DeckComparisonScreen() {
     <Stack>
       <DeckViewingOptions horizontal={true} comparison={true}/>
       <Grid columns={11}>
+        <Grid.Col span={5} style={{display: "flex", justifyContent: "flex-end"}}>
+          <Button variant={"outline"} onClick={selectOriginal}>Select Original Version</Button>
+        </Grid.Col>
+
+        <Grid.Col span={1}>
+          <Divider h={"100%"} mx={"auto"} w={"fit-content"} orientation={"vertical"}/>
+        </Grid.Col>
+
+        <Grid.Col span={5}>
+          <Button variant={"outline"} onClick={selectChanged}>Select Comparison Version</Button>
+        </Grid.Col>
+
+
         {
           comparison.map(
             section => (
