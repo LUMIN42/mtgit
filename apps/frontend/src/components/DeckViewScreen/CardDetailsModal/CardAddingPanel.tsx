@@ -15,13 +15,15 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
   const {repository} = useRepositoryContext();
   const {tryGetCard} = useScryfallCache();
 
-  const cardAmount = tryGetCard(oracle_id);
+  const hydratedCard = tryGetCard(oracle_id);
+
+
 
   // todo extract to a proper place
   const canBeCommander =
-    cardAmount ?
-      cardAmount.type_line.includes("Legendary") &&
-      cardAmount.type_line.includes("Creature") : false;
+    hydratedCard ?
+      hydratedCard.type_line.includes("Legendary") &&
+      hydratedCard.type_line.includes("Creature") : false;
 
 
   return (
