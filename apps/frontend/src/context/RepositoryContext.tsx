@@ -130,8 +130,8 @@ export function RepositoryProvider({
 
   const selectedBranchContent =
     repository && selectedBranchName
-      ? repository.branches[selectedBranchName]
-      : undefined;
+      ? repository.branches[selectedBranchName] ?? {}
+      : {};
 
   const setBranchValue = (
     branchName: string,

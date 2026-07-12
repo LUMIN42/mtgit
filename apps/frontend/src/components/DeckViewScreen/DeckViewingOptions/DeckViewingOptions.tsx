@@ -5,7 +5,7 @@ import {FilterSection} from "./FilterSection.tsx";
 import {DeckGroupingSection} from "./DeckGroupingSection.tsx";
 import {SortingSelector} from "./SortingSelector.tsx";
 import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
-import {DeckOverview} from "./DeckCardCount.tsx";
+import {DeckOverview} from "./DeckOverview.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 import BranchSelector from "./BranchSelector.tsx";

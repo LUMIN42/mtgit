@@ -1,4 +1,4 @@
-import {Group, Text} from "@mantine/core";
+import {Group, Loader, Text} from "@mantine/core";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {DeckSectionName, expectedSectionCardCounts} from "@mtgit/shared";
 import PriceOverviewBadge from "./PriceOverviewBadge.tsx";
@@ -8,6 +8,12 @@ export function DeckOverview() {
 
   const expected = expectedSectionCardCounts(repository.format);
 
+  console.log("selected branch content:", selectedBranchContent);
+
+  if (!selectedBranchContent) {
+    return <Loader/>;
+  }
+
   return (
     <Group
       gap="xl"
@@ -15,7 +21,7 @@ export function DeckOverview() {
       justify={"space-evenly"}
     >
       {Object.entries(expected).map(([sectionName, expectedCount]: [DeckSectionName, number]) => {
-        const actualCount = Object.values(selectedBranchContent[sectionName])
+        const actualCount = Object.values(selectedBranchContent[sectionName] ?? {})
           .reduce((sum, count) => sum + count, 0);
 
         return (
