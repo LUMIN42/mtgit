@@ -25,7 +25,7 @@ export function DeckViewScreen() {
 
 
   return (
-    <Stack>
+    <Stack style={{maxWidth: "1500px", margin: "auto"}}>
 
       <Title order={1}>
         {repo.repository.name}
@@ -56,7 +56,7 @@ export function DeckViewScreen() {
       {/*  onClose={() => setIsCreateBranchOpen(false)}*/}
       {/*/>*/}
 
-      <Grid className={style.stretchChildren}>
+      <Grid className={style.stretchChildren} gap={"xl"}>
         <Grid.Col className={`${style.stretchMe} ${style.relative}`} span={3}>
           <DeckViewingOptions/>
         </Grid.Col>
