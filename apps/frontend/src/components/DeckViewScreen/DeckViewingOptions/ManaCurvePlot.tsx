@@ -21,7 +21,7 @@ export function ManaCurvePlot() {
       }
 
       const cmc = Math.min(Math.floor(card.cmc), 10);
-      countsPerCMC[cmc] = (countsPerCMC[cmc] || 0) + 1;
+      countsPerCMC[cmc] = (countsPerCMC[cmc] ?? 0) + card.count;
     }
 
     return Object.entries(countsPerCMC).map(([cmc, count]) => ({
