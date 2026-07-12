@@ -17,7 +17,7 @@ export function DeckOverview() {
   return (
     <Group
       gap="xl"
-      wrap="nowrap"
+      // wrap="nowrap"
       justify={"space-evenly"}
     >
       {Object.entries(expected).map(([sectionName, expectedCount]: [DeckSectionName, number]) => {
@@ -33,7 +33,7 @@ export function DeckOverview() {
             <Text fw={600}>
               {sectionName}:
             </Text>
-            <Text>
+            <Text textWrap={"nowrap"}>
               {actualCount} / {expectedCount}
             </Text>
           </Group>

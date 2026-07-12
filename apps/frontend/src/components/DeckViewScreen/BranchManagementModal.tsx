@@ -135,7 +135,6 @@ function BranchManagementModal() {
                         </>
                       ) : (
                         <ActionIcon
-                          color="blue"
                           variant="light"
                           title="Rename branch"
                           onClick={() =>
