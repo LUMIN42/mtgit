@@ -42,11 +42,6 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
         </FieldSection>)
       }
 
-      {
-        (!comparison && groupingMode !== "manaValue" && groupingMode !== "none") &&
-          <DeckPieChart/>
-      }
-
       <DeckGroupingSection/>
       <SortingSelector/>
       <DeckOverview/>
@@ -104,10 +99,15 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
               {commonContent}
 
               {
-                groupingMode === "manaValue" ?
-                  <ManaCurvePlot/> :
-                  <DeckSectionsToc/>
+                groupingMode === "manaValue" &&
+                  <ManaCurvePlot/>
               }
+
+              {
+                (groupingMode !== "manaValue" && groupingMode !== "none") &&
+                  <DeckPieChart/>
+              }
+
             </Stack>
           </Paper>
 
