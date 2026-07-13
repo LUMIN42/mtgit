@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {TaggedCard} from "./deckTypes.ts";
+import {ColorCode} from "./scryfall.ts";
 
 
 export const MainCardTypes = [
@@ -46,3 +46,11 @@ export function mainTypes(typeLine: string): Set<MainCardType> {
 
   return output;
 }
+
+export const COLOR_NAMES: Record<ColorCode, string> = {
+  B: "Black",
+  W: "White",
+  U: "Blue",
+  R: "Red",
+  G: "Green"
+} as const;

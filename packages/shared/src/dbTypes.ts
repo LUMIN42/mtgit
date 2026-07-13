@@ -6,6 +6,7 @@ export const DeckOverviewSchema = z.object({
   deck_id: z.string()
 });
 
+// todo move this to backend ?
 export const UserSchema = z.object({
   _id: z.string(),
   username: z.string(),

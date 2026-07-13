@@ -5,6 +5,7 @@ import {authRouter} from "./auth.js";
 import {publicProcedure, router} from "../trpc.js";
 import {decksRouter} from "./decks.js";
 import {cardRouter} from "./cards.js";
+import {repositoryPreferencesRouter} from "./preferences.js";
 
 export const appRouter = router({
   health: healthRouter,
@@ -15,7 +16,8 @@ export const appRouter = router({
   cards: cardRouter,
   hello: publicProcedure.query(() => ({
     message: "Hello world from tRPC + Express"
-  }))
+  })),
+  repositoryPreferences: repositoryPreferencesRouter
 });
 
 export type AppRouter = typeof appRouter;

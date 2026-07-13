@@ -12,7 +12,7 @@ export function CardSearchSection() {
   function startSearch(rawValue: string) {
     const trimmedValue = rawValue.trim();
     deck.setIsSearching(true);
-    deck.setSubmittedSearch(trimmedValue);
+    deck.setSearchQuery(trimmedValue);
   }
 
   return (

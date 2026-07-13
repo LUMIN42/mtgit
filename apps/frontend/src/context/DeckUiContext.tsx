@@ -29,8 +29,8 @@ interface DeckUIContextValue {
   isSearching: boolean;
   setIsSearching: Dispatch<SetStateAction<boolean>>;
 
-  submittedSearch: string;
-  setSubmittedSearch: Dispatch<SetStateAction<string>>;
+  searchQuery: string;
+  setSearchQuery: Dispatch<SetStateAction<string>>;
 
   comparisonBranchName: string | null;
   setComparisonBranchName: Dispatch<SetStateAction<string | null>>;
@@ -61,7 +61,7 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [cardFilterQuery, setCardFilterQuery] = useState("");
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
   const [selectedBranchName, setSelectedBranchName] = useState(null);
   const [diffsOnly, setDiffsOnly] = useState<boolean>(true);
@@ -87,8 +87,8 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
     setHoveredCardImageUrl,
     isSearching,
     setIsSearching,
-    submittedSearch,
-    setSubmittedSearch,
+    searchQuery,
+    setSearchQuery,
     comparisonBranchName,
     setComparisonBranchName,
 

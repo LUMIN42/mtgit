@@ -1,6 +1,6 @@
 import {createContext, useContext, useEffect} from "react";
 import type {ReactNode} from "react";
-import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
+import {ColorIdentity, DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
 import {trpc} from "../trpcClient.ts";
 import {useDeckUiContext} from "./DeckUiContext.tsx";
 
@@ -13,6 +13,7 @@ type RepositoryContextValue = {
   updateTag: (oracleId: string, tagName: string, value: boolean) => void;
   createBranch: (branchName: string, branchContent: DeckCardCounts) => void;
   setCardAmount: (oracleId: string, branchName: string, newAmount: number, deckSection: DeckSectionName) => void;
+  updateRepository: (change: Partial<Repository>) => void;
 
   setRepositoryValue: (repository: Repository) => void;
 };
@@ -127,6 +128,15 @@ export function RepositoryProvider({
     }
   });
 
+  function updateRepository(change: Partial<Repository>) {
+    setRepositoryValue(
+      {
+        ...repository,
+        ...change
+      }
+    );
+  }
+
 
   const selectedBranchContent =
     repository && selectedBranchName
@@ -204,7 +214,8 @@ export function RepositoryProvider({
         createBranch,
         updateTag,
 
-        setRepositoryValue
+        setRepositoryValue,
+        updateRepository
       }}
     >
       {children}

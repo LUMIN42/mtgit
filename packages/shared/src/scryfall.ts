@@ -31,6 +31,22 @@ export const ScryfallPricesSchema = z
   })
   .passthrough();
 
+export const COLOR_CODES = ["B", "W", "U", "R", "G"] as const;
+
+
+export const ColorCodeSchema = z.enum(COLOR_CODES);
+
+export type ColorCode = z.infer<typeof ColorCodeSchema>;
+
+export const ColorIdentitySchema = z.array(ColorCodeSchema).refine(
+  colors => new Set(colors).size === colors.length,
+  {
+    message: "Color identity must not contain duplicate colors"
+  }
+);
+
+export type ColorIdentity = z.infer<typeof ColorIdentitySchema>;
+
 export const ScryfallOracleCardSchema = z
   .object({
     object: z.literal("card"),
@@ -48,8 +64,8 @@ export const ScryfallOracleCardSchema = z
     oracle_text: z.string().optional(),
     power: z.string().optional(),
     toughness: z.string().optional(),
-    colors: z.array(z.string()).catch([]), // the catch is needed for two-sided cards, which lack colors
-    color_identity: z.array(z.string()),
+    colors: ColorIdentitySchema.catch([]), // the catch is needed for two-sided cards, which lack colors
+    color_identity: ColorIdentitySchema.catch([]),
     keywords: z.array(z.string()),
     legalities: ScryfallLegalitiesSchema,
     games: z.array(z.string()),
@@ -65,8 +81,8 @@ export const ScryfallOracleCardSchema = z
 export const ScryfallApiOracleCardSchema = ScryfallOracleCardSchema.extend({
   cmc: z.number().catch(0),
   type_line: z.string().catch(""),
-  colors: z.array(z.string()).catch([]),
-  color_identity: z.array(z.string()).catch([]),
+  colors: ColorIdentitySchema.catch([]),
+  color_identity: ColorIdentitySchema.catch([]),
   keywords: z.array(z.string()).catch([]),
   legalities: ScryfallLegalitiesSchema.catch({}),
   games: z.array(z.string()).catch([]),

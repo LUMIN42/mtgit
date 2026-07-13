@@ -1,5 +1,6 @@
 import {z} from "zod";
 import {Format, FormatSchema, relevantSections} from "./deckFormats.js";
+import {ColorIdentitySchema} from "./scryfall.ts";
 
 export type TagsMap = Record<string, string[]>;
 
@@ -64,13 +65,15 @@ export const BranchesSchema = z.record(
   DeckCardCountsSchema
 );
 
+
 export const RepositorySchema = z.object({
   name: z.string(),
   _id: ObjectIdSchema,
   owner_id: z.string(),
   tags: TagsMapSchema,
   branches: BranchesSchema,
-  format: FormatSchema
+  format: FormatSchema,
+  colorIdentity: ColorIdentitySchema.default(null)
 });
 
 export type OracleId = z.infer<typeof OracleIdSchema>;
@@ -104,10 +107,6 @@ export function allDeckOracleIds(cardCounts: DeckCardCounts) {
   }
 
   return [...result.keys()];
-}
-
-export function copyDeckCardAmounts(cardAmounts: DeckCardCounts) {
-  return {...cardAmounts};
 }
 
 export function mergeTagsMaps(currentTags: TagsMap, importedTags: TagsMap): TagsMap {
@@ -181,4 +180,11 @@ export function withoutIdenticalParts(
   }
 
   return [result1, result2];
+}
+
+export function allRepositoryOracleIds(repository: Repository) {
+  return new Set(
+    Object.values(repository.branches)
+      .flatMap((branchValue: DeckCardCounts) => allDeckOracleIds(branchValue))
+  );
 }

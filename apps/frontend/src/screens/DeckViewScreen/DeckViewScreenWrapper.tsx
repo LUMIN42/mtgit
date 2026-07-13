@@ -8,6 +8,7 @@ import {Center, Loader} from "@mantine/core";
 import DeckViewScreenWrapperInner from "./DeckViewScreenWrapperInner.tsx";
 import {DeckUiProvider} from "../../context/DeckUiContext.tsx";
 import {DeckDataProviderWrapper} from "../../context/DeckDataProviderWrapper.tsx";
+import {RepositoryPreferencesProvider} from "../../context/RepositoryPreferencesContext.tsx";
 
 export function DeckViewScreenWrapper() {
   const {deckId} = useParams<{deckId: string}>();
@@ -40,9 +41,11 @@ export function DeckViewScreenWrapper() {
   return (
     <DeckUiProvider>
       <RepositoryProvider repository={deckQuery.data}>
-        <DeckDataProviderWrapper>
-          <DeckViewScreenWrapperInner/>
-        </DeckDataProviderWrapper>
+        <RepositoryPreferencesProvider>
+          <DeckDataProviderWrapper>
+            <DeckViewScreenWrapperInner/>
+          </DeckDataProviderWrapper>
+        </RepositoryPreferencesProvider>
       </RepositoryProvider>
 
     </DeckUiProvider>

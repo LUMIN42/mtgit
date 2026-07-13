@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from "react";
-import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
+import {Alert, Button, Center, Loader, Stack, Text, TextInput} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
@@ -8,6 +8,7 @@ import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -25,10 +26,17 @@ function hasScryfallOrderClause(query: string): boolean {
 
 export function SearchResultsScreen() {
 
-  const uiContext = useDeckUiContext();
+  const {setIsSearching, searchQuery, setSearchQuery} = useDeckUiContext();
 
-  const submittedSearch = uiContext.submittedSearch;
-  const [searchInput, setSearchInput] = useState(submittedSearch);
+  const {preferences: {defaultQuery}, updatePreferences} = useRepositoryPreferences();
+
+  const [defaultQueryField, setDefaultQueryField] = useState(defaultQuery);
+
+  const [fullSearchQuery, setFullSearchQuery] = useState<string>();
+
+  useEffect(() => {
+    handleSearchSubmit();
+  }, []);
 
   const {fetchMissingCards} = useScryfallCache();
 
@@ -42,30 +50,26 @@ export function SearchResultsScreen() {
     hasNextRight
   } = useCardSelectionManager();
 
+  const usesServerOrder = hasScryfallOrderClause(searchQuery);
 
-  useEffect(() => {
-    setSearchInput(submittedSearch);
-  }, [submittedSearch]);
-
-  const usesServerOrder = hasScryfallOrderClause(submittedSearch);
-
-  const searchQuery = useQuery({
-    queryKey: ["scryfall", "search", submittedSearch, 50, 0],
-    enabled: submittedSearch.trim().length > 0,
-    queryFn: async () => searchScryfallCards(submittedSearch, 50, 0)
+  const searchQueryHook = useQuery({
+    queryKey: ["scryfall", "search", fullSearchQuery, 50, 0],
+    enabled: searchQuery.trim().length > 0,
+    queryFn: async () => searchScryfallCards(fullSearchQuery, 50, 0)
   });
 
   const cards = useMemo(
-    () => (searchQuery.data?.ok ? searchQuery.data.cards : []),
-    [searchQuery.data]
+    () => (searchQueryHook.data?.ok ? searchQueryHook.data.cards : []),
+    [searchQueryHook.data]
   );
 
   useEffect(() => {
     fetchMissingCards(cards.map(card => card.oracle_id));
   }, [cards]);
 
-  const showInitialLoading = searchQuery.isPending && submittedSearch.trim().length > 0 && cards.length === 0;
-  const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
+
+  const showInitialLoading = searchQueryHook.isPending && searchQuery.trim().length > 0 && cards.length === 0;
+  const showRefreshLoading = searchQueryHook.isFetching && !showInitialLoading;
 
   const cardsWithTags = useMemo(
     () => cards.map(card => ({...card, count: 1, tags: []})),
@@ -78,26 +82,42 @@ export function SearchResultsScreen() {
   );
 
 
-  const handleSearchSubmit = (value: string) => {
-    const trimmedValue = value.trim();
-    uiContext.setSubmittedSearch(trimmedValue);
+  const handleSearchSubmit = () => {
+    setFullSearchQuery(`${searchQuery} ${defaultQueryField}`);
+
+    updatePreferences({
+      defaultQuery: defaultQueryField
+    });
   };
 
   return (
     <Stack gap={"md"}>
-      <Button onClick={() => uiContext.setIsSearching(false)} w={"fit-content"}>
+      <Button onClick={() => setIsSearching(false)} w={"fit-content"}>
         Return to Deck View
+        {/*  todo rewrite as a chevron */}
       </Button>
       <SearchBox
-        value={searchInput}
-        onChange={setSearchInput}
+        value={searchQuery}
+        onChange={text => setSearchQuery(text)}
         onSearch={handleSearchSubmit}
-        loading={searchQuery.isFetching}
+        loading={searchQueryHook.isFetching}
+      />
+
+      <TextInput
+        label={"Default Deck Query: "}
+        value={defaultQueryField}
+        onInput={event => setDefaultQueryField(event.currentTarget.value)}
+
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            handleSearchSubmit();
+          }
+        }}
       />
 
       <Text size="sm" c="dimmed">
-        {submittedSearch
-          ? `Showing ${cards.length} result(s) for: ${submittedSearch}`
+        {searchQuery
+          ? `Showing ${cards.length} result(s) for: ${fullSearchQuery}`
           : "Type a search and press Enter or click the search icon."}
       </Text>
 
@@ -116,15 +136,15 @@ export function SearchResultsScreen() {
         </Center>
       ) : null}
 
-      {searchQuery.isError ? (
+      {searchQueryHook.isError ? (
         <Alert color="red" title="Search failed">
-          {searchQuery.error instanceof Error ? searchQuery.error.message : "Unknown error"}
+          {searchQueryHook.error instanceof Error ? searchQueryHook.error.message : "Unknown error"}
         </Alert>
       ) : null}
 
-      {searchQuery.data && !searchQuery.data.ok ? (
+      {searchQueryHook.data && !searchQueryHook.data.ok ? (
         <Alert color="red" title="Search failed">
-          {searchQuery.data.message}
+          {searchQueryHook.data.message}
         </Alert>
       ) : null}
 
@@ -132,15 +152,15 @@ export function SearchResultsScreen() {
         <CardGroup
           group={resultsGroup}
           sectionName="Main"
-          groupKey={submittedSearch || "search-results"}
+          groupKey={searchQuery || "search-results"}
           quicklyAdjustable
           onCardSelect={location => {
             openModal(
-              // location set to empty as it is not needed
-              cards.map(card => {
+              // location set to empty, since there is only one location, thus is not needed
+              cards
+                .map(card => {
                   return {oracle_id: card.oracle_id, location: {}};
-                }
-              ),
+                }),
               {oracle_id: location.oracle_id, location: {}}
             );
           }}
@@ -157,5 +177,3 @@ export function SearchResultsScreen() {
     </Stack>
   );
 }
-
-export default SearchResultsScreen;
