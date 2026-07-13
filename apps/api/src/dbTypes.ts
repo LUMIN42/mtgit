@@ -2,7 +2,7 @@ import {z} from "zod";
 import {ObjectIdSchema, RepositoryPreferencesSchema} from "@mtgit/shared";
 
 export const DbRepositoryPreferencesSchema = z.object({
-  userId: ObjectIdSchema,
+  userId: z.uuid(),
   repositoryId: ObjectIdSchema,
   preferences: RepositoryPreferencesSchema
 });

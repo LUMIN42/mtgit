@@ -30,7 +30,6 @@ export const authRouter = router({
       return session;
     }),
 
-  // 🟢 REGISTER ENDPOINT (added)
   register: publicProcedure
     .input(
       z.object({

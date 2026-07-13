@@ -2,7 +2,7 @@
 import {router, protectedProcedure} from "../trpc.js";
 import {
   ObjectIdSchema,
-  RepositoryPreferencesSchema,
+  RepositoryPreferencesSchema
 } from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {DbRepositoryPreferences, DbRepositoryPreferencesSchema} from "../dbTypes.js";
@@ -25,7 +25,7 @@ export const repositoryPreferencesRouter = router({
       const response = await repositoriesCollection.findOne(
         {
           _id: new ObjectId(repositoryId),
-          ownerId: userId
+          owner_id: userId
         },
         {projection: {_id: 1}}
       );
@@ -42,7 +42,9 @@ export const repositoryPreferencesRouter = router({
         return RepositoryPreferencesSchema.parse({}); // defaults
       }
 
-      const dbPreferences = DbRepositoryPreferencesSchema.parse(preferencesResult);
+      const dbPreferences = DbRepositoryPreferencesSchema.parse({...preferencesResult,
+        _id: preferencesResult._id.toString()
+      });
       return dbPreferences.preferences;
     }),
 
