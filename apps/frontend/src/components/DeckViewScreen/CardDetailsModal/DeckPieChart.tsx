@@ -212,7 +212,7 @@ export function DeckPieChart() {
 
                 cursor={"pointer"}
 
-                outerRadius={90}
+                outerRadius={"100%"}
                 shape={props => {
                   const entry = props.payload as ChartData;
 
