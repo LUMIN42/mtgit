@@ -39,12 +39,11 @@ function DeckExportModalButton() {
             flexDirection: "column",
             height: "fit-content",
             width: "fit-content",
-            overflow: "hidden"
+            flex: "none"
           },
           body: {
             flex: 1,
-            display: "flex",
-            overflow: "hidden"
+            display: "flex"
           }
         }}
       >
@@ -54,6 +53,7 @@ function DeckExportModalButton() {
           style={{flex: 1}}
           align="stretch"
           w="100%"
+          p={"xs"}
         >
           {/* LEFT SIDE */}
           <Stack style={{flex: 2, height: "100%"}}>
@@ -70,7 +70,7 @@ function DeckExportModalButton() {
               w={"fit-content"}
             >
               <ScrollArea h={"100%"} pr={"lg"} pl={"sm"}>
-                <Text size="xs" style={{whiteSpace: "pre-wrap", textWrap:"nowrap"}}>
+                <Text size="xs" style={{whiteSpace: "pre-wrap", textWrap: "nowrap"}}>
                   {exportText}
                 </Text>
               </ScrollArea>
@@ -80,7 +80,7 @@ function DeckExportModalButton() {
           {/* RIGHT SIDE */}
           <Stack
             style={{flex: 1, minHeight: 0}}
-            p="md"
+            // p="md"
             justify="space-between"
           >
             <Radio.Group
