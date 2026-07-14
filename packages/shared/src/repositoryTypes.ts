@@ -36,18 +36,9 @@ export const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
  */
 export const DeckCardCountsSchema = z
   .partialRecord(
-    OptionalDeckSectionNameSchema.or(z.literal("Main")),
+    DeckSectionNameSchema,
     CardCountsSchema
-  )
-  .superRefine((val, ctx) => {
-    if (!val.Main) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Main is required",
-        path: ["Main"]
-      });
-    }
-  });
+  );
 
 export function emptyDeckCardCounts(format?: Format): DeckCardCounts {
   if (format === undefined) {
