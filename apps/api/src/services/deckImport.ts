@@ -166,6 +166,12 @@ export async function parseDeckImportText(
   for (const parsedLine of parsedLines) {
     const oracleId = cardsLookup[parsedLine.cardName];
 
+    if (!oracleId) {
+      console.error(`can't find card with name ${parsedLine.cardName}`);
+      continue;
+      // todo show which cards were not found
+    }
+
     resultingDeck[parsedLine.deckSection] ??= {};
     resultingDeck[parsedLine.deckSection]![oracleId] ??= 0;
     resultingDeck[parsedLine.deckSection]![oracleId] += parsedLine.quantity;
