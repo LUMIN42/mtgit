@@ -104,6 +104,8 @@ export function SearchResultsScreen() {
         onChange={text => setSearchQuery(text)}
         onSearch={handleSearchSubmit}
         loading={searchQueryHook.isFetching}
+        placeholder={"t:creature mv<5 order:edhrec"}
+        label={"Scryfall Search Query"}
       />
 
       <Group w="100%" gap={"xs"} align="center" c={editingDefaultQuery ? "inherit" : "dimmed"}>
