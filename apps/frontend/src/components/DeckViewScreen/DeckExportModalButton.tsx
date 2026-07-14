@@ -71,7 +71,7 @@ function DeckExportModalButton() {
             >
               <ScrollArea h={"100%"} pr={"lg"} pl={"sm"}>
                 <Text size="xs" style={{whiteSpace: "pre-wrap", textWrap: "nowrap"}}>
-                  {exportText}
+                  {exportText || "(deck is empty, nothing to export)"}
                 </Text>
               </ScrollArea>
             </Paper>
