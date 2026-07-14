@@ -6,7 +6,13 @@ const DEFAULT_DATABASE_NAME = "mtgit";
 /**
  * Valid collection names in the mtgit database.
  */
-export type CollectionName = "scryfall_cards" | "users" | "sessions" | "repositories" | "repository_preferences";
+export type CollectionName =
+  "scryfall_cards"
+  | "users"
+  | "sessions"
+  | "repositories"
+  | "repository_preferences"
+  | "branch_snapshots";
 
 let cachedMongoUri: string | null = null;
 let cachedMongoClient: MongoClient | null = null;

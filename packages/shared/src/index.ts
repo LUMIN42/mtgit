@@ -8,4 +8,5 @@ export * from "./dbTypes.js";
 export * from "./deckFormats.js";
 export * from "./cardTypes.js";
 export * from "./deckExport.js";
-export * from "./preferencesTypes.ts";
+export * from "./preferencesTypes.js";
+export * from "./snapshotTypes.js";

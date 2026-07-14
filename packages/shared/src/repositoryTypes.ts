@@ -1,6 +1,5 @@
 import {z} from "zod";
 import {Format, FormatSchema, relevantSections} from "./deckFormats.js";
-import {ColorIdentitySchema} from "./scryfall.ts";
 
 export type TagsMap = Record<string, string[]>;
 
@@ -28,7 +27,10 @@ export const OracleIdSchema = z.string();
 
 export const CardCountsSchema = z.record(OracleIdSchema, z.number().int().positive());
 
-export const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
+export const ObjectIdSchema = z.preprocess(
+  value => String(value),
+  z.string().regex(/^[0-9a-fA-F]{24}$/)
+);
 
 /**
  * Each deck section must contain optional sections,
@@ -63,8 +65,8 @@ export const RepositorySchema = z.object({
   owner_id: z.string(),
   tags: TagsMapSchema,
   branches: BranchesSchema,
-  format: FormatSchema,
-  colorIdentity: ColorIdentitySchema.default(null)
+  format: FormatSchema
+  // colorIdentity: ColorIdentitySchema.default(null)
 });
 
 export type OracleId = z.infer<typeof OracleIdSchema>;

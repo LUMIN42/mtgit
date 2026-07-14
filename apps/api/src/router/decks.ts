@@ -2,9 +2,12 @@ import {z} from "zod";
 import {protectedProcedure, router} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
 import {TRPCError} from "@trpc/server";
+import {isDeepStrictEqual} from "node:util";
 
-import {createEmptyRepositoryTemplate, ObjectIdSchema, RepositorySchema, FormatSchema} from "@mtgit/shared";
+
+import {createEmptyRepositoryTemplate, ObjectIdSchema, RepositorySchema, FormatSchema, Repository} from "@mtgit/shared";
 import {ObjectId} from "mongodb";
+import {saveBranchSnapshot} from "../services/saveBranchSnapshot.js";
 
 
 export const decksRouter = router({
@@ -78,18 +81,20 @@ export const decksRouter = router({
     .mutation(async ({ctx, input}) => {
       const reposCollection = getCollection("repositories");
 
-      const currentDeck = await reposCollection.findOne({
+      const originalRepoResult = await reposCollection.findOne({
         _id: new ObjectId(input._id)
       });
 
-      if (!currentDeck) {
+      if (!originalRepoResult) {
         throw new TRPCError({
           code: "NOT_FOUND"
         });
       }
 
+      const originalRepo: Repository = RepositorySchema.parse(originalRepoResult);
+
       // ownership check
-      if (currentDeck.owner_id !== ctx.user._id) {
+      if (originalRepo.owner_id !== ctx.user._id) {
         throw new TRPCError({
           code: "UNAUTHORIZED"
         });
@@ -97,15 +102,15 @@ export const decksRouter = router({
 
       // update document
       await reposCollection.replaceOne(
-        {_id: currentDeck._id},
+        {_id: originalRepoResult._id},
         {
           ...input,
-          _id: currentDeck._id
+          _id: originalRepoResult._id
         }
       );
 
       const updated = await reposCollection.findOne({
-        _id: currentDeck._id
+        _id: originalRepoResult._id
       });
 
       if (!updated) {
@@ -114,10 +119,30 @@ export const decksRouter = router({
         });
       }
 
-      return RepositorySchema.parse({
+      const updatedRepo = RepositorySchema.parse({
         ...updated,
         _id: updated._id.toString()
       });
+
+      const updatedBranchNames = Object.entries(updatedRepo.branches)
+        .filter(([branchName, branchContent]) =>
+          !isDeepStrictEqual(branchContent, originalRepo.branches[branchName])
+        )
+        .map(([branchName]) => branchName);
+
+
+      // todo double-check that it is fully parallelized
+      const promises: Promise<void>[] = [];
+      for (const updatedBranchName of updatedBranchNames) {
+        const promise = saveBranchSnapshot(updatedRepo._id, updatedBranchName, updatedRepo.branches[updatedBranchName]);
+        promises.push(promise);
+      }
+
+      for (const promise of promises) {
+        await promise;
+      }
+
+      return updatedRepo;
     }),
 
   setTag: protectedProcedure
