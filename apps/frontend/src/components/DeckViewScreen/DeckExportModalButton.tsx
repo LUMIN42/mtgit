@@ -101,6 +101,19 @@ function DeckExportModalButton() {
 
             <Stack>
               <Button
+                fullWidth
+                onClick={async () => {
+                  await navigator.clipboard.writeText(exportText);
+
+                  notifications.show({
+                    title: "Copied",
+                    message: "Deck exported to clipboard"
+                  });
+                }}
+              >
+                Copy to Clipboard
+              </Button>
+              <Button
                 variant="subtle"
                 fullWidth
                 onClick={() => {
@@ -119,20 +132,6 @@ function DeckExportModalButton() {
                 }}
               >
                 Download for MTGO
-              </Button>
-
-              <Button
-                fullWidth
-                onClick={async () => {
-                  await navigator.clipboard.writeText(exportText);
-
-                  notifications.show({
-                    title: "Copied",
-                    message: "Deck exported to clipboard"
-                  });
-                }}
-              >
-                Copy to Clipboard
               </Button>
             </Stack>
           </Stack>
