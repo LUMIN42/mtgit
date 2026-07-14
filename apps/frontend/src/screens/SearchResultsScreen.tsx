@@ -86,7 +86,7 @@ export function SearchResultsScreen() {
 
 
   const handleSearchSubmit = () => {
-    setFullSearchQuery(`${searchQuery} ${defaultQueryField}`);
+    setFullSearchQuery(`${defaultQueryField} ${searchQuery}`);
 
     updatePreferences({
       defaultQuery: defaultQueryField
