@@ -1,4 +1,4 @@
-import {SimpleGrid, Stack} from "@mantine/core";
+import {Grid, SimpleGrid, Stack} from "@mantine/core";
 import style from "../../assets/index.module.css";
 // import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import {Card} from "./Card.tsx";
@@ -77,29 +77,29 @@ export function CardGroup({
   }
 
   return (
-    <SimpleGrid
+    <Grid
       ref={ref}
       pos={"sticky"}
       bottom={sticky && isTall ? "1em" : "initial"}
       top={sticky && !isTall ? "8em" : "initial"}
 
       w={"100%"}
+      justify={rightToLeft ? "right" : "left"}
+      gap={0}
+      columns={columnCount}
 
-      cols={columnCount}
-
-      spacing={0}
-      verticalSpacing={0}
 
       mt={sticky && isTall ? "auto" : 0}
+
       // top={sticky ? 0 : "initial"}
       style={{
-        direction: rightToLeft ? "rtl" : "initial",
-        justifySelf: "flex-end"
+        justifySelf: "flex-end",
+        justifyContent: "end"
       }}>
 
       {!!columnCount &&
         group.cards.map((card, index) => (
-          <div style={{direction: "ltr"}} key={`${groupKey}-${card.id}`}>
+          <Grid.Col key={`${groupKey}-${card.id}`} span={1}>
             <Card
               card={card}
               displayMode={displayMode}
@@ -115,9 +115,9 @@ export function CardGroup({
               quicklyAdjustable={quicklyAdjustable}
               deckSection={sectionName}
             />
-          </div>
+          </Grid.Col>
         ))}
 
-    </SimpleGrid>
+    </Grid>
   );
 }
