@@ -1,4 +1,4 @@
-import {Box, Grid, SimpleGrid, Stack} from "@mantine/core";
+import {SimpleGrid, Stack} from "@mantine/core";
 import style from "../../assets/index.module.css";
 // import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import {Card} from "./Card.tsx";
@@ -21,6 +21,7 @@ interface CardGroupProps {
   rightToLeft?: boolean;
   sticky?: boolean;
   minWidth?: number;
+  widthOverride?: number | undefined;
 }
 
 export function CardGroup({
@@ -34,11 +35,16 @@ export function CardGroup({
   quicklyAdjustable = false,
   rightToLeft = false,
   sticky = false,
-  minWidth = 160
+  minWidth = 160,
+  widthOverride
 }: CardGroupProps) {
   const {displayMode} = useDeckUiContext();
   const {ref, height, width} = useElementSize();
-  const columnCount = Math.floor((width / minWidth));
+
+
+  const calculationWidth = widthOverride ?? width;
+  let columnCount = Math.floor(calculationWidth / minWidth);
+  if (columnCount === 0 && calculationWidth > 0) columnCount = 1;
 
   const isTall = useMemo(() => {
     if (typeof window === "undefined") {

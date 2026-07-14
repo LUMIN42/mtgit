@@ -11,6 +11,7 @@ import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {DeckGroupLocation} from "../types/addressedCards.ts";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
+import {useElementSize} from "@mantine/hooks";
 
 export function DeckComparisonScreen() {
   const {
@@ -26,6 +27,9 @@ export function DeckComparisonScreen() {
   const comparisonBranchContent = repository.branches[comparisonBranchName];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
+
+  const {width, ref} = useElementSize();
+  const widthOfOneHalf = Math.floor(width / 11 * 5);
 
 
   const originalLeftCardCounts = useMemo(
@@ -170,7 +174,7 @@ export function DeckComparisonScreen() {
 
 
   return (
-    <Stack>
+    <Stack ref={ref}>
       <DeckViewingOptions horizontal={true} comparison={true}/>
       <Grid columns={11}>
         <Grid.Col span={5} style={{display: "flex", justifyContent: "flex-end"}}>
@@ -187,6 +191,7 @@ export function DeckComparisonScreen() {
 
 
         {
+          width &&
           comparison.map(
             section => (
               <React.Fragment key={`${section.sectionName}-fragment`}>
@@ -210,6 +215,7 @@ export function DeckComparisonScreen() {
                               sticky={true}
                               rightToLeft={true}
                               quicklyAdjustable={true}
+                              widthOverride={widthOfOneHalf}
                               onCardSelect={location => {
                                 const loc: ComparisonCardLocation = {
                                   oracle_id: location.oracle_id,
@@ -239,6 +245,7 @@ export function DeckComparisonScreen() {
                               groupKey={group.heading}
                               sticky={true}
                               quicklyAdjustable={true}
+                              widthOverride={widthOfOneHalf}
 
                               onCardSelect={location => {
                                 const loc: ComparisonCardLocation = {
