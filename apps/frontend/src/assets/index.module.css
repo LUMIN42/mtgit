@@ -51,6 +51,6 @@ html, body, #root, .gridRoot {
 }
 
 
-[data-variant="gradient"][type="button"]:hover {
+[data-variant="gradient"][type="button"]:not([data-disabled="true"]):hover {
     filter: brightness(1.15);
 }

@@ -11,7 +11,9 @@ export function DeckImportModalButton() {
   const {selectedBranchName} = useDeckUiContext();
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   const [importDeckText, setImportDeckText] = useState("");
+
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
@@ -126,6 +128,7 @@ export function DeckImportModalButton() {
               variant="default"
               onClick={() => handleConfirmImport("merge")}
               loading={isImporting}
+              disabled={importDeckText.length === 0}
             >
               Add to deck
             </Button>
@@ -133,6 +136,7 @@ export function DeckImportModalButton() {
             <Button
               onClick={() => handleConfirmImport("overwrite")}
               loading={isImporting}
+              disabled={importDeckText.length === 0}
             >
               Replace deck
             </Button>
