@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from "react";
-import {Alert, Button, Center, Loader, Stack, Text, TextInput} from "@mantine/core";
+import {ActionIcon, Alert, Button, Center, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
 import {useQuery} from "@tanstack/react-query";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
@@ -9,6 +9,7 @@ import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
+import {IconCheck, IconPencil} from "@tabler/icons-react";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -31,6 +32,8 @@ export function SearchResultsScreen() {
   const {preferences: {defaultQuery}, updatePreferences} = useRepositoryPreferences();
 
   const [defaultQueryField, setDefaultQueryField] = useState(defaultQuery);
+
+  const [editingDefaultQuery, setEditingDefaultQuery] = useState<boolean>(false);
 
   const [fullSearchQuery, setFullSearchQuery] = useState<string>();
 
@@ -103,17 +106,50 @@ export function SearchResultsScreen() {
         loading={searchQueryHook.isFetching}
       />
 
-      <TextInput
-        label={"Default Deck Query: "}
-        value={defaultQueryField}
-        onInput={event => setDefaultQueryField(event.currentTarget.value)}
+      <Group w="100%" gap={"xs"} align="center" c={editingDefaultQuery ? "inherit" : "dimmed"}>
+        <Text size={editingDefaultQuery ? "md" : "xs"} fw={500}>
+          Default Query:
+        </Text>
 
-        onKeyDown={e => {
-          if (e.key === "Enter") {
-            handleSearchSubmit();
-          }
-        }}
-      />
+        {editingDefaultQuery ? (
+          <>
+            <TextInput
+              value={defaultQueryField}
+              onInput={event => setDefaultQueryField(event.currentTarget.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  handleSearchSubmit();
+                }
+              }}
+              style={{flex: 1}}
+            />
+
+            <ActionIcon
+              variant={"gradient"}
+              onClick={() => {
+                handleSearchSubmit();
+                setEditingDefaultQuery(false);
+              }}
+            >
+              <IconCheck/>
+            </ActionIcon>
+          </>
+        ) : (
+          <>
+            <Text size="xs">
+              {defaultQueryField}
+            </Text>
+            <ActionIcon
+              variant="white"
+              size="xs"
+              onClick={() => setEditingDefaultQuery(true)}
+            >
+              <IconPencil size={14} color="var(--mantine-color-dimmed)" />
+            </ActionIcon>
+          </>
+        )}
+      </Group>
+
 
       <Text size="sm" c="dimmed">
         {searchQuery
