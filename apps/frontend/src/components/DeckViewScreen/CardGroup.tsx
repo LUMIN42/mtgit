@@ -1,4 +1,4 @@
-import {Box, Stack} from "@mantine/core";
+import {Box, Grid, SimpleGrid, Stack} from "@mantine/core";
 import style from "../../assets/index.module.css";
 // import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import {Card} from "./Card.tsx";
@@ -20,6 +20,7 @@ interface CardGroupProps {
   quicklyAdjustable?: boolean;
   rightToLeft?: boolean;
   sticky?: boolean;
+  minWidth?: number;
 }
 
 export function CardGroup({
@@ -32,11 +33,12 @@ export function CardGroup({
   },
   quicklyAdjustable = false,
   rightToLeft = false,
-  sticky = false
+  sticky = false,
+  minWidth = 160
 }: CardGroupProps) {
-
   const {displayMode} = useDeckUiContext();
-  const {ref, height} = useElementSize();
+  const {ref, height, width} = useElementSize();
+  const columnCount = Math.floor((width / minWidth));
 
   const isTall = useMemo(() => {
     if (typeof window === "undefined") {
@@ -69,40 +71,47 @@ export function CardGroup({
   }
 
   return (
-    <Box
-      // pos={sticky ? "sticky" : "initial"}
+    <SimpleGrid
       ref={ref}
       pos={"sticky"}
       bottom={sticky && isTall ? "1em" : "initial"}
       top={sticky && !isTall ? "8em" : "initial"}
 
+      w={"100%"}
+
+      cols={columnCount}
+
+      spacing={0}
+      verticalSpacing={0}
+
       mt={sticky && isTall ? "auto" : 0}
       // top={sticky ? 0 : "initial"}
-      className={style.grid}
       style={{
         direction: rightToLeft ? "rtl" : "initial",
         justifySelf: "flex-end"
       }}>
-      {group.cards.map((card, index) => (
-        <div style={{direction: "ltr"}} key={`${groupKey}-${card.id}`}>
-          <Card
-            card={card}
-            displayMode={displayMode}
-            onSelect={() => onCardSelect(
-              {
-                oracle_id: card.oracle_id,
-                location: {
-                  group: group.heading,
-                  section: sectionName
-                }
-              }
-            )}
-            quicklyAdjustable={quicklyAdjustable}
-            deckSection={sectionName}
-          />
-        </div>
 
-      ))}
-    </Box>
+      {!!columnCount &&
+        group.cards.map((card, index) => (
+          <div style={{direction: "ltr"}} key={`${groupKey}-${card.id}`}>
+            <Card
+              card={card}
+              displayMode={displayMode}
+              onSelect={() =>
+                onCardSelect({
+                  oracle_id: card.oracle_id,
+                  location: {
+                    group: group.heading,
+                    section: sectionName
+                  }
+                })
+              }
+              quicklyAdjustable={quicklyAdjustable}
+              deckSection={sectionName}
+            />
+          </div>
+        ))}
+
+    </SimpleGrid>
   );
 }

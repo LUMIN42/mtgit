@@ -101,7 +101,7 @@ function DeckExportModalButton() {
 
             <Stack>
               <Button
-                variant="light"
+                variant="subtle"
                 fullWidth
                 onClick={() => {
                   const blob = new Blob([exportText], {

@@ -14,7 +14,7 @@ import {ScryfallCacheProvider} from "./context/ScryfallCacheContext.tsx";
 
 import {trpc, trpcLinks} from "./trpcClient";
 import {Notifications} from "@mantine/notifications";
-import '@mantine/notifications/styles.css';
+import "@mantine/notifications/styles.css";
 
 const queryClient = new QueryClient();
 
@@ -47,7 +47,6 @@ createRoot(document.getElementById("root")!).render(
           <MantineProvider theme={theme}>
             <ScryfallCacheProvider>
               <Notifications/>
-
               <App/>
             </ScryfallCacheProvider>
           </MantineProvider>

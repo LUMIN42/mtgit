@@ -91,7 +91,7 @@ export function SearchResultsScreen() {
   };
 
   return (
-    <Stack gap={"md"}>
+    <Stack gap={"md"} maw={1200} mx={"auto"}>
       <Button onClick={() => setIsSearching(false)} w={"fit-content"}>
         Return to Deck View
         {/*  todo rewrite as a chevron */}
@@ -164,6 +164,7 @@ export function SearchResultsScreen() {
               {oracle_id: location.oracle_id, location: {}}
             );
           }}
+          minWidth={190}
         />
       ) : null}
 
