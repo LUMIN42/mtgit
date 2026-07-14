@@ -50,3 +50,7 @@ html, body, #root, .gridRoot {
     padding: 8px 10px;
 }
 
+
+[data-variant="gradient"][type="button"]:hover {
+    filter: brightness(1.15);
+}
