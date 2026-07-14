@@ -199,6 +199,8 @@ export function DeckPieChart() {
                 cx="50%"
                 cy="50%"
 
+                isAnimationActive={false}
+
                 onClick={
                   item => {
                     document
