@@ -2,7 +2,7 @@ import {z} from "zod";
 import {ColorCode} from "./scryfall.ts";
 
 
-export const MainCardTypes = [
+export const MAIN_CARD_TYPES = [
   "Artifact",
   "Battle",
   "Creature",
@@ -14,7 +14,7 @@ export const MainCardTypes = [
 ] as const;
 
 
-export const MainCardTypeSchema = z.enum(MainCardTypes);
+export const MainCardTypeSchema = z.enum(MAIN_CARD_TYPES);
 
 export type MainCardType = z.infer<typeof MainCardTypeSchema>;
 
@@ -29,7 +29,7 @@ export const MAIN_TYPE_ORDER: MainCardType[] = [
   "Land"
 ];
 
-export const MAIN_TYPE_SET = new Set(MainCardTypes);
+export const MAIN_TYPE_SET = new Set(MAIN_CARD_TYPES);
 
 export function isMainCardType(value: string): value is MainCardType {
   return MAIN_TYPE_SET.has(value as MainCardType);
@@ -38,7 +38,7 @@ export function isMainCardType(value: string): value is MainCardType {
 export function mainTypes(typeLine: string): Set<MainCardType> {
   const output = new Set<MainCardType>();
 
-  for (const mainCardType of MainCardTypes) {
+  for (const mainCardType of MAIN_CARD_TYPES) {
     if (typeLine.includes(mainCardType)) {
       output.add(mainCardType);
     }

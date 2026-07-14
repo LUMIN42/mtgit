@@ -1,4 +1,4 @@
-import {HydratedDeck} from "@mtgit/shared";
+import {HydratedDeck, isMainCardType, TaggedCard} from "@mtgit/shared";
 import type {ScryfallOracleCard} from "@mtgit/shared";
 
 // todo move file to shared code
@@ -17,17 +17,6 @@ interface ParsedClause {
 const COLOR_SYMBOLS = new Set(["w", "u", "b", "r", "g", "c"]);
 
 // todo add to global type declarations and unify
-const MAIN_TYPE_KEYWORDS = new Set([
-  "artifact",
-  "battle",
-  "creature",
-  "dungeon",
-  "enchantment",
-  "instant",
-  "land",
-  "planeswalker",
-  "sorcery"
-]);
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();
@@ -231,7 +220,7 @@ function matchesIsClause(card: ScryfallOracleCard, rawQuery: string): boolean {
     return asString(card.type_line).toLowerCase().includes("legendary");
   }
 
-  if (MAIN_TYPE_KEYWORDS.has(query)) {
+  if (isMainCardType(query)) {
     return asString(card.type_line).toLowerCase().includes(query);
   }
 
@@ -252,7 +241,12 @@ function matchesIsClause(card: ScryfallOracleCard, rawQuery: string): boolean {
   return true;
 }
 
-function matchesClause(card: ScryfallOracleCard, clause: ParsedClause): boolean {
+function matchesTagClause(card: TaggedCard, tagQuery: string) {
+  return card.tags.some(tag => tag.includes(tagQuery));
+}
+
+// todo refactor using oop-like modular design
+function matchesClause(card: TaggedCard, clause: ParsedClause): boolean {
   const field = clause.field;
 
   if (!field) {
@@ -296,12 +290,15 @@ function matchesClause(card: ScryfallOracleCard, clause: ParsedClause): boolean 
       return asStringArray(card.keywords).some(keyword => matchesText(keyword.toLowerCase(), clause.value));
     case "is":
       return matchesIsClause(card, clause.value);
+    case "tag":
+    case "tags":
+      return matchesTagClause(card, clause.value);
     default:
       return true; // make incorrect clauses less punishing
   }
 }
 
-export function createScryfallCardMatcher(query: string): (card: ScryfallOracleCard) => boolean {
+export function createScryfallCardMatcher(query: string): (card: TaggedCard) => boolean {
   const trimmedQuery = query.trim();
   if (!trimmedQuery) {
     return () => true;
@@ -315,7 +312,7 @@ export function createScryfallCardMatcher(query: string): (card: ScryfallOracleC
   });
 }
 
-export function filterCardsByScryfallQuery(cards: ScryfallOracleCard[], query: string): ScryfallOracleCard[] {
+export function filterCardsByScryfallQuery(cards: TaggedCard[], query: string): ScryfallOracleCard[] {
   const matcher = createScryfallCardMatcher(query);
   return cards.filter(matcher);
 }
