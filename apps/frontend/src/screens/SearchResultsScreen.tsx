@@ -76,7 +76,7 @@ export function SearchResultsScreen() {
   const showRefreshLoading = searchQueryHook.isFetching && !showInitialLoading;
 
   const cardsWithTags = useMemo(
-    () => cards.map(card => ({...card, count: 1, tags: []})),
+    () => cards.map(card => ({...card, tags: []})),
     [cards]
   );
 
