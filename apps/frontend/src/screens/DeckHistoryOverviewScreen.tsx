@@ -123,6 +123,10 @@ export function DeckHistoryOverviewScreen() {
       Return to Deck
     </Button>
 
+    <Title order={1} ta={"center"}>
+      History of {selectedBranchName} branch
+    </Title>
+
     <Grid columns={11}>
       {
         diffs.map(diff =>

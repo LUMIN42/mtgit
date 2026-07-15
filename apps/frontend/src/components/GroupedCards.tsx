@@ -11,12 +11,14 @@ import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useDeckDataContext} from "../context/DeckDataContext.tsx";
 import {cardCount} from "@mtgit/shared";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
-import {useElementSize} from "@mantine/hooks";
+import {useElementSize, useViewportSize} from "@mantine/hooks";
 
 export function GroupedCards() {
   const {groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
 
   const {width, ref} = useElementSize();
+
+  const {width: viewportWidth} = useViewportSize();
 
   const {filteredDeck} = useDeckDataContext();
 
@@ -101,7 +103,7 @@ export function GroupedCards() {
                       }}
                       onCardHover={setHoveredCardImageUrl}
                       sectionName={section.name}
-                      widthOverride={width}
+                      widthOverride={width ?? viewportWidth * 0.8}
                     />
                   </Stack>
                 );

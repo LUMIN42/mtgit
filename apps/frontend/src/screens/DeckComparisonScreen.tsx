@@ -11,7 +11,7 @@ import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {DeckGroupLocation} from "../types/addressedCards.ts";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
-import {useElementSize} from "@mantine/hooks";
+import {useElementSize, useViewportSize} from "@mantine/hooks";
 
 export function DeckComparisonScreen() {
   const {
@@ -28,8 +28,10 @@ export function DeckComparisonScreen() {
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
 
+  const {width: viewportWidth} = useViewportSize();
+
   const {width, ref} = useElementSize();
-  const widthOfOneHalf = Math.floor(width / 11 * 5);
+  const widthOfOneHalf = Math.floor((viewportWidth ?? width) / 11 * 5);
 
 
   const originalLeftCardCounts = useMemo(
@@ -191,7 +193,7 @@ export function DeckComparisonScreen() {
 
 
         {
-          width &&
+          widthOfOneHalf &&
           comparison.map(
             section => (
               <React.Fragment key={`${section.sectionName}-fragment`}>

@@ -1,11 +1,11 @@
 import {createContext, useContext, useEffect} from "react";
 import type {ReactNode} from "react";
-import {ColorIdentity, DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
+import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
 import {trpc} from "../trpcClient.ts";
 import {useDeckUiContext} from "./DeckUiContext.tsx";
 
 type RepositoryContextValue = {
-  repository: Repository | null;
+  repository: Repository;
 
   selectedBranchContent: DeckCardCounts | undefined;
 
@@ -24,21 +24,30 @@ const RepositoryContext = createContext<RepositoryContextValue | undefined>(
 
 export function RepositoryProvider({
   children,
-  repository
+  repositoryId
 }: {
   children: ReactNode;
-  repository: Repository;
+  repositoryId: string;
 }) {
   const utils = trpc.useUtils();
 
   const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
 
+  const deckQuery = trpc.decks.get.useQuery(
+    {deckId: repositoryId}
+  );
+
+  const repository: Repository = deckQuery.data ?? {
+    _id: repositoryId, branches: {}, format: "Standard", name: "", owner_id: "", tags: {}
+  };
+
   useEffect(
     () => {
-      if (selectedBranchName === null) {
+      if (!selectedBranchName) {
         setSelectedBranchName(Object.keys(repository.branches)[0]);
       }
-    }
+    },
+    [repository]
   );
 
   const updateTagEndpoint = trpc.decks.setTag.useMutation({
@@ -129,12 +138,14 @@ export function RepositoryProvider({
   });
 
   function updateRepository(change: Partial<Repository>) {
-    setRepositoryValue(
-      {
-        ...repository,
-        ...change
-      }
-    );
+    if (repository !== null) {
+      setRepositoryValue(
+        {
+          ...repository,
+          ...change
+        }
+      );
+    }
   }
 
 
@@ -159,7 +170,9 @@ export function RepositoryProvider({
   };
 
   const updateTag = async (oracleId: string, tagName: string, value: boolean) => {
-    updateTagEndpoint.mutateAsync({deckId: repository._id, tagKey: tagName, oracleId, value});
+    updateTagEndpoint.mutateAsync(
+      {deckId: repository._id, tagKey: tagName, oracleId, value}
+    );
   };
 
   const createBranch = async (
