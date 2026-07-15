@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {Grid, Group, Stack, Title} from "@mantine/core";
+import {Button, Grid, Group, Stack, Title} from "@mantine/core";
 
 import style from "../../assets/index.module.css";
 import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
@@ -12,7 +12,8 @@ import {
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import DeckExportModalButton from "../../components/DeckViewScreen/DeckExportModalButton.tsx";
-import BranchManagementModal from "../../components/DeckViewScreen/BranchManagementModal.tsx";
+import BranchManagementModalButton from "../../components/DeckViewScreen/BranchManagementModalButton.tsx";
+import {Link} from "react-router-dom";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
@@ -28,7 +29,7 @@ export function DeckViewScreen() {
     <Stack style={{maxWidth: "1500px", margin: "auto"}}>
 
       <Title order={1}>
-        {repo.repository.name}
+        {repo.repository?.name}
       </Title>
 
       <Group>
@@ -40,7 +41,11 @@ export function DeckViewScreen() {
           onToggle={toggleDisplayMode}
         />
 
-        <BranchManagementModal/>
+        <BranchManagementModalButton/>
+
+        <Button variant={"default"} component={Link} to={"history"}>
+          Branch History
+        </Button>
 
         {/*<Button variant="default" onClick={() => ui.setViewMode("Branches")}>*/}
         {/*  View branches*/}

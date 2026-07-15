@@ -24,7 +24,7 @@ export function DeckComparisonScreen() {
   } = useDeckUiContext();
   const {repository, selectedBranchContent, setBranchValue} = useRepositoryContext();
 
-  const comparisonBranchContent = repository.branches[comparisonBranchName];
+  const comparisonBranchContent = repository!.branches[comparisonBranchName!];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
 
@@ -33,7 +33,7 @@ export function DeckComparisonScreen() {
 
 
   const originalLeftCardCounts = useMemo(
-    () => selectedBranchContent,
+    () => selectedBranchContent!,
     [map, selectedBranchName, comparisonBranchName]
   );
 
@@ -50,7 +50,7 @@ export function DeckComparisonScreen() {
 
   const originalLeftDeck = usePartiallyReconstructedDeck(
     leftCardCounts,
-    repository.tags
+    repository!.tags
   );
   const filteredLeftDeck = filterDeckByScryfallQuery(
     originalLeftDeck,
@@ -59,7 +59,7 @@ export function DeckComparisonScreen() {
 
   const originalRightDeck = usePartiallyReconstructedDeck(
     rightCardCounts,
-    repository.tags
+    repository!.tags
   );
   const filteredRightDeck = filterDeckByScryfallQuery(
     originalRightDeck,
@@ -143,11 +143,11 @@ export function DeckComparisonScreen() {
   );
 
   function selectChanged() {
-    setBranchValue(selectedBranchName, originalRightCardCounts);
+    setBranchValue(selectedBranchName!, originalRightCardCounts);
   }
 
   function selectOriginal() {
-    setBranchValue(selectedBranchName, originalLeftCardCounts);
+    setBranchValue(selectedBranchName!, originalLeftCardCounts);
   }
 
   const {
@@ -209,7 +209,8 @@ export function DeckComparisonScreen() {
 
                         <Grid.Col span={5} key={`${section.sectionName}-${group.heading}-left`}>
                           <Stack pos={"relative"} h={"100%"}>
-                            <CardGroup group={{heading: group.heading, cards: group.leftCards}}
+                            <CardGroup
+                              cards={group.leftCards}
                               sectionName={section.sectionName}
                               groupKey={group.heading}
                               sticky={true}
@@ -240,7 +241,8 @@ export function DeckComparisonScreen() {
 
                         <Grid.Col pos={"relative"} span={5} key={`${section.sectionName}-${group.heading}-right`}>
                           <Stack pos={"relative"} h={"100%"}>
-                            <CardGroup group={{heading: group.heading, cards: group.rightCards}}
+                            <CardGroup
+                              cards={group.rightCards}
                               sectionName={section.sectionName}
                               groupKey={group.heading}
                               sticky={true}

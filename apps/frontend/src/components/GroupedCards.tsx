@@ -61,10 +61,10 @@ export function GroupedCards() {
                 size="lg"
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading
-                data-card-count={cardCount(filteredDeck[section.name])}
+                data-card-count={cardCount(filteredDeck[section.name]!)}
                 data-heading-text={section.name}
               >
-                {section.name} ({cardCount(filteredDeck[section.name])})
+                {section.name} ({cardCount(filteredDeck[section.name]!)})
               </Title>
 
               {/* Render groups within the section */}
@@ -94,8 +94,8 @@ export function GroupedCards() {
 
                     {/* Render cards in the group */}
                     <CardGroup
-                      group={group}
-                      groupKey={`${section.name}-${group.heading}`}
+                      cards={group.cards}
+                      groupKey={`${group.heading}`}
                       onCardSelect={cardLoc => {
                         openModal(pageCards, cardLoc);
                       }}

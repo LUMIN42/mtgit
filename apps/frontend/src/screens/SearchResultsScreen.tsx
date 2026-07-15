@@ -10,6 +10,7 @@ import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 import {IconCheck, IconPencil} from "@tabler/icons-react";
+import {Link} from "react-router-dom";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -27,7 +28,7 @@ function hasScryfallOrderClause(query: string): boolean {
 
 export function SearchResultsScreen() {
 
-  const {setIsSearching, searchQuery, setSearchQuery} = useDeckUiContext();
+  const {searchQuery, setSearchQuery} = useDeckUiContext();
 
   const {preferences: {defaultQuery}, updatePreferences} = useRepositoryPreferences();
 
@@ -58,7 +59,7 @@ export function SearchResultsScreen() {
   const searchQueryHook = useQuery({
     queryKey: ["scryfall", "search", fullSearchQuery, 50, 0],
     enabled: searchQuery.trim().length > 0,
-    queryFn: async () => searchScryfallCards(fullSearchQuery, 50, 0)
+    queryFn: async () => searchScryfallCards(fullSearchQuery!, 50, 0)
   });
 
   const cards = useMemo(
@@ -95,7 +96,7 @@ export function SearchResultsScreen() {
 
   return (
     <Stack gap={"md"} maw={1200} mx={"auto"}>
-      <Button onClick={() => setIsSearching(false)} w={"fit-content"}>
+      <Button component={Link} to={".."} w={"fit-content"}>
         Return to Deck View
         {/*  todo rewrite as a chevron */}
       </Button>

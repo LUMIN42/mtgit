@@ -98,7 +98,7 @@ export function Card({
           right="8%"
           top="11%"
         >
-          <CardAmountEditor originalCardAmount={cardAmount} branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={deckSection}/>
+          <CardAmountEditor originalCardAmount={cardAmount} branchName={selectedBranchName!} oracleId={card.oracle_id} deckSection={deckSection}/>
         </Paper>
       )}
 

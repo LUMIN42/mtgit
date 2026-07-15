@@ -35,8 +35,8 @@ interface DeckUIContextValue {
   comparisonBranchName: string | null;
   setComparisonBranchName: Dispatch<SetStateAction<string | null>>;
 
-  selectedBranchName: string | null;
-  setSelectedBranchName: (n: string | null) => void;
+  selectedBranchName: string;
+  setSelectedBranchName: (n: string) => void;
 
   diffsOnly: boolean;
   setDiffsOnly: (value: boolean) => void;
@@ -60,13 +60,13 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [sortingMode, setSortingMode] = useState<CardSortMode>("name");
   const [cardFilterQuery, setCardFilterQuery] = useState("");
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
-  const [selectedBranchName, setSelectedBranchName] = useState(null);
+  const [selectedBranchName, setSelectedBranchName] = useState<string>(null!);
   const [diffsOnly, setDiffsOnly] = useState<boolean>(true);
 
-  const [deckExportModalOpen, setDeckExportModalOpen] = useState<boolean>();
+  const [deckExportModalOpen, setDeckExportModalOpen] = useState<boolean>(false);
 
   // todo set to mtga if deck format is standard
   const [deckExportMode, setDeckExportMode] = useState<DeckExportMode>("MTGO");

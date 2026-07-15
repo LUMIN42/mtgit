@@ -74,7 +74,7 @@ function App() {
             <AppLayout>
               <Routes>
                 <Route path="decks" element={<DeckOverviewScreen/>}/>
-                <Route path="deck/:deckId" element={<DeckViewScreenWrapper />} />
+                <Route path="deck/:deckId/*" element={<DeckViewScreenWrapper />} />
                 <Route path="*" element={<Navigate to="decks" replace/>}/>
               </Routes>
             </AppLayout>

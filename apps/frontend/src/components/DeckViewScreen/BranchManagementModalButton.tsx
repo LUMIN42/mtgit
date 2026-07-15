@@ -14,7 +14,7 @@ import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import {CreateBranchModal} from "./CreateBranchModal.tsx";
 
-function BranchManagementModal() {
+function BranchManagementModalButton() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [branchToDelete, setBranchToDelete] = useState<string | null>(null);
 
@@ -192,4 +192,4 @@ function BranchManagementModal() {
   );
 }
 
-export default BranchManagementModal;
+export default BranchManagementModalButton;

@@ -1,6 +1,7 @@
-import {DeckCardCounts} from "@mtgit/shared";
+import {DeckCardCounts, Format, isLegalDeck} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {DbBranchSnapshot} from "@mtgit/frontend/src/types/dbBranchSnapshot.js";
+import {hydrateDeck} from "./deckHydration.js";
 
 export async function performCleanup() {
   const snapshotsCollection = getCollection("branch_snapshots");
@@ -13,7 +14,15 @@ export async function performCleanup() {
 }
 
 // this assumes that you know you do want to save this (it's not a duplicate)
-export async function saveBranchSnapshot(repositoryId: string, branchName: string, branchContent: DeckCardCounts) {
+export async function saveBranchSnapshot(repositoryId: string, branchName: string, branchContent: DeckCardCounts, format:Format) {
+
+  const hydrated = await hydrateDeck(branchContent);
+
+  if (!isLegalDeck(hydrated, format)) {
+    return;
+  }
+
+
   const now = new Date();
   const day = now.toISOString().slice(0, 10);
 

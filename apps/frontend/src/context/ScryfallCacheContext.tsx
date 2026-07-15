@@ -20,7 +20,7 @@ import {
   allDeckOracleIds,
   HydratedDeck,
   DeckCardCounts,
-  TagsMap
+  TagsMap, CardCounts, HydratedDeckSection
 } from "@mtgit/shared";
 
 import {z} from "zod";
@@ -42,7 +42,9 @@ type ScryfallCacheValue = {
 
   map: Record<string, ScryfallOracleCard>;
 
-  fetchMissingCards: (ids:string[]) => Promise<void>;
+  fetchMissingCards: (ids: string[]) => Promise<void>;
+
+  partiallyReconstructedCounts: (cardCounts: CardCounts, tags: TagsMap) => HydratedDeckSection;
 };
 
 const ScryfallCacheContext =
@@ -65,6 +67,8 @@ export function ScryfallCacheProvider({
   const inflight = useRef<Set<string>>(new Set());
 
   const fetchMissingCards = useCallback(async (ids: string[]) => {
+    ids = [...new Set(ids)];
+
     const missing = ids.filter(
       id => !map[id] && !inflight.current.has(id)
     );
@@ -96,6 +100,20 @@ export function ScryfallCacheProvider({
       );
     }
   }, [map]);
+
+  function partiallyReconstructedCounts(cardCounts: CardCounts, tags: TagsMap) {
+    return Object.fromEntries(
+      Object.entries(cardCounts)
+        .filter(([oracleId, _]) => oracleId in map)
+        .map(([oracleId, count]) => {
+          return [oracleId, {
+            ...map[oracleId],
+            count,
+            tags: tags[oracleId] ?? []
+          }];
+        })
+    );
+  }
 
   const fetchMissingDeckCards = useCallback(
     (deckCardCounts: DeckCardCounts) => {
@@ -175,7 +193,8 @@ export function ScryfallCacheProvider({
         tryGetCard,
         buildPartiallyReconstructedDeck,
         map,
-        fetchMissingCards
+        fetchMissingCards: fetchMissingCards,
+        partiallyReconstructedCounts
       }}
     >
       {children}

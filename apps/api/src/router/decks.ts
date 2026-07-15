@@ -5,9 +5,18 @@ import {TRPCError} from "@trpc/server";
 import {isDeepStrictEqual} from "node:util";
 
 
-import {createEmptyRepositoryTemplate, ObjectIdSchema, RepositorySchema, FormatSchema, Repository} from "@mtgit/shared";
+import {
+  createEmptyRepositoryTemplate,
+  ObjectIdSchema,
+  RepositorySchema,
+  FormatSchema,
+  Repository,
+  BranchSnapshot, BranchSnapshotSchema
+} from "@mtgit/shared";
 import {ObjectId} from "mongodb";
 import {saveBranchSnapshot} from "../services/saveBranchSnapshot.js";
+import {DbRepository, DbRepositorySchema} from "../dbTypes.js";
+import {DbBranchSnapshot, DbBranchSnapshotSchema} from "@mtgit/frontend/src/types/dbBranchSnapshot.js";
 
 
 export const decksRouter = router({
@@ -193,5 +202,57 @@ export const decksRouter = router({
       }
 
       return {success: true};
+    }),
+
+  branchHistory: protectedProcedure
+    .input(z.object({
+      repositoryId: ObjectIdSchema,
+      branchName: z.string()
+      // todo batching
+    }))
+    .output(
+      z.array(BranchSnapshotSchema)
+    )
+    .query(async ({ctx, input: {branchName, repositoryId}}) => {
+      const reposCollection = getCollection("repositories");
+
+      const repoFilter: Partial<DbRepository> =
+        {
+          _id: new ObjectId(repositoryId),
+          owner_id: ctx.user._id
+        };
+
+      const rawRepo = await reposCollection.findOne(repoFilter);
+
+      if (!rawRepo) {
+        throw new TRPCError({code: "NOT_FOUND", message: "Repo not found."});
+      }
+
+      const repo = DbRepositorySchema.parse(rawRepo);
+
+      if (!(branchName in repo.branches)) {
+        throw new TRPCError({code: "NOT_FOUND", message: "Branch not found."});
+      }
+
+      const snapshotsCollection = getCollection<DbBranchSnapshot>("branch_snapshots");
+
+
+
+      const rawSnapshots = await snapshotsCollection
+        .find({
+          branchName,
+          deckId: repositoryId
+        })
+        .sort({"snapshot.timestamp": -1})
+        .toArray();
+
+      const snapshotsSchema = z.array(DbBranchSnapshotSchema);
+
+      const dbSnapshots = snapshotsSchema.parse(rawSnapshots);
+      const snapshots: BranchSnapshot[] = dbSnapshots.map(
+        snapshot => snapshot.snapshot
+      );
+
+      return snapshots;
     })
 });

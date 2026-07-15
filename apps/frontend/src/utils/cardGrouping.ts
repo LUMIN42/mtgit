@@ -290,7 +290,7 @@ export function groupCardCount(group: SortedGroup) {
   return group.cards.reduce((sum, card) => sum + card.count, 0);
 }
 
-export function sectionCardCount(section: SortedSection) {
+export function sortedSectionCardCount(section: SortedSection) {
   return section.groups.reduce(
     (sum, group) => sum + groupCardCount(group), 0
   );

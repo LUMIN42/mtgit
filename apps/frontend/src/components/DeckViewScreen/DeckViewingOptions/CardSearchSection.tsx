@@ -4,15 +4,18 @@ import {Tip} from "../../Tip.tsx";
 import {SearchBox} from "../../SearchBox.tsx";
 import {FieldSection} from "./FieldSection.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
+import {useNavigate} from "react-router-dom";
 
 export function CardSearchSection() {
   const deck = useDeckUiContext();
   const [searchString, setSearchString] = useState("");
 
+  const navigate = useNavigate();
+
   function startSearch(rawValue: string) {
     const trimmedValue = rawValue.trim();
-    deck.setIsSearching(true);
     deck.setSearchQuery(trimmedValue);
+    navigate("search");
   }
 
   return (

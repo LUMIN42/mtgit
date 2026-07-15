@@ -1,9 +1,7 @@
-import {Grid, SimpleGrid, Stack} from "@mantine/core";
+import {Grid, Stack} from "@mantine/core";
 import style from "../../assets/index.module.css";
-// import type {CardDisplayMode} from "../context/DeckUiContext.tsx";
 import {Card} from "./Card.tsx";
-import type {SortedGroup} from "../../utils/cardGrouping.ts";
-import type {DeckSectionName} from "@mtgit/shared";
+import type {DeckSectionName, TaggedCard} from "@mtgit/shared";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import type {CardSortMode} from "../../types/grouping.ts";
 import {useElementSize} from "@mantine/hooks";
@@ -11,10 +9,10 @@ import {useMemo} from "react";
 import {DeckGroupCardLocation} from "../../types/addressedCards.ts";
 
 interface CardGroupProps {
-  group: SortedGroup;
-  sectionName: DeckSectionName;
+  cards: TaggedCard[];
+  sectionName?: DeckSectionName;
   sortingMode?: CardSortMode;
-  groupKey: string;
+  groupKey?: string;
   onCardSelect?: (location: DeckGroupCardLocation) => void;
   onCardHover?: (imageUrl: string | null) => void;
   quicklyAdjustable?: boolean;
@@ -25,9 +23,9 @@ interface CardGroupProps {
 }
 
 export function CardGroup({
-  group,
-  sectionName,
-  groupKey,
+  cards,
+  sectionName = undefined,
+  groupKey = "",
   onCardSelect = () => {
   },
   onCardHover = () => {
@@ -56,17 +54,17 @@ export function CardGroup({
   if (displayMode === "Text") {
     return (
       <Stack w={"100%"} gap="xs">
-        {group.cards.map((card, index) => (
+        {cards.map((card, index) => (
           <Card
-            key={`${groupKey}-${card.id}-${index}`}
+            key={`${sectionName}-${groupKey}-${card.id}-${index}`}
             card={card}
             displayMode={displayMode}
             className={style.cardNameItem}
             onSelect={() => onCardSelect({
               oracle_id: card.oracle_id,
               location: {
-                group: group.heading,
-                section: sectionName
+                group: groupKey,
+                section: sectionName ?? null
               }
             })}
             onHoverImage={onCardHover}
@@ -98,8 +96,8 @@ export function CardGroup({
       }}>
 
       {!!columnCount &&
-        group.cards.map((card, index) => (
-          <Grid.Col key={`${groupKey}-${card.id}`} span={1}>
+        cards.map((card) => (
+          <Grid.Col key={card.oracle_id} span={1}>
             <Card
               card={card}
               displayMode={displayMode}
@@ -107,8 +105,8 @@ export function CardGroup({
                 onCardSelect({
                   oracle_id: card.oracle_id,
                   location: {
-                    group: group.heading,
-                    section: sectionName
+                    group: groupKey,
+                    section: sectionName ?? null
                   }
                 })
               }

@@ -5,6 +5,8 @@ import {parseDeckImportText} from "../services/deckImport.js";
 import {getCollection} from "../db/mongo.js";
 import {ObjectId} from "mongodb";
 import {mergeCardCounts, mergeTagsMaps, RepositorySchema} from "@mtgit/shared";
+import {saveBranchSnapshot} from "../services/saveBranchSnapshot.js";
+import {TRPCError} from "@trpc/server";
 
 export const deckImportRouter = router({
   parse: protectedProcedure
@@ -26,35 +28,35 @@ export const deckImportRouter = router({
       });
 
       if (!rawDeck) {
-        throw new Error("Deck not found");
+        throw new TRPCError({code: "NOT_FOUND", message: "Deck not found."});
       }
 
-      const deck = RepositorySchema.parse({...rawDeck, _id: rawDeck._id.toString()});
+      const deck = RepositorySchema.parse(rawDeck);
 
       if (deck.owner_id !== ctx.user._id) {
-        throw new Error("Unauthorized");
+        throw new TRPCError({code: "UNAUTHORIZED"});
       }
 
       const {resultingDeck, oracleTagsMap} = await parseDeckImportText(text);
 
       const existingBranch = rawDeck.branches?.[branchName];
 
-      let nextBranch;
+      let nextBranchContent;
 
       if (mode === "overwrite" || !existingBranch) {
-        nextBranch = resultingDeck;
+        nextBranchContent = resultingDeck;
       }
       else {
         // 🔥 USE shared mergeDecks here
-        nextBranch = {...existingBranch};
+        nextBranchContent = {...existingBranch};
 
         for (const [section, cards] of Object.entries(resultingDeck)) {
-          if (!nextBranch[section]) {
-            nextBranch[section] = {};
+          if (!nextBranchContent[section]) {
+            nextBranchContent[section] = {};
           }
 
-          nextBranch[section] = mergeCardCounts(
-            nextBranch[section],
+          nextBranchContent[section] = mergeCardCounts(
+            nextBranchContent[section],
             cards
           );
         }
@@ -66,12 +68,14 @@ export const deckImportRouter = router({
         {_id: new ObjectId(deckId)},
         {
           $set: {
-            [`branches.${branchName}`]: nextBranch,
+            [`branches.${branchName}`]: nextBranchContent,
             tags: newTags
           }
         }
       );
 
-      return nextBranch;
+      await saveBranchSnapshot(deckId, branchName, nextBranchContent, deck.format);
+
+      return nextBranchContent;
     })
 });
