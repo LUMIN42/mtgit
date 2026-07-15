@@ -42,7 +42,7 @@ export function SearchResultsScreen() {
     handleSearchSubmit();
   }, []);
 
-  const {fetchMissingCards} = useScryfallCache();
+  const {fetchMissingCards, tryGetCard} = useScryfallCache();
 
   const {
     oracleId,
@@ -67,6 +67,11 @@ export function SearchResultsScreen() {
     [searchQueryHook.data]
   );
 
+  const redownloadedCards = cards
+    .map(
+      card => tryGetCard(card.oracle_id)
+    ).filter(card => card !== undefined);
+
   useEffect(() => {
     fetchMissingCards(cards.map(card => card.oracle_id));
   }, [cards]);
@@ -76,8 +81,8 @@ export function SearchResultsScreen() {
   const showRefreshLoading = searchQueryHook.isFetching && !showInitialLoading;
 
   const cardsWithTags = useMemo(
-    () => cards.map(card => ({...card, tags: []})),
-    [cards]
+    () => redownloadedCards.map(card => ({...card, tags: []})),
+    [redownloadedCards]
   );
 
 
@@ -142,7 +147,7 @@ export function SearchResultsScreen() {
               size="xs"
               onClick={() => setEditingDefaultQuery(true)}
             >
-              <IconPencil size={14} color="var(--mantine-color-dimmed)" />
+              <IconPencil size={14} color="var(--mantine-color-dimmed)"/>
             </ActionIcon>
           </>
         )}
