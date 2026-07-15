@@ -2,24 +2,24 @@ import React, {useEffect} from "react";
 import {trpc} from "../trpcClient.ts";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
-import {Grid, Loader, Title} from "@mantine/core";
+import {Divider, Grid, Loader, Title, Text, Stack, Button} from "@mantine/core";
 import {
   allDeckOracleIds,
   BranchSnapshot,
   BranchSnapshotSchema,
-  DECK_SECTION_NAMES,
-  DeckCardCounts,
+  DeckCardCounts, DeckSectionName, isLegalDeck,
   withoutIdenticalParts
 } from "@mtgit/shared";
 import {z} from "zod";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {Link} from "react-router-dom";
 
 export function DeckHistoryOverviewScreen() {
   const {repository} = useRepositoryContext();
   const {selectedBranchName} = useDeckUiContext();
 
-  const {fetchMissingCards, partiallyReconstructedCounts} = useScryfallCache();
+  const {fetchMissingCards, partiallyReconstructedCounts, buildPartiallyReconstructedDeck} = useScryfallCache();
 
 
   const historyQuery = trpc.decks.branchHistory.useQuery(
@@ -48,7 +48,9 @@ export function DeckHistoryOverviewScreen() {
     return <Loader/>;
   }
 
-  const branchSnapshots = branchSnapshotsParsing.data;
+  const branchSnapshots = branchSnapshotsParsing.data
+    .filter(snapshot => isLegalDeck(buildPartiallyReconstructedDeck(snapshot.cards, repository.tags),
+      repository.format));
 
 
   // if (historyQuery.data === undefined) {
@@ -73,50 +75,122 @@ export function DeckHistoryOverviewScreen() {
     });
   }
 
-  return <Grid columns={11}>
-    <Grid.Col span={5}>
-      Before Change:
-    </Grid.Col>
-    <Grid.Col span={1}>
+  function sectionsToShow(deck1: DeckCardCounts, deck2: DeckCardCounts) {
+    const output: string[] = [];
 
-    </Grid.Col>
-    <Grid.Col span={5}>
-      After Change:
-    </Grid.Col>
-
-    {
-      diffs.map(diff =>
-        <>
-          <Title order={2}>
-            {diff.timestamp.toDateString()}
-          </Title>
-          {DECK_SECTION_NAMES
-            .filter(sectionName => [...Object.keys(diff.before), ...Object.keys(diff.after)].includes(sectionName))
-            .map(sectionName => <>
-              <Grid.Col span={11}>
-                <Title ta={"center"} order={3}>
-                  {sectionName}
-                </Title>
-              </Grid.Col>
-
-              <Grid.Col span={5}>
-                <CardGroup cards={
-                  Object.values(partiallyReconstructedCounts(diff.before[sectionName]!, repository?.tags))
-                }/>
-              </Grid.Col>
-
-              <Grid.Col span={1}/>
-
-              <Grid.Col span={5}>
-                <CardGroup cards={
-                  Object.values(partiallyReconstructedCounts(diff.after[sectionName]!, repository?.tags))
-                }/>
-              </Grid.Col>
-
-            </>)
-          }
-        </>
-      )
+    for (const [sectionName, sectionContent] of Object.entries(deck1)) {
+      if (Object.keys(sectionContent).length > 0 && Object.keys(deck2[sectionName] ?? []).length > 0) {
+        output.push(sectionName);
+      }
     }
-  </Grid>;
+
+    return output;
+  }
+
+  function formatDate(date: Date): string {
+    const now = new Date();
+
+    const isToday =
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate();
+
+    if (isToday) {
+      return date.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    const isThisYear = date.getFullYear() === now.getFullYear();
+
+    if (isThisYear) {
+      return date.toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short"
+      });
+    }
+
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  return <Stack>
+    <Button component={Link} to={".."} w={"fit-content"}>
+      Return to Deck
+    </Button>
+
+    <Grid columns={11}>
+      {
+        diffs.map(diff =>
+          <>
+            <Grid.Col span={11}>
+              <Title order={2} ta={"center"}>
+                {
+                  formatDate(diff.timestamp)
+                }
+              </Title>
+            </Grid.Col>
+
+            <Grid.Col span={5}>
+              <Text ta={"right"}>
+                Before:
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={1}>
+
+            </Grid.Col>
+            <Grid.Col span={5}>
+              <Text>
+                After:
+              </Text>
+            </Grid.Col>
+
+            {
+              sectionsToShow(diff.before, diff.after)
+                .map(sectionName => <>
+
+                  {
+                    sectionName as DeckSectionName !== "Main" &&
+                    (
+                      <Grid.Col span={11}>
+                        <Title ta={"center"} order={3}>
+                          {sectionName}
+                        </Title>
+                      </Grid.Col>
+                    )
+                  }
+
+
+                  <Grid.Col span={5}>
+                    <CardGroup
+                      cards={
+                        Object.values(partiallyReconstructedCounts(diff.before[sectionName]!, repository?.tags))
+                      }
+                      rightToLeft={true}
+                    />
+                  </Grid.Col>
+
+                  <Grid.Col span={1}>
+                    <Divider orientation={"vertical"}/>
+                  </Grid.Col>
+
+                  <Grid.Col span={5}>
+                    <CardGroup cards={
+                      Object.values(partiallyReconstructedCounts(diff.after[sectionName]!, repository?.tags))
+                    }/>
+                  </Grid.Col>
+
+                </>)
+            }
+          </>
+        )
+      }
+    </Grid>
+  </Stack>
+
+    ;
 }

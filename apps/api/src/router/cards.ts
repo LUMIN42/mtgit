@@ -6,13 +6,6 @@ import {TRPCError} from "@trpc/server";
 
 const CardIdSchema = z.string();
 
-/**
- * Internal helper: normalize + validate Mongo document
- */
-function parseCard(raw: unknown): ScryfallOracleCard {
-  return ScryfallOracleCardSchema.parse(raw);
-}
-
 export const cardRouter = router({
   /**
    * 🧩 Fetch a single card by oracle_id
@@ -37,7 +30,7 @@ export const cardRouter = router({
         });
       }
 
-      return parseCard(raw);
+      return ScryfallOracleCardSchema.parse(raw);
     }),
 
   /**
@@ -58,7 +51,7 @@ export const cardRouter = router({
         })
         .toArray();
 
-      const cards = rawCards.map(parseCard);
+      const cards = z.array(ScryfallOracleCardSchema).parse(rawCards);
 
 
       return Object.fromEntries(

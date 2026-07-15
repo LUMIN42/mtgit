@@ -1,8 +1,8 @@
 import {z} from "zod";
 import {ScryfallOracleCard} from "./scryfall.js";
 import {DeckSectionName} from "./repositoryTypes.js";
-import {HydratedDeck} from "./deckTypes.ts";
-import {cardCount} from "./deckTypes.ts";
+import {HydratedDeck} from "./deckTypes.js";
+import {cardCount} from "./deckTypes.js";
 
 
 export const formats = ["Standard", "Modern", "Commander", "Pauper"] as const;
@@ -57,10 +57,15 @@ export function relevantSections(format: Format): DeckSectionName[] {
 }
 
 export function isLegalDeck(hydratedDeck: HydratedDeck, format: Format) {
-  for (const [sectionName, sectionContent] of Object.entries(hydratedDeck)) {
+  for (const [sn, sectionContent] of Object.entries(hydratedDeck)) {
+    const sectionName = sn as DeckSectionName;
+
     const count = cardCount(sectionContent);
 
-    if (expectedSectionCardCounts(format)[sectionName] !== count) {
+    if (
+      expectedSectionCardCounts(format)[sectionName as DeckSectionName] !== count
+      && !(format === "Commander" && sectionName === "Commander" && count > 0)
+    ) {
       return false;
     }
 

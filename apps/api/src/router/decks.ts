@@ -6,12 +6,13 @@ import {isDeepStrictEqual} from "node:util";
 
 
 import {
+  BranchSnapshot,
+  BranchSnapshotSchema,
   createEmptyRepositoryTemplate,
-  ObjectIdSchema,
-  RepositorySchema,
   FormatSchema,
+  ObjectIdSchema,
   Repository,
-  BranchSnapshot, BranchSnapshotSchema
+  RepositorySchema
 } from "@mtgit/shared";
 import {ObjectId} from "mongodb";
 import {saveBranchSnapshot} from "../services/saveBranchSnapshot.js";
@@ -27,10 +28,13 @@ export const decksRouter = router({
       })
     )
     .query(async ({input, ctx}) => {
-      const decksCollection = getCollection("repositories");
+      const decksCollection = getCollection<DbRepository>("repositories");
 
       const rawDeck = await decksCollection
-        .findOne({_id: new ObjectId(input.deckId)});
+        .findOne({
+          _id: new ObjectId(input.deckId),
+          owner_id: ctx.user._id
+        });
 
       if (rawDeck === null) {
         throw new TRPCError({
@@ -38,18 +42,10 @@ export const decksRouter = router({
         });
       }
 
-      const deck = RepositorySchema.parse({
+      return RepositorySchema.parse({
         ...rawDeck,
         _id: rawDeck._id.toString()
       });
-
-      if (deck.owner_id !== ctx.user._id) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED"
-        });
-      }
-
-      return deck;
     }),
 
   create: protectedProcedure
@@ -143,7 +139,10 @@ export const decksRouter = router({
       // todo double-check that it is fully parallelized
       const promises: Promise<void>[] = [];
       for (const updatedBranchName of updatedBranchNames) {
-        const promise = saveBranchSnapshot(updatedRepo._id, updatedBranchName, updatedRepo.branches[updatedBranchName]);
+        const promise = saveBranchSnapshot(updatedRepo._id,
+          updatedBranchName,
+          updatedRepo.branches[updatedBranchName],
+          updatedRepo.format);
         promises.push(promise);
       }
 
@@ -235,7 +234,6 @@ export const decksRouter = router({
       }
 
       const snapshotsCollection = getCollection<DbBranchSnapshot>("branch_snapshots");
-
 
 
       const rawSnapshots = await snapshotsCollection

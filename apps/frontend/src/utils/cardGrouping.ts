@@ -265,7 +265,7 @@ export function handleSection(section: HydratedDeckSection, sectionName: DeckSec
 
   const headingOrder = sortGroupHeadings(groups.map(group => group.heading), groupingMode);
 
-  sortedGroups = headingOrder.map(heading => sortedGroups.find(group => group.heading == heading));
+  sortedGroups = headingOrder.map(heading => sortedGroups.find(group => group.heading == heading)!);
 
 
   return {
@@ -279,7 +279,7 @@ export function performGrouping(deck: HydratedDeck, groupingMode: CardGroupingMo
 
   for (const sectionName of SECTION_SCREEN_SORT_ORDER) {
     if (sectionName in deck) {
-      outputSections.push(handleSection(deck[sectionName], sectionName, groupingMode, sortingMode));
+      outputSections.push(handleSection(deck[sectionName]!, sectionName, groupingMode, sortingMode));
     }
   }
 
