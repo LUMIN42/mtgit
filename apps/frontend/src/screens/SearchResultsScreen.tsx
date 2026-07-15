@@ -80,11 +80,6 @@ export function SearchResultsScreen() {
     [cards]
   );
 
-  const resultsGroup = useMemo(
-    () => ({heading: "Results", cards: cardsWithTags}),
-    [cardsWithTags]
-  );
-
 
   const handleSearchSubmit = () => {
     setFullSearchQuery(`${defaultQueryField} ${searchQuery}`);
@@ -189,9 +184,8 @@ export function SearchResultsScreen() {
 
       {!showInitialLoading ? (
         <CardGroup
-          group={resultsGroup}
+          cards={cardsWithTags}
           sectionName="Main"
-          groupKey={searchQuery || "search-results"}
           quicklyAdjustable
           onCardSelect={location => {
             openModal(
