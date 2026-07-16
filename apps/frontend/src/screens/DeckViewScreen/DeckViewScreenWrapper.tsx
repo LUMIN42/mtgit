@@ -8,12 +8,13 @@ import {DeckDataProviderWrapper} from "../../context/DeckDataProviderWrapper.tsx
 import {RepositoryPreferencesProvider} from "../../context/RepositoryPreferencesContext.tsx";
 
 export function DeckViewScreenWrapper() {
-  const {deckId} = useParams<{deckId: string}>();
+  const {deckId: rawDeckId} = useParams<{deckId: string}>();
+  const deckId: string = rawDeckId!;
 
   return (
     <DeckUiProvider>
-      <RepositoryProvider repositoryId={deckId!}>
-        <RepositoryPreferencesProvider>
+      <RepositoryProvider repositoryId={deckId}>
+        <RepositoryPreferencesProvider repositoryId={deckId}>
           <DeckDataProviderWrapper>
             <DeckViewScreenRouter/>
           </DeckDataProviderWrapper>

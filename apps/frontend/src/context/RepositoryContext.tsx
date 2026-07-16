@@ -41,15 +41,6 @@ export function RepositoryProvider({
     _id: repositoryId, branches: {}, format: "Standard", name: "", owner_id: "", tags: {}
   };
 
-  useEffect(
-    () => {
-      if (!selectedBranchName) {
-        setSelectedBranchName(Object.keys(repository.branches)[0]);
-      }
-    },
-    [repository]
-  );
-
   const updateTagEndpoint = trpc.decks.setTag.useMutation({
     async onMutate(variables) {
       if (!variables) {

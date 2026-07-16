@@ -4,12 +4,15 @@ import {IconArrowsLeftRight} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
+import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
 
 function BranchSelector() {
   const repo = useRepositoryContext();
   const uiState = useDeckUiContext();
 
   const branches = Object.keys(repo.repository?.branches ?? {});
+
+  const {updatePreferences} = useRepositoryPreferences();
 
   const selectedBranch = uiState.selectedBranchName;
   const comparisonBranch = uiState.comparisonBranchName;
@@ -48,10 +51,12 @@ function BranchSelector() {
         label="Editing Branch"
         data={editedBranchOptions}
         value={selectedBranch}
-        onChange={(value) => {
+        onChange={value => {
           if (!value) return;
 
           uiState.setSelectedBranchName(value);
+
+          updatePreferences({openBranchName: value});
 
           if (value === comparisonBranch) {
             uiState.setComparisonBranchName(null);

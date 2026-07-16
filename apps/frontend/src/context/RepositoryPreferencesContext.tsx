@@ -1,8 +1,9 @@
-﻿import {createContext, useContext} from "react";
+﻿import {createContext, useContext, useEffect} from "react";
 import type {ReactNode} from "react";
 import {RepositoryPreferences, RepositoryPreferencesSchema} from "@mtgit/shared";
 import {trpc} from "../trpcClient.ts";
 import {useRepositoryContext} from "./RepositoryContext.tsx";
+import {useDeckUiContext} from "./DeckUiContext.tsx";
 
 type RepositoryPreferencesContextValue = {
   preferences: RepositoryPreferences;
@@ -14,26 +15,45 @@ const RepositoryPreferencesContext = createContext<RepositoryPreferencesContextV
 );
 
 export function RepositoryPreferencesProvider({
-  children
+  children,
+  repositoryId
 }: {
   children: ReactNode;
+  repositoryId: string;
 }) {
 
   const {repository} = useRepositoryContext();
+  const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
 
 
   const {data} = trpc.repositoryPreferences.get.useQuery(
     {
-      repositoryId: repository._id!
-    },
-    {
-      enabled: !!repository
+      repositoryId: repositoryId
     }
   );
 
-  const preferences = data ?? RepositoryPreferencesSchema.parse({});
+  const preferences = RepositoryPreferencesSchema.parse(data ?? {});
 
   const utils = trpc.useUtils();
+
+  useEffect(
+    () => {
+      if (selectedBranchName) {
+        return;
+      }
+
+      if (data) {
+        if (preferences.openBranchName) {
+          setSelectedBranchName(preferences.openBranchName);
+        }
+        else if (repository && repository.branches) {
+          setSelectedBranchName(Object.keys(repository.branches)[0]);
+        }
+      }
+
+    },
+    [preferences, repository]
+  );
 
 
   const setPreferencesMutation = trpc.repositoryPreferences.set.useMutation({

@@ -128,6 +128,8 @@ export function DeckHistoryOverviewScreen() {
     </Title>
 
     <Grid columns={11}>
+
+      {diffs.length === 0 && <Text w={"100%"} ta={"center"} c={"dimmed"}>(nothing to show)</Text>}
       {
         diffs.map(diff =>
           <>
