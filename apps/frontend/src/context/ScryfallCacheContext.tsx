@@ -11,7 +11,7 @@ import type {ReactNode} from "react";
 
 import {
   ScryfallOracleCard,
-  ScryfallOracleCardSchema
+  OracleCardSchema
 } from "@mtgit/shared/scryfall";
 
 import {trpcClient} from "../trpcClient.ts";
@@ -86,7 +86,7 @@ export function ScryfallCacheProvider({
 
       const CardsMapSchema = z.record(
         z.string(),
-        ScryfallOracleCardSchema
+        OracleCardSchema
       );
 
       setMap(prev => ({

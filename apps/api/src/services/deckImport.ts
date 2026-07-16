@@ -1,7 +1,7 @@
 import {DeckCardCounts, DeckSectionName} from "@mtgit/shared";
 import {SECTION_BY_LABEL} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
-import {ScryfallOracleCardSchema} from "@mtgit/shared";
+import {OracleCardSchema} from "@mtgit/shared";
 import {z} from "zod";
 
 /**
@@ -73,7 +73,7 @@ async function lookupOracleId(name: string): Promise<string | null> {
     .toArray();
 
   for (const raw of cards) {
-    const parsed = ScryfallOracleCardSchema.safeParse(raw);
+    const parsed = OracleCardSchema.safeParse(raw);
     if (parsed.success) {
       return parsed.data.oracle_id ?? parsed.data.id;
     }

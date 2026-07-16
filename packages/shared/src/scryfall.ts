@@ -19,8 +19,8 @@ export const CardFaceSchema = z
     mana_cost: z.string(),
     type_line: z.string(),
     oracle_text: z.string(),
-    colors: z.array(z.string()),
-    image_uris: ImageUrisSchema
+    colors: z.array(z.string()).catch(() => []), // todo handle adventure and prepared cards
+    image_uris: ImageUrisSchema.optional() // again, adventures break this
   })
 ;
 
@@ -93,7 +93,7 @@ const DoubleFacedScryfallOracleCardSchema = ScryfallOracleCardBaseSchema.extend(
   {card_faces: z.array(CardFaceSchema)}
 );
 
-export const ScryfallOracleCardSchema =
+export const OracleCardSchema =
   z.preprocess(
       rawCard => {
         const singleFacedParsing = SingleFacedScryfallOracleCardSchema.safeParse(rawCard);
@@ -159,7 +159,7 @@ export type ScryfallImageUris = z.infer<typeof ImageUrisSchema>;
 export type ScryfallCardFace = z.infer<typeof CardFaceSchema>;
 export type ScryfallLegalities = z.infer<typeof LegalitiesSchema>;
 export type ScryfallPrices = z.infer<typeof PricesSchema>;
-export type ScryfallOracleCard = z.infer<typeof ScryfallOracleCardSchema>;
+export type ScryfallOracleCard = z.infer<typeof OracleCardSchema>;
 export type ScryfallApiOracleCard = z.infer<typeof ScryfallApiOracleCardSchema>;
 
 export function getCardImageUrl(card: ScryfallOracleCard): string | null {

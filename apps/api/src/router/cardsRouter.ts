@@ -1,7 +1,7 @@
 import {z} from "zod";
 import {router, publicProcedure} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
-import {ScryfallOracleCardSchema} from "@mtgit/shared";
+import {OracleCardSchema} from "@mtgit/shared";
 import {TRPCError} from "@trpc/server";
 
 const CardIdSchema = z.string();
@@ -30,7 +30,7 @@ export const cardRouter = router({
         });
       }
 
-      return ScryfallOracleCardSchema.parse(raw);
+      return OracleCardSchema.parse(raw);
     }),
 
   /**
@@ -55,7 +55,7 @@ export const cardRouter = router({
         })
         .toArray();
 
-      const cards = z.array(ScryfallOracleCardSchema).parse(rawCards);
+      const cards = z.array(OracleCardSchema).parse(rawCards);
 
 
       return Object.fromEntries(

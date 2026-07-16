@@ -1,4 +1,4 @@
-import {allDeckOracleIds, DeckCardCounts, ScryfallOracleCard, ScryfallOracleCardSchema} from "@mtgit/shared";
+import {allDeckOracleIds, DeckCardCounts, ScryfallOracleCard, OracleCardSchema} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {z} from "zod";
 
@@ -9,7 +9,7 @@ export async function createCardsMap(oracle_ids: string[]) {
     oracle_id: {$in: oracle_ids}
   }).toArray();
 
-  const cards = z.array(ScryfallOracleCardSchema).parse(cardsResponse);
+  const cards = z.array(OracleCardSchema).parse(cardsResponse);
 
   return Object.fromEntries(cards.map(card => [card.oracle_id, card]));
 }
