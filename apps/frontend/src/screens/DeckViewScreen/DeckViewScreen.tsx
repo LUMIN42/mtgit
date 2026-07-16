@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {Button, Grid, Group, Stack, Title} from "@mantine/core";
+import {ActionIcon, Button, Grid, Group, Stack, TextInput, Title, Tooltip} from "@mantine/core";
 
 import style from "../../assets/index.module.css";
 import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
@@ -14,10 +14,15 @@ import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import DeckExportModalButton from "../../components/DeckViewScreen/DeckExportModalButton.tsx";
 import BranchManagementModalButton from "../../components/DeckViewScreen/BranchManagementModalButton.tsx";
 import {Link} from "react-router-dom";
+import {IconCheck, IconPencil} from "@tabler/icons-react";
+import {useState} from "react";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
   const repo = useRepositoryContext();
+
+  const [renamingDeck, setRenamingDeck] = useState<boolean>(false);
+  const [deckRenamingTextbox, setDeckRenamingTextbox] = useState("");
 
 
   const toggleDisplayMode = () => {
@@ -28,9 +33,56 @@ export function DeckViewScreen() {
   return (
     <Stack style={{maxWidth: "1500px", margin: "auto"}}>
 
-      <Title order={1}>
-        {repo.repository?.name}
-      </Title>
+      <Group>
+        {
+          renamingDeck
+            ?
+            <TextInput
+              // h={"2em"}
+              value={deckRenamingTextbox}
+              onChange={e => setDeckRenamingTextbox(e.currentTarget.value)}
+
+              size={"xl"}
+
+              styles={{
+                input: {
+                  fontSize: "var(--mantine-h1-font-size)",
+                  fontWeight: "var(--mantine-h1-font-weight)",
+                  lineHeight: "var(--mantine-h1-line-height)"
+                }
+              }}
+            />
+            :
+            <Title order={1}>
+              {repo.repository?.name}
+            </Title>
+        }
+
+        <Tooltip label={"Rename Deck"}>
+          {renamingDeck ? (
+            <ActionIcon
+              variant="outline"
+              onClick={() => {
+                repo.updateRepository({name: deckRenamingTextbox});
+                setRenamingDeck(false);
+              }}
+            >
+              <IconCheck/>
+            </ActionIcon>
+          ) : (
+            <ActionIcon
+              color="var(--mantine-color-dimmed)"
+              variant="subtle"
+              onClick={() => {
+                setDeckRenamingTextbox(repo.repository.name);
+                setRenamingDeck(true);
+              }}
+            >
+              <IconPencil/>
+            </ActionIcon>
+          )}
+        </Tooltip>
+      </Group>
 
       <Group>
         <DeckImportModalButton/>

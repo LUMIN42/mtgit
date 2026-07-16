@@ -29,7 +29,6 @@ export function GroupedCards() {
   );
 
   const sections = groups;
-  console.log("groups:", sections);
   const pageCards = flatten(groups);
 
 

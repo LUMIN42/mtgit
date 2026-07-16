@@ -1,4 +1,4 @@
-import {createContext, useContext, useEffect} from "react";
+import {createContext, useContext} from "react";
 import type {ReactNode} from "react";
 import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
 import {trpc} from "../trpcClient.ts";
