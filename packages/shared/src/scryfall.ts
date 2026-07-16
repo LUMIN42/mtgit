@@ -58,14 +58,13 @@ const ScryfallOracleCardBaseSchema = z
     lang: z.string(),
     released_at: z.string(),
     layout: z.string(),
-    image_uris: ImageUrisSchema.optional(),
     card_faces: z.array(CardFaceSchema).optional(),
-    mana_cost: z.string().optional(),
+    // mana_cost: z.string().optional(),
     cmc: z.number(),
     type_line: z.string(),
-    oracle_text: z.string().optional(),
-    power: z.string().optional(),
-    toughness: z.string().optional(),
+    // oracle_text: z.string().optional(),
+    // power: z.string().optional(),
+    // toughness: z.string().optional(),
 
     // colors: ColorIdentitySchema.catch([]), // the catch is needed for two-sided cards, which lack colors
     color_identity: ColorCombinationSchema.catch([]),
@@ -93,6 +92,14 @@ const DoubleFacedScryfallOracleCardSchema = ScryfallOracleCardBaseSchema.extend(
   {card_faces: z.array(CardFaceSchema)}
 );
 
+type DoubleFacedScryfallOracleCard = z.infer<typeof DoubleFacedScryfallOracleCardSchema>;
+
+const AdventureOracleCardSchema = DoubleFacedScryfallOracleCardSchema
+  .extend({
+    image_uris: ImageUrisSchema
+  });
+
+
 export const OracleCardSchema =
   z.preprocess(
       rawCard => {
@@ -103,6 +110,24 @@ export const OracleCardSchema =
             ...singleFacedParsing.data,
             card_faces: [{...singleFacedParsing.data, object: "card_face"}]
           };
+        }
+
+        const adventureParsing = AdventureOracleCardSchema.safeParse(rawCard);
+        if (adventureParsing.success) {
+          const adventureCard = adventureParsing.data;
+
+          const modifiedCard: DoubleFacedScryfallOracleCard = {
+            ...adventureCard,
+            card_faces: [
+              {
+                ...(adventureCard.card_faces[0]),
+                image_uris: adventureCard.image_uris
+              },
+              ...adventureCard.card_faces.slice(1)
+            ]
+          };
+
+          return modifiedCard;
         }
 
         return rawCard;
@@ -162,7 +187,23 @@ export type ScryfallPrices = z.infer<typeof PricesSchema>;
 export type ScryfallOracleCard = z.infer<typeof OracleCardSchema>;
 export type ScryfallApiOracleCard = z.infer<typeof ScryfallApiOracleCardSchema>;
 
-export function getCardImageUrl(card: ScryfallOracleCard): string | null {
-  return card.image_uris?.normal ?? card.card_faces?.[0]?.image_uris?.normal ?? null;
+export function getCardImageUrls(card: ScryfallOracleCard): [string] | [string, string] {
+  const urls = card.card_faces
+    .filter(face => "image_uris" in face)
+    .map(face => face.image_uris!.normal!)!;
+
+  if (urls.length === 1) {
+    return [urls[0]];
+  }
+  else if (urls.length === 2) {
+    return [urls[0], urls[1]];
+  }
+
+  else {
+    console.log(card);
+    console.log(urls);
+    throw new Error(`wrong card uris object: ${urls}`);
+  }
 }
+
 
