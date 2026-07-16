@@ -8,6 +8,7 @@ import {useDeckUiContext} from "./DeckUiContext.tsx";
 type RepositoryPreferencesContextValue = {
   preferences: RepositoryPreferences;
   updatePreferences: (p: Partial<RepositoryPreferences>) => void;
+  isFetching: boolean;
 };
 
 const RepositoryPreferencesContext = createContext<RepositoryPreferencesContextValue | undefined>(
@@ -26,7 +27,7 @@ export function RepositoryPreferencesProvider({
   const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
 
 
-  const {data} = trpc.repositoryPreferences.get.useQuery(
+  const {data, isFetching} = trpc.repositoryPreferences.get.useQuery(
     {
       repositoryId: repositoryId
     }
@@ -64,13 +65,13 @@ export function RepositoryPreferencesProvider({
 
   function updatePreferences(newData: Partial<RepositoryPreferences>) {
     setPreferencesMutation.mutate({
-      preferences: newData,
+      preferences: {...preferences, ...newData},
       repositoryId: repository._id
     });
   }
 
   return (
-    <RepositoryPreferencesContext.Provider value={{preferences, updatePreferences}}>
+    <RepositoryPreferencesContext.Provider value={{preferences, updatePreferences, isFetching}}>
       {children}
     </RepositoryPreferencesContext.Provider>
   );

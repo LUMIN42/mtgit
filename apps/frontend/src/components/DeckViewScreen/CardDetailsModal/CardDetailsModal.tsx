@@ -10,7 +10,7 @@ import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
 interface CardDetailsModalProps {
   onClose: () => void;
 
-  oracle_id: string | null;
+  oracle_id: string;
   onPrev: () => void;
   onNext: () => void;
 
@@ -35,7 +35,7 @@ export function CardDetailsModal({
 
   const {repository} = useRepositoryContext();
 
-  const tagSearchInputRef = useRef(undefined);
+  const tagSearchInputRef = useRef<HTMLInputElement>(null);
   const cardImageUrl = card ? getCardImageUrl(card) : undefined;
 
   const currentTags = repository.tags[oracle_id] ?? [];

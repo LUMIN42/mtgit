@@ -27,6 +27,13 @@ const theme = createTheme({
     Button: {
       defaultProps: {
         variant: "gradient"
+      },
+      styles: {
+        root: {
+          "&:disabled": {
+            cursor: "wait"
+          }
+        }
       }
     }
   },

@@ -4,6 +4,7 @@ import {relevantSections} from "@mtgit/shared";
 import {Paper, Table} from "@mantine/core";
 import CardAmountEditor from "../CardAmountEditor.tsx";
 import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
+import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
 
 
 type CardAddingPanelProps =
@@ -15,8 +16,9 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
   const {repository} = useRepositoryContext();
   const {tryGetCard} = useScryfallCache();
 
-  const hydratedCard = tryGetCard(oracle_id);
+  const {preferences} = useRepositoryPreferences();
 
+  const hydratedCard = tryGetCard(oracle_id);
 
 
   // todo extract to a proper place
@@ -52,30 +54,32 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
         </Table.Thead>
 
         <Table.Tbody>
-          {Object.keys(repository.branches).map(branchName => {
-            return (
-              <Table.Tr key={branchName}>
-                <Table.Td ta={"center"}>{branchName}</Table.Td>
+          {Object.keys(repository.branches)
+            .filter(branchName => !preferences.hiddenBranches.includes(branchName))
+            .map(branchName => {
+              return (
+                <Table.Tr key={branchName}>
+                  <Table.Td ta={"center"}>{branchName}</Table.Td>
 
-                {
-                  relevantSections(repository.format)
-                    .map(
-                      sectionName => {
-                        if (sectionName == "Commander" && !canBeCommander) {
-                          return null;
+                  {
+                    relevantSections(repository.format)
+                      .map(
+                        sectionName => {
+                          if (sectionName == "Commander" && !canBeCommander) {
+                            return null;
+                          }
+
+                          return (<Table.Td ta={"center"} key={sectionName}>
+                            <CardAmountEditor branchName={branchName} oracleId={oracle_id} deckSection={sectionName}/>
+                          </Table.Td>);
                         }
-
-                        return (<Table.Td ta={"center"} key={sectionName}>
-                          <CardAmountEditor branchName={branchName} oracleId={oracle_id} deckSection={sectionName}/>
-                        </Table.Td>);
-                      }
-                    )
-                }
+                      )
+                  }
 
 
-              </Table.Tr>
-            );
-          })}
+                </Table.Tr>
+              );
+            })}
         </Table.Tbody>
       </Table>
     </Paper>

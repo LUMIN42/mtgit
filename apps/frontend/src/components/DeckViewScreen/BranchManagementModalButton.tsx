@@ -8,17 +8,20 @@ import {
   ActionIcon,
   Group, Stack
 } from "@mantine/core";
-import {IconCheck, IconPencil, IconTrash, IconX} from "@tabler/icons-react";
+import {IconCheck, IconEye, IconEyeClosed, IconPencil, IconTrash, IconX} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import {CreateBranchModal} from "./CreateBranchModal.tsx";
+import {useRepositoryPreferences} from "../../context/RepositoryPreferencesContext.tsx";
 
 function BranchManagementModalButton() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [branchToDelete, setBranchToDelete] = useState<string | null>(null);
 
   const {repository} = useRepositoryContext();
+
+  const {updatePreferences, preferences, isFetching} = useRepositoryPreferences();
 
   const branches = Object.keys(repository.branches);
 
@@ -147,6 +150,46 @@ function BranchManagementModalButton() {
                           <IconPencil size={16}/>
                         </ActionIcon>
                       )}
+
+                      {
+                        preferences.hiddenBranches.includes(branchName)
+                          ?
+                          <ActionIcon
+                            color={"gray"}
+                            variant={"light"}
+                            title={"Branch is Hidden ~ cannot be edited through card detail menu."}
+
+                            style={{cursor:"pointer"}}
+
+                            onClick={() => {
+                              const copy = preferences.hiddenBranches.filter(
+                                branch => branch !== branchName
+                              );
+                              updatePreferences({hiddenBranches: copy});
+                            }}
+                            disabled={isFetching}
+                          >
+                            <IconEyeClosed/>
+                          </ActionIcon>
+                          :
+                          <ActionIcon
+                            color={"gray"}
+                            variant={"light"}
+                            title={"Branch is Revealed ~ can be edited through card detail menu."}
+
+                            style={{cursor:"pointer"}}
+
+                            onClick={() => {
+                              const copy = [...preferences.hiddenBranches, branchName];
+                              updatePreferences({hiddenBranches: copy});
+                            }}
+
+                            disabled={isFetching}
+                          >
+                            <IconEye/>
+                          </ActionIcon>
+                      }
+
 
                       <ActionIcon
                         color="red"

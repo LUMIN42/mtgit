@@ -35,7 +35,7 @@ function getCookieValue(cookieHeader: string | undefined, name: string): string 
   return undefined;
 }
 
-const t = initTRPC.context<TrpcContext>().create();
+const t = initTRPC.context<TrpcContext>().create({});
 
 const loggerMiddleware = t.middleware(async ({path, type, next}) => {
   const start = Date.now();

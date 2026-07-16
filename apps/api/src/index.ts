@@ -5,7 +5,7 @@ import cors from "cors";
 import express from "express";
 import * as trpcExpress from "@trpc/server/adapters/express";
 
-import {appRouter} from "./router/index.js";
+import {appRouter} from "./router/routerDispatcher.js";
 import {initMongo} from "./db/mongo.js";
 
 import cookieParser from "cookie-parser";
