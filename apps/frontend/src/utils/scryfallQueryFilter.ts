@@ -265,8 +265,6 @@ function matchesClause(card: TaggedCard, clause: ParsedClause): boolean {
       return matchesText((card.oracle_text ?? "").toLowerCase(), clause.value)
         || matchesText(getFaceSearchText(card).toLowerCase(), clause.value);
     case "set":
-    case "s":
-      return matchesText(`${asString(card.set)} ${asString(card.set_name)}`.toLowerCase(), clause.value);
     case "rarity":
     case "r":
       return matchesText(asString(card.rarity).toLowerCase(), clause.value);
@@ -286,8 +284,6 @@ function matchesClause(card: TaggedCard, clause: ParsedClause): boolean {
     case "id":
       return matchesColorClause(card, clause.value);
     case "kw":
-    case "keyword":
-      return asStringArray(card.keywords).some(keyword => matchesText(keyword.toLowerCase(), clause.value));
     case "is":
       return matchesIsClause(card, clause.value);
     case "tag":

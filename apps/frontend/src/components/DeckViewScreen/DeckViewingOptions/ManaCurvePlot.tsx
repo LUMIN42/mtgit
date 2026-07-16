@@ -15,7 +15,7 @@ export function ManaCurvePlot() {
   const manaCurveData = useMemo(() => {
     const countsPerCMC: Record<number, number> = {};
 
-    for (const card of Object.values(filteredDeck.Main) ?? []) {
+    for (const card of Object.values(filteredDeck?.Main ?? {})) {
       if (card.type_line.toLowerCase().includes("land")) {
         continue;
       }

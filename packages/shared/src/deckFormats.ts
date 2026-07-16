@@ -1,7 +1,7 @@
 import {z} from "zod";
-import {ScryfallOracleCard} from "./scryfall.js";
-import {DeckSectionName} from "./repositoryTypes.js";
-import {HydratedDeck} from "./deckTypes.js";
+import type {ScryfallOracleCard} from "./scryfall.js";
+import type {DeckSectionName} from "./repositoryTypes.js";
+import type {HydratedDeck} from "./deckTypes.js";
 import {cardCount} from "./deckTypes.js";
 
 

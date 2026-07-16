@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {ColorCode} from "./scryfall.ts";
+import {ColorCode} from "./scryfall.js";
 
 
 export const MAIN_CARD_TYPES = [

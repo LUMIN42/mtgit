@@ -206,13 +206,17 @@ export function SearchResultsScreen() {
         />
       ) : null}
 
-      <CardDetailsModal onClose={closeModal}
-        oracle_id={oracleId}
-        onPrev={moveLeft}
-        onNext={moveRight}
-        hasPrevious={hasNextLeft}
-        hasNext={hasNextRight}
-      />
+      {
+        oracleId &&
+          (<CardDetailsModal onClose={closeModal}
+            oracle_id={oracleId}
+            onPrev={moveLeft}
+            onNext={moveRight}
+            hasPrevious={hasNextLeft}
+            hasNext={hasNextRight}
+          />)
+      }
+
     </Stack>
   );
 }

@@ -97,7 +97,7 @@ export function DeckPieChart() {
       const weights: Partial<Record<MainCardType, number>> = {};
       const counts: Partial<Record<MainCardType, number>> = {};
 
-      for (const card of Object.values(filteredDeck.Main)) {
+      for (const card of Object.values(filteredDeck?.Main ?? {})) {
         const types = mainTypes(card.type_line);
 
         for (const type of types) {

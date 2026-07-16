@@ -1,10 +1,10 @@
 import React from "react";
-import {COLOR_NAMES, ColorCode, ColorIdentity} from "@mtgit/shared";
+import {COLOR_NAMES, ColorCode, ColorCombination} from "@mtgit/shared";
 import {Checkbox, Group} from "@mantine/core";
 
 type ColorsSelectorProps = {
-  colors: ColorIdentity;
-  onChange: (newIndentity: ColorIdentity) => void;
+  colors: ColorCombination;
+  onChange: (newIndentity: ColorCombination) => void;
 };
 
 export function ColorsSelector({colors, onChange}: ColorsSelectorProps) {

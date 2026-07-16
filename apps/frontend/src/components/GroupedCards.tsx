@@ -114,13 +114,17 @@ export function GroupedCards() {
       </Stack>
 
       {/* Card details modal for selected card, supports navigation */}
-      <CardDetailsModal oracle_id={oracleId}
-        onClose={() => closeModal()}
-        onPrev={moveLeft}
-        onNext={moveRight}
-        hasPrevious={hasNextLeft}
-        hasNext={hasNextRight}
-      />
+      {oracleId
+        &&
+          (<CardDetailsModal oracle_id={oracleId}
+            onClose={() => closeModal()}
+            onPrev={moveLeft}
+            onNext={moveRight}
+            hasPrevious={hasNextLeft}
+            hasNext={hasNextRight}
+          />)
+      }
+
     </>
   );
 }
