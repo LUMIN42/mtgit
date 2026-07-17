@@ -19,6 +19,8 @@ export const CardFaceSchema = z
     mana_cost: z.string(),
     type_line: z.string(),
     oracle_text: z.string(),
+    power: z.string().optional(),
+    toughness: z.string().optional(),
     colors: z.array(z.string()).catch(() => []), // todo handle adventure and prepared cards
     image_uris: ImageUrisSchema.optional() // again, adventures break this
   })
@@ -63,8 +65,8 @@ const ScryfallOracleCardBaseSchema = z
     cmc: z.number(),
     type_line: z.string(),
     // oracle_text: z.string().optional(),
-    // power: z.string().optional(),
-    // toughness: z.string().optional(),
+    power: z.string().optional(),
+    toughness: z.string().optional(),
 
     // fixme colors: ColorIdentitySchema.catch([]), // the catch is needed for two-sided cards, which lack colors
     color_identity: ColorCombinationSchema,

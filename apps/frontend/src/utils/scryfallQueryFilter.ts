@@ -1,4 +1,5 @@
 import {
+  CardFace,
   COLOR_NAME_TO_CODE,
   ColorCombination,
   ColorNameSchema,
@@ -196,6 +197,13 @@ function matchesNumeric(value: number | string | undefined, operator: Comparison
   }
 }
 
+function anyFaceMatchesNumeric(faces: CardFace[],
+  criterion: (face: CardFace) => number,
+  operator: ComparisonOperator,
+  value: string) {
+  return faces.some(face => matchesNumeric(criterion(face), operator, value));
+}
+
 // todo properly implement <, <=, ... operators
 function matchesColorClause(colors: ColorCombination, rawQuery: string): boolean {
   const query = normalize(rawQuery);
@@ -273,8 +281,9 @@ function matchesClause(card: TaggedCard, clause: ParsedClause): boolean {
       return matchesText(asString(card.type_line).toLowerCase(), clause.value);
     case "oracle":
     case "o":
-      return matchesText((card.oracle_text ?? "").toLowerCase(), clause.value)
-        || matchesText(getFaceSearchText(card).toLowerCase(), clause.value);
+      return card.card_faces.some(
+        face => matchesText(face.oracle_text, clause.value)
+      );
     case "set":
     case "rarity":
     case "r":
@@ -285,9 +294,13 @@ function matchesClause(card: TaggedCard, clause: ParsedClause): boolean {
     case "manavalue":
       return matchesNumeric(card.cmc, clause.operator, clause.value);
     case "power":
-      return matchesNumeric(card.power, clause.operator, clause.value);
+      return card.card_faces.some(
+        face => matchesNumeric(face.power, clause.operator, clause.value)
+      );
     case "toughness":
-      return matchesNumeric(card.toughness, clause.operator, clause.value);
+      return card.card_faces.some(
+        face => matchesNumeric(face.toughness, clause.operator, clause.value)
+      );
     case "color":
     case "c":
       return matchesColorClause(card.colors, clause.value);

@@ -2,7 +2,6 @@ import {z} from "zod";
 import {
   ScryfallSearchResponseSchema,
   type ScryfallApiOracleCard,
-  type OracleCard
 } from "./scryfall.js";
 import {OracleId} from "./repositoryTypes.ts";
 
