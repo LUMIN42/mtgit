@@ -22,11 +22,27 @@ export function GroupedCards() {
 
   const {filteredDeck} = useDeckDataContext();
 
-  const groups = performGrouping(
+  let groups = performGrouping(
     filteredDeck,
     groupingMode,
     sortingMode
   );
+  if (groupingMode === "color") {
+    const allGroups = groups.flatMap(
+      section => section.groups
+    );
+
+    const consumedColors = allGroups
+      .filter(group => !group.heading.includes("Producer") && group.heading)
+      .map(group => group.heading);
+
+    groups = groups.map(section => {
+      return {
+        name: section.name,
+        groups: section.groups.filter(group => consumedColors.some(color => group.heading.includes(color)))
+      };
+    });
+  }
 
   const sections = groups;
   const pageCards = flatten(groups);
@@ -115,13 +131,13 @@ export function GroupedCards() {
       {/* Card details modal for selected card, supports navigation */}
       {oracleId
         &&
-          (<CardDetailsModal oracle_id={oracleId}
-            onClose={() => closeModal()}
-            onPrev={moveLeft}
-            onNext={moveRight}
-            hasPrevious={hasNextLeft}
-            hasNext={hasNextRight}
-          />)
+        (<CardDetailsModal oracle_id={oracleId}
+          onClose={() => closeModal()}
+          onPrev={moveLeft}
+          onNext={moveRight}
+          hasPrevious={hasNextLeft}
+          hasNext={hasNextRight}
+        />)
       }
 
     </>

@@ -27,8 +27,12 @@ export interface DeckDataProviderProps {
   children: ReactNode;
 }
 
-const DeckDataContext = createContext<DeckDataContextValue | undefined>(
-  undefined
+const DeckDataContext = createContext<DeckDataContextValue>(
+  {
+    deck: {},
+    filteredDeck: {},
+    isLoading: true
+  }
 );
 
 /**

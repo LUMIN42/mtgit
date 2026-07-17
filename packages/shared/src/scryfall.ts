@@ -66,8 +66,9 @@ const ScryfallOracleCardBaseSchema = z
     // power: z.string().optional(),
     // toughness: z.string().optional(),
 
-    // colors: ColorIdentitySchema.catch([]), // the catch is needed for two-sided cards, which lack colors
-    color_identity: ColorCombinationSchema.catch([]),
+    // fixme colors: ColorIdentitySchema.catch([]), // the catch is needed for two-sided cards, which lack colors
+    color_identity: ColorCombinationSchema,
+    produced_mana: ColorCombinationSchema.catch([]),
     // keywords: z.array(z.string()),
     legalities: LegalitiesSchema,
     // games: z.array(z.string()),
@@ -102,38 +103,38 @@ const AdventureOracleCardSchema = DoubleFacedScryfallOracleCardSchema
 
 export const OracleCardSchema =
   z.preprocess(
-      rawCard => {
-        const singleFacedParsing = SingleFacedScryfallOracleCardSchema.safeParse(rawCard);
-        if (singleFacedParsing.success) {
+    rawCard => {
+      const singleFacedParsing = SingleFacedScryfallOracleCardSchema.safeParse(rawCard);
+      if (singleFacedParsing.success) {
 
-          return {
-            ...singleFacedParsing.data,
-            card_faces: [{...singleFacedParsing.data, object: "card_face"}]
-          };
-        }
+        return {
+          ...singleFacedParsing.data,
+          card_faces: [{...singleFacedParsing.data, object: "card_face"}]
+        };
+      }
 
-        const adventureParsing = AdventureOracleCardSchema.safeParse(rawCard);
-        if (adventureParsing.success) {
-          const adventureCard = adventureParsing.data;
+      const adventureParsing = AdventureOracleCardSchema.safeParse(rawCard);
+      if (adventureParsing.success) {
+        const adventureCard = adventureParsing.data;
 
-          const modifiedCard: DoubleFacedScryfallOracleCard = {
-            ...adventureCard,
-            card_faces: [
-              {
-                ...(adventureCard.card_faces[0]),
-                image_uris: adventureCard.image_uris
-              },
-              ...adventureCard.card_faces.slice(1)
-            ]
-          };
+        const modifiedCard: DoubleFacedScryfallOracleCard = {
+          ...adventureCard,
+          card_faces: [
+            {
+              ...(adventureCard.card_faces[0]),
+              image_uris: adventureCard.image_uris
+            },
+            ...adventureCard.card_faces.slice(1)
+          ]
+        };
 
-          return modifiedCard;
-        }
+        return modifiedCard;
+      }
 
-        return rawCard;
-      },
-      DoubleFacedScryfallOracleCardSchema
-    )
+      return rawCard;
+    },
+    DoubleFacedScryfallOracleCardSchema
+  )
     .transform(parsed => {
       return {
         ...parsed,

@@ -1,5 +1,5 @@
 import React from "react";
-import {COLOR_NAMES, ColorCode, ColorCombination} from "@mtgit/shared";
+import {COLOR_CODE_TO_NAMES, ColorCode, ColorCombination} from "@mtgit/shared";
 import {Checkbox, Group} from "@mantine/core";
 
 type ColorsSelectorProps = {
@@ -19,7 +19,7 @@ export function ColorsSelector({colors, onChange}: ColorsSelectorProps) {
   }
 
   return <Group>
-    {Object.entries(COLOR_NAMES)
+    {Object.entries(COLOR_CODE_TO_NAMES)
       .map(
         ([code, name]: [ColorCode, string]) => <Group>
           <Checkbox value={colors[code]} onClick={() => handleColorToggle(code)} label={name}/>

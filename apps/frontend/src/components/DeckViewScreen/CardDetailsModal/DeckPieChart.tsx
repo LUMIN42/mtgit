@@ -4,7 +4,7 @@ import {
   Flex,
   Group,
   MantineColor,
-  Paper,
+  Paper, Stack,
   Text,
   useMantineTheme
 } from "@mantine/core";
@@ -20,7 +20,7 @@ import {
 import {useDeckDataContext} from "../../../context/DeckDataContext.tsx";
 import {performGrouping} from "../../../utils/cardGrouping.ts";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
-import {MainCardType, mainTypes} from "@mtgit/shared";
+import {COLOR_CODE_TO_NAMES, ColorCode, ColorName, MainCardType, mainTypes} from "@mtgit/shared";
 
 type ChartData = {
   name: string;
@@ -29,14 +29,123 @@ type ChartData = {
   color: MantineColor;
 };
 
+type DumbPieChartProps = {
+  chartData: ChartData[];
+};
 
-export function DeckPieChart() {
+
+function DumbPieChart({chartData}: DumbPieChartProps) {
   const theme = useMantineTheme();
 
+  function resolveColor(color: MantineColor): string {
+    if (color.startsWith("hsl")) {
+      return color;
+    }
+
+    const [name, shade] = color.split(".");
+
+    if (shade) {
+      return theme.colors[name]?.[Number(shade)] ?? color;
+    }
+
+    return theme.colors[name]?.[6] ?? color;
+  }
+
+  return <Group w="100%">
+    <Flex w="100%" align="center">
+      <Box style={{flex: "1 1 50%", minWidth: 0}}>
+        <ResponsiveContainer width="100%" height={150}>
+          <PieChart>
+            <Tooltip
+              content={({active, payload}) => {
+                if (!active || !payload?.length) {
+                  return null;
+                }
+
+                const item = payload[0].payload as ChartData;
+
+                return (
+                  <Paper p="xs" withBorder>
+                    <Text fw={600}>
+                      {item.name}
+                    </Text>
+
+                    <Text>
+                      Cards: {item.actualValue}
+                    </Text>
+                  </Paper>
+                );
+              }}
+            />
+
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+
+              isAnimationActive={false}
+
+              onClick={
+                item => {
+                  document
+                    .getElementById(item["anchorId"])
+                    ?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start"
+                    });
+                }
+              }
+
+              cursor={"pointer"}
+
+              outerRadius={"100%"}
+              shape={props => {
+                const entry = props.payload as ChartData;
+
+                return (
+                  <Sector
+                    {...props}
+                    fill={resolveColor(entry.color)}
+                  />
+                );
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </Box>
+
+      <Box style={{flex: "1 1 50%", minWidth: 0}}>
+        <div>
+          {chartData.map(item => (
+            <Group key={item.name} gap="xs">
+              <div
+                style={{
+                  width: 12,
+                  height: 12,
+                  background: resolveColor(item.color),
+                  borderRadius: 2
+                }}
+              />
+
+              <Text>
+                {item.name}
+              </Text>
+            </Group>
+          ))}
+        </div>
+      </Box>
+    </Flex>
+  </Group>;
+}
+
+
+export function DeckPieChart() {
   const {filteredDeck} = useDeckDataContext();
   const {groupingMode, sortingMode} = useDeckUiContext();
 
-  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null); // todo
 
   const grouping = performGrouping(
     filteredDeck,
@@ -78,15 +187,30 @@ export function DeckPieChart() {
     return dictionary[type] ?? "grape";
   }
 
+  const COLOR_CODE_TO_COLOR: Record<ColorCode | ColorName, MantineColor> = {
+    Black: "dark",
+    Blue: "blue",
+    Green: "green",
+    Red: "red",
+    White: "yellow.1",
+    "B": "dark",
+    "W": "yellow.1",
+    "U": "blue",
+    "R": "red",
+    "G": "green"
+  };
+
 
   function getColor(groupHeading: string): MantineColor {
     if (groupingMode === "type") {
       return typeToColor(groupHeading as MainCardType);
     }
+    else if (groupingMode === "color") {
+      return COLOR_CODE_TO_COLOR[groupHeading as ColorCode];
+    }
 
     return randomColorGenerator(groupHeading);
   }
-
 
   function createChartData(): ChartData[] {
     if (!main) {
@@ -127,11 +251,15 @@ export function DeckPieChart() {
         continue;
       }
 
+      if (groupingMode === "color" && group.heading.includes("Producer")) {
+        continue;
+      }
+
       for (const card of group.cards) {
         weights[group.heading] ??= 0;
         counts[group.heading] ??= 0;
 
-        weights[group.heading] += card.count / card.tags.length;
+        weights[group.heading] += groupingMode === "tags" ? card.count / card.tags.length : card.count;
         counts[group.heading] += card.count;
       }
     }
@@ -149,108 +277,44 @@ export function DeckPieChart() {
   const chartData = createChartData();
 
 
-  function resolveColor(color: MantineColor): string {
-    if (color.startsWith("hsl")) {
-      return color;
+  function productionChartData() {
+    const counts: Partial<Record<ColorCode, number>> = {};
+
+    for (const card of Object.values(filteredDeck.Main ?? {})) {
+      for (const producedColor of card.produced_mana) {
+        if (!chartData.some(datum => datum.name === COLOR_CODE_TO_NAMES[producedColor])) {
+          continue;
+        }
+
+        counts[producedColor] ??= 0;
+        counts[producedColor] += card.count;
+      }
     }
 
-    const [name, shade] = color.split(".");
-
-    if (shade) {
-      return theme.colors[name]?.[Number(shade)] ?? color;
-    }
-
-    return theme.colors[name]?.[6] ?? color;
+    return Object.entries(counts).map(([name, weight]) => ({
+      name: COLOR_CODE_TO_NAMES[name],
+      value: weight,
+      actualValue: counts[name],
+      color: COLOR_CODE_TO_COLOR[name],
+      anchorId: sectionId(`${COLOR_CODE_TO_NAMES[name]} Producer`)
+    }));
   }
 
+  const colorProductionData: ChartData[] = productionChartData();
 
-  return (
-    <Group w="100%">
-      <Flex w="100%" align="center">
-        <Box style={{flex: "1 1 50%", minWidth: 0}}>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Tooltip
-                content={({active, payload}) => {
-                  if (!active || !payload?.length) {
-                    return null;
-                  }
 
-                  const item = payload[0].payload as ChartData;
+  return <Stack>
+    <Stack gap={0}>
+      {groupingMode === "color" && <Text>Consumption:</Text>}
+      <DumbPieChart chartData={chartData}/>
+    </Stack>
+    {
+      groupingMode === "color" &&
+      (<Stack gap={0}>
+        <Text>Production:</Text>
+        <DumbPieChart chartData={colorProductionData}/>
+      </Stack>)
 
-                  return (
-                    <Paper p="xs" withBorder>
-                      <Text fw={600}>
-                        {item.name}
-                      </Text>
-
-                      <Text>
-                        Cards: {item.actualValue}
-                      </Text>
-                    </Paper>
-                  );
-                }}
-              />
-
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-
-                isAnimationActive={false}
-
-                onClick={
-                  item => {
-                    document
-                      .getElementById(item["anchorId"])
-                      ?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                      });
-                  }
-                }
-
-                cursor={"pointer"}
-
-                outerRadius={"100%"}
-                shape={props => {
-                  const entry = props.payload as ChartData;
-
-                  return (
-                    <Sector
-                      {...props}
-                      fill={resolveColor(entry.color)}
-                    />
-                  );
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </Box>
-
-        <Box style={{flex: "1 1 50%", minWidth: 0}}>
-          <div>
-            {chartData.map(item => (
-              <Group key={item.name} gap="xs">
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    background: resolveColor(item.color),
-                    borderRadius: 2
-                  }}
-                />
-
-                <Text>
-                  {item.name}
-                </Text>
-              </Group>
-            ))}
-          </div>
-        </Box>
-      </Flex>
-    </Group>
-  );
+    }
+  </Stack>;
 }

@@ -3,7 +3,7 @@ import {
   type HydratedDeck,
   type HydratedDeckSection,
   type DeckSectionName, isMainCardType, MainCardType,
-  type ScryfallOracleCard
+  type ScryfallOracleCard, COLOR_CODE_TO_NAMES
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
 import {MAIN_TYPE_ORDER} from "@mtgit/shared";
@@ -97,6 +97,8 @@ export function getManaValueGroupKey(card: ScryfallOracleCard): string {
     return MANA_VALUE_LANDS_GROUP;
   }
 
+  // todo double-faced cards with different costs
+
   const manaValue = Math.floor(card.cmc);
   return manaValue >= 10 ? MANA_VALUE_TEN_PLUS_GROUP : `${manaValue}`;
 }
@@ -114,7 +116,9 @@ export function getTagGroupKeys(card: TaggedDeckCard): string[] {
   return Array.from(new Set(card.tags));
 }
 
-export function getGroupHeadingId(groupingMode: CardGroupingMode, deckSection: DeckSectionName, heading: string): string | undefined {
+export function getGroupHeadingId(groupingMode: CardGroupingMode,
+  deckSection: DeckSectionName,
+  heading: string): string | undefined {
   return `${groupingMode}-${deckSection}-${heading}`;
 }
 
@@ -161,6 +165,40 @@ export function sortGroupHeadings(headings: string[], mode: CardGroupingMode): s
   });
 }
 
+function getColorGroupKeys(card: ScryfallOracleCard) {
+
+
+  let fromIdentity = card.color_identity.map(
+    colorCode => `${COLOR_CODE_TO_NAMES[colorCode]}`
+  );
+
+  if (card.type_line.includes("Land")) {
+    fromIdentity = [];
+  }
+
+  const fromProduction = card.produced_mana.map(
+    colorCode => `${COLOR_CODE_TO_NAMES[colorCode]} Producer`
+  );
+
+  return [...fromIdentity, ...fromProduction];
+}
+
+
+function getGroupKeys(card: TaggedDeckCard, mode: CardGroupingMode) {
+  switch (mode) {
+    case "type":
+      return getTypeGroupKeys(card);
+    case "manaValue":
+      return [getManaValueGroupKey(card)];
+    case "tags":
+      return getTagGroupKeys(card);
+    case "color":
+      return getColorGroupKeys(card);
+    case "none":
+      return "";
+  }
+}
+
 /**
  * Groups cards by the selected grouping mode (type, mana value, tag, or none).
  * @param cards The array of TaggedDeckCard to group.
@@ -174,12 +212,7 @@ export function groupCardsByMode(cards: TaggedDeckCard[], mode: CardGroupingMode
   const groups = new Map<string, TaggedDeckCard[]>();
 
   for (const card of cards) {
-    const keys =
-      mode === "type"
-        ? getTypeGroupKeys(card)
-        : mode === "manaValue"
-          ? [getManaValueGroupKey(card)]
-          : getTagGroupKeys(card);
+    const keys = getGroupKeys(card, mode);
 
     for (const key of keys) {
       const currentCards = groups.get(key) ?? [];
@@ -253,7 +286,10 @@ function sortCardsInGroup(cards: TaggedDeckCard[], mode: CardSortMode): TaggedDe
   });
 }
 
-export function handleSection(section: HydratedDeckSection, sectionName: DeckSectionName, groupingMode: CardGroupingMode, sortingMode: CardSortMode): SortedSection {
+export function handleSection(section: HydratedDeckSection,
+  sectionName: DeckSectionName,
+  groupingMode: CardGroupingMode,
+  sortingMode: CardSortMode): SortedSection {
   const groups = groupCardsByMode(Object.values(section), groupingMode);
 
   let sortedGroups = groups.map(group => {
@@ -274,12 +310,28 @@ export function handleSection(section: HydratedDeckSection, sectionName: DeckSec
   };
 }
 
-export function performGrouping(deck: HydratedDeck, groupingMode: CardGroupingMode, sortingMode: CardSortMode): GroupingResult {
+export function performGrouping(deck: HydratedDeck,
+  groupingMode: CardGroupingMode,
+  sortingMode: CardSortMode): GroupingResult {
   const outputSections: SortedSection[] = [];
 
+
   for (const sectionName of SECTION_SCREEN_SORT_ORDER) {
-    if (sectionName in deck) {
-      outputSections.push(handleSection(deck[sectionName]!, sectionName, groupingMode, sortingMode));
+    const section = deck[sectionName];
+
+    if (section) {
+      if (sectionName === "Commander") {
+        outputSections.push({
+          name: sectionName,
+          groups: [{
+            heading: "",
+            cards: Object.values(section)
+          }]
+        });
+      }
+      else {
+        outputSections.push(handleSection(section, sectionName, groupingMode, sortingMode));
+      }
     }
   }
 

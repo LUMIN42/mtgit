@@ -47,7 +47,11 @@ export function mainTypes(typeLine: string): Set<MainCardType> {
   return output;
 }
 
-export const COLOR_NAMES: Record<ColorCode, string> = {
+export const COLOR_NAMES = ["Black", "White", "Blue", "Red", "Green"] as const;
+export const ColorNameSchema = z.enum(COLOR_NAMES);
+export type ColorName = z.infer<typeof ColorNameSchema>;
+
+export const COLOR_CODE_TO_NAMES: Record<ColorCode, ColorName> = {
   B: "Black",
   W: "White",
   U: "Blue",
