@@ -10,7 +10,7 @@ import {
 import type {ReactNode} from "react";
 
 import {
-  ScryfallOracleCard,
+  OracleCard,
   OracleCardSchema
 } from "@mtgit/shared/scryfall";
 
@@ -33,14 +33,14 @@ type ScryfallCacheValue = {
 
   fetchMissingDeckCards: (deckCardCounts: DeckCardCounts) => Promise<void>;
 
-  tryGetCard: (oracleId: string) => ScryfallOracleCard | undefined;
+  tryGetCard: (oracleId: string) => OracleCard | undefined;
 
   buildPartiallyReconstructedDeck: (
     cardCounts: DeckCardCounts,
     tags: TagsMap
   ) => HydratedDeck;
 
-  map: Record<string, ScryfallOracleCard>;
+  map: Record<string, OracleCard>;
 
   fetchMissingCards: (ids: string[]) => Promise<void>;
 
@@ -56,7 +56,7 @@ export function ScryfallCacheProvider({
   children: ReactNode;
 }) {
   const [map, setMap] = useState<
-    Record<string, ScryfallOracleCard>
+    Record<string, OracleCard>
   >({});
 
   /**

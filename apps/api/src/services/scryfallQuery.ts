@@ -1,4 +1,4 @@
-import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
+import type {OracleCard} from "@mtgit/shared/scryfall";
 import {ScryfallSearchQuerySchema, searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 
 export {ScryfallSearchQuerySchema};
@@ -10,7 +10,7 @@ export class ScryfallQueryService {
   async search(query: string, limit: number = 20, skip: number = 0): Promise<{
     ok: boolean;
     message: string;
-    cards: ScryfallOracleCard[];
+    cards: OracleCard[];
     total: number;
   }> {
     return await searchScryfallCards(query, limit, skip);

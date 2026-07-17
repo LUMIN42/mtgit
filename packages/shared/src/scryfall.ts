@@ -68,7 +68,7 @@ const ScryfallOracleCardBaseSchema = z
 
     // fixme colors: ColorIdentitySchema.catch([]), // the catch is needed for two-sided cards, which lack colors
     color_identity: ColorCombinationSchema,
-    produced_mana: ColorCombinationSchema.catch([]),
+    produced_mana: ColorCombinationSchema.catch([] as ColorCombination),
     // keywords: z.array(z.string()),
     legalities: LegalitiesSchema,
     // games: z.array(z.string()),
@@ -84,7 +84,8 @@ const SingleFacedScryfallOracleCardSchema = ScryfallOracleCardBaseSchema.and(
     mana_cost: z.string(),
     type_line: z.string(),
     oracle_text: z.string(),
-    image_uris: ImageUrisSchema
+    image_uris: ImageUrisSchema,
+    colors: ColorCombinationSchema
   })
 );
 
@@ -103,65 +104,72 @@ const AdventureOracleCardSchema = DoubleFacedScryfallOracleCardSchema
 
 export const OracleCardSchema =
   z.preprocess(
-    rawCard => {
-      const singleFacedParsing = SingleFacedScryfallOracleCardSchema.safeParse(rawCard);
-      if (singleFacedParsing.success) {
+      rawCard => {
+        const singleFacedParsing = SingleFacedScryfallOracleCardSchema.safeParse(rawCard);
+        if (singleFacedParsing.success) {
 
-        return {
-          ...singleFacedParsing.data,
-          card_faces: [{...singleFacedParsing.data, object: "card_face"}]
-        };
-      }
+          return {
+            ...singleFacedParsing.data,
+            card_faces: [{...singleFacedParsing.data, object: "card_face"}]
+          };
+        }
 
-      const adventureParsing = AdventureOracleCardSchema.safeParse(rawCard);
-      if (adventureParsing.success) {
-        const adventureCard = adventureParsing.data;
+        const adventureParsing = AdventureOracleCardSchema.safeParse(rawCard);
+        if (adventureParsing.success) {
+          const adventureCard = adventureParsing.data;
 
-        const modifiedCard: DoubleFacedScryfallOracleCard = {
-          ...adventureCard,
-          card_faces: [
-            {
-              ...(adventureCard.card_faces[0]),
-              image_uris: adventureCard.image_uris
-            },
-            ...adventureCard.card_faces.slice(1)
-          ]
-        };
+          const modifiedCard: DoubleFacedScryfallOracleCard = {
+            ...adventureCard,
+            card_faces: [
+              {
+                ...(adventureCard.card_faces[0]),
+                image_uris: adventureCard.image_uris
+              },
+              ...adventureCard.card_faces.slice(1)
+            ]
+          };
 
-        return modifiedCard;
-      }
+          return modifiedCard;
+        }
 
-      return rawCard;
-    },
-    DoubleFacedScryfallOracleCardSchema
-  )
+        return rawCard;
+      },
+      DoubleFacedScryfallOracleCardSchema
+    )
     .transform(parsed => {
       return {
         ...parsed,
-        colors: [...new Set(parsed.card_faces.flatMap(face => face.colors))]
+        colors: [...new Set(parsed.card_faces
+          .filter(face => face.colors)
+          .flatMap(face => face.colors))] as ColorCombination
       };
     });
 
 
 // Live Scryfall API payloads can occasionally omit fields this app expects.
 // This variant keeps core identifiers strict while filling optional app fields.
-export const ScryfallApiOracleCardSchema = DoubleFacedScryfallOracleCardSchema.extend({
-  cmc: z.number().catch(0),
-  type_line: z.string().catch(""),
-  colors: ColorCombinationSchema.catch([]),
-  color_identity: ColorCombinationSchema.catch([]),
-  keywords: z.array(z.string()).catch([]),
-  legalities: LegalitiesSchema.catch({}),
-  games: z.array(z.string()).catch([]),
-  set: z.string().catch(""),
-  set_name: z.string().catch(""),
-  rarity: z.string().catch("common")
-});
+// export const ScryfallApiOracleCardSchema = DoubleFacedScryfallOracleCardSchema.extend({
+//   cmc: z.number().catch(0),
+//   type_line: z.string().catch(""),
+//   colors: ColorCombinationSchema.catch([]),
+//   color_identity: ColorCombinationSchema.catch([]),
+//   keywords: z.array(z.string()).catch([]),
+//   legalities: LegalitiesSchema.catch({}),
+//   games: z.array(z.string()).catch([]),
+//   set: z.string().catch(""),
+//   set_name: z.string().catch(""),
+//   rarity: z.string().catch("common")
+// });
+export const ScryfallApiCardIdSchema = z.object({
+  oracle_id: OracleIdSchema
+}).transform(
+  card => OracleIdSchema.parse(card.oracle_id)
+);
 
 export const ScryfallSearchListSchema = z.object({
   object: z.literal("list"),
   has_more: z.boolean(),
-  data: z.array(ScryfallApiOracleCardSchema),
+  data: z.array(ScryfallApiCardIdSchema),
   total_cards: z.number().int().nonnegative(),
   next_page: z.string().url().optional(),
   warnings: z.array(z.string()).optional()
@@ -181,14 +189,14 @@ export const ScryfallSearchResponseSchema = z.union([
   ScryfallErrorSchema
 ]);
 
-export type ScryfallImageUris = z.infer<typeof ImageUrisSchema>;
-export type ScryfallCardFace = z.infer<typeof CardFaceSchema>;
-export type ScryfallLegalities = z.infer<typeof LegalitiesSchema>;
-export type ScryfallPrices = z.infer<typeof PricesSchema>;
-export type ScryfallOracleCard = z.infer<typeof OracleCardSchema>;
-export type ScryfallApiOracleCard = z.infer<typeof ScryfallApiOracleCardSchema>;
+export type ImageUris = z.infer<typeof ImageUrisSchema>;
+export type CardFace = z.infer<typeof CardFaceSchema>;
+export type Legalities = z.infer<typeof LegalitiesSchema>;
+export type Prices = z.infer<typeof PricesSchema>;
+export type OracleCard = z.infer<typeof OracleCardSchema>;
+export type ScryfallApiOracleCard = z.infer<typeof ScryfallApiCardIdSchema>;
 
-export function getCardImageUrls(card: ScryfallOracleCard): [string] | [string, string] {
+export function getCardImageUrls(card: OracleCard): [string] | [string, string] {
   const urls = card.card_faces
     .filter(face => "image_uris" in face)
     .map(face => face.image_uris!.normal!)!;

@@ -1,6 +1,6 @@
 import {Box, Text, Image, Overlay, Paper, ActionIcon, Tooltip} from "@mantine/core";
 import {type DeckCard, DeckSectionName, getCardImageUrls, isDeckCard} from "@mtgit/shared";
-import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
+import type {OracleCard} from "@mtgit/shared/scryfall";
 import {CardDisplayMode, useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import React, {useEffect, useState} from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
@@ -9,10 +9,10 @@ import {IconRefresh} from "@tabler/icons-react";
 
 
 type CardProps = {
-  card: ScryfallOracleCard | DeckCard;
+  card: OracleCard | DeckCard;
   displayMode?: CardDisplayMode;
   className?: string;
-  onSelect?: (card: ScryfallOracleCard) => void;
+  onSelect?: (card: OracleCard) => void;
   onHoverImage?: (imageUrl: string | null) => void;
   quicklyAdjustable?: boolean;
   actualCardCount?: number;

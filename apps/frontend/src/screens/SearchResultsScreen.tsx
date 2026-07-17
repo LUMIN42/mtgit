@@ -62,22 +62,20 @@ export function SearchResultsScreen() {
     queryFn: async () => searchScryfallCards(fullSearchQuery!, 50, 0)
   });
 
-  const cards = useMemo(
-    () => (searchQueryHook.data?.ok ? searchQueryHook.data.cards : []),
+  const cardIds = useMemo(
+    () => (searchQueryHook.data?.ok ? searchQueryHook.data.ids : []),
     [searchQueryHook.data]
   );
 
-  const redownloadedCards = cards
-    .map(
-      card => tryGetCard(card.oracle_id)
-    ).filter(card => card !== undefined);
+  const redownloadedCards = cardIds
+    .map(tryGetCard).filter(card => card !== undefined);
 
   useEffect(() => {
-    fetchMissingCards(cards.map(card => card.oracle_id));
-  }, [cards]);
+    fetchMissingCards(cardIds);
+  }, [cardIds]);
 
 
-  const showInitialLoading = searchQueryHook.isPending && searchQuery.trim().length > 0 && cards.length === 0;
+  const showInitialLoading = searchQueryHook.isPending && searchQuery.trim().length > 0 && cardIds.length === 0;
   const showRefreshLoading = searchQueryHook.isFetching && !showInitialLoading;
 
   const cardsWithTags = useMemo(
@@ -156,7 +154,7 @@ export function SearchResultsScreen() {
 
       <Text size="sm" c="dimmed">
         {searchQuery
-          ? `Showing ${cards.length} result(s) for: ${fullSearchQuery}`
+          ? `Showing ${cardIds.length} result(s) for: ${fullSearchQuery}`
           : "Type a search and press Enter or click the search icon."}
       </Text>
 
@@ -195,9 +193,9 @@ export function SearchResultsScreen() {
           onCardSelect={location => {
             openModal(
               // location set to empty, since there is only one location, thus is not needed
-              cards
-                .map(card => {
-                  return {oracle_id: card.oracle_id, location: {}};
+              cardIds
+                .map(oracle_id => {
+                  return {oracle_id, location: {}};
                 }),
               {oracle_id: location.oracle_id, location: {}}
             );

@@ -1,5 +1,5 @@
 import {z} from "zod";
-import type {ScryfallOracleCard} from "./scryfall.js";
+import type {OracleCard} from "./scryfall.js";
 import type {DeckSectionName} from "./repositoryTypes.js";
 import {HydratedDeck, HydratedDeckSection} from "./deckTypes.js";
 // import {cardCount} from "./deckTypes.js";
@@ -11,7 +11,7 @@ export const FormatSchema = z.enum(formats);
 
 export type Format = z.infer<typeof FormatSchema>;
 
-export function maximumCardAmount(card: ScryfallOracleCard, format: Format) {
+export function maximumCardAmount(card: OracleCard, format: Format) {
   if (card.type_line.includes("Basic")) {
     return Infinity;
   }

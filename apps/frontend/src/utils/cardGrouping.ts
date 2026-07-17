@@ -3,7 +3,7 @@ import {
   type HydratedDeck,
   type HydratedDeckSection,
   type DeckSectionName, isMainCardType, MainCardType,
-  type ScryfallOracleCard, COLOR_CODE_TO_NAMES
+  type OracleCard, COLOR_CODE_TO_NAMES
 } from "@mtgit/shared";
 import type {TaggedDeckCard} from "@mtgit/shared";
 import {MAIN_TYPE_ORDER} from "@mtgit/shared";
@@ -71,7 +71,7 @@ function toTitleCase(word: string): string {
  * @param card The ScryfallOracleCard to analyze.
  * @returns An array of type group keys, or ["Other"] if none found.
  */
-export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
+export function getTypeGroupKeys(card: OracleCard): string[] {
   const {mainPart} = parseTypeLineParts(card.type_line);
   const words = mainPart.match(/[A-Za-z]+/g) ?? [];
   const keys = new Set<MainCardType>();
@@ -92,7 +92,7 @@ export function getTypeGroupKeys(card: ScryfallOracleCard): string[] {
  * @param card The ScryfallOracleCard to analyze.
  * @returns The group key as a string.
  */
-export function getManaValueGroupKey(card: ScryfallOracleCard): string {
+export function getManaValueGroupKey(card: OracleCard): string {
   if (card.type_line.toLowerCase().includes("land")) {
     return MANA_VALUE_LANDS_GROUP;
   }
@@ -165,7 +165,7 @@ export function sortGroupHeadings(headings: string[], mode: CardGroupingMode): s
   });
 }
 
-function getColorGroupKeys(card: ScryfallOracleCard) {
+function getColorGroupKeys(card: OracleCard) {
 
 
   let fromIdentity = card.color_identity.map(

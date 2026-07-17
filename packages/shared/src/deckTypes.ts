@@ -1,6 +1,6 @@
 // Deck-related fully functional model (no classes, no mutation)
 
-import type {ScryfallOracleCard} from "./scryfall.js";
+import type {OracleCard} from "./scryfall.js";
 import {DECK_SECTION_NAMES} from "./repositoryTypes.js";
 import type {OracleId, DeckSectionName} from "./repositoryTypes.js";
 
@@ -10,7 +10,7 @@ export const SECTION_BY_LABEL: Record<string, DeckSectionName> =
   );
 
 
-export type TaggedCard = ScryfallOracleCard & {
+export type TaggedCard = OracleCard & {
   tags: string[];
 };
 
@@ -23,7 +23,7 @@ export type TaggedDeckCard = DeckCard & {
   tags: string[];
 };
 
-export function isDeckCard(card: ScryfallOracleCard): card is DeckCard {
+export function isDeckCard(card: OracleCard): card is DeckCard {
   return "count" in card;
 }
 

@@ -2,8 +2,9 @@ import {z} from "zod";
 import {
   ScryfallSearchResponseSchema,
   type ScryfallApiOracleCard,
-  type ScryfallOracleCard
+  type OracleCard
 } from "./scryfall.js";
+import {OracleId} from "./repositoryTypes.ts";
 
 export const ScryfallSearchQuerySchema = z.object({
   query: z.string(),
@@ -31,12 +32,8 @@ type ScryfallSearchPageResult = ScryfallSearchSuccess | ScryfallSearchFailure;
 export interface ScryfallSearchResult {
   ok: boolean;
   message: string;
-  cards: ScryfallOracleCard[];
+  ids: OracleId[];
   total: number;
-}
-
-function toOracleCards(cards: ScryfallApiOracleCard[]): ScryfallOracleCard[] {
-  return cards as ScryfallOracleCard[];
 }
 
 function buildSearchUrl(query: string, page: number): URL {
@@ -59,6 +56,8 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
     const parsed = ScryfallSearchResponseSchema.safeParse(payload);
 
     if (!parsed.success) {
+      console.error(parsed.error);
+
       return {
         ok: false,
         message: "Scryfall returned an unexpected response format."
@@ -108,7 +107,7 @@ export async function searchScryfallCards(
     return {
       ok: true,
       message: "Found 0 card(s) matching the query.",
-      cards: [],
+      ids: [],
       total: 0
     };
   }
@@ -126,7 +125,7 @@ export async function searchScryfallCards(
       return {
         ok: false,
         message: pageResult.message,
-        cards: [],
+        ids: [],
         total: 0
       };
     }
@@ -155,12 +154,10 @@ export async function searchScryfallCards(
     page += 1;
   }
 
-  const cards = toOracleCards(collectedCards);
-
   return {
     ok: true,
-    message: `Found ${cards.length} card(s) matching the query.`,
-    cards,
+    message: `Found ${collectedCards.length} card(s) matching the query.`,
+    ids: collectedCards,
     total
   };
 }

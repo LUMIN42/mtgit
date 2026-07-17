@@ -1,5 +1,12 @@
-import {HydratedDeck, isMainCardType, TaggedCard} from "@mtgit/shared";
-import type {ScryfallOracleCard} from "@mtgit/shared";
+import {
+  COLOR_NAME_TO_CODE,
+  ColorCombination,
+  ColorNameSchema,
+  HydratedDeck,
+  isMainCardType,
+  TaggedCard
+} from "@mtgit/shared";
+import type {OracleCard} from "@mtgit/shared";
 
 // todo move file to shared code
 
@@ -105,7 +112,7 @@ function parseClause(clauseString: string): ParsedClause {
   };
 }
 
-function getFaceSearchText(card: ScryfallOracleCard): string {
+function getFaceSearchText(card: OracleCard): string {
   return card.card_faces
     ?.map(face => [face.name, face.type_line, face.oracle_text ?? ""].join(" "))
     .join(" ") ?? "";
@@ -190,30 +197,34 @@ function matchesNumeric(value: number | string | undefined, operator: Comparison
 }
 
 // todo properly implement <, <=, ... operators
-function matchesColorClause(card: ScryfallOracleCard, rawQuery: string): boolean {
+function matchesColorClause(colors: ColorCombination, rawQuery: string): boolean {
   const query = normalize(rawQuery);
-  const colorIdentity = asStringArray(card.color_identity);
-  const colors = asStringArray(card.colors);
+
+  const colorNameParsing = ColorNameSchema.safeParse(query);
+  if (colorNameParsing.success) {
+    const colorName = colorNameParsing.data;
+    return colors.includes(COLOR_NAME_TO_CODE[colorName]);
+  }
 
   if (query === "colorless") {
-    return colorIdentity.length === 0;
+    return colors.length === 0;
   }
 
   if (query === "multicolor") {
-    return colorIdentity.length > 1;
+    return colors.length > 1;
   }
 
   if (query === "monocolor" || query === "mono") {
-    return colorIdentity.length === 1;
+    return colors.length === 1;
   }
 
   const symbols = query.replace(/[^wubrgc]/g, "");
 
-  const colorSet = new Set([...colors, ...colorIdentity].map(normalize));
+  const colorSet = new Set([...colors].map(normalize));
   return Array.from(symbols).every(symbol => COLOR_SYMBOLS.has(symbol) && colorSet.has(symbol));
 }
 
-function matchesIsClause(card: ScryfallOracleCard, rawQuery: string): boolean {
+function matchesIsClause(card: OracleCard, rawQuery: string): boolean {
   const query = normalize(rawQuery);
 
   if (query === "legendary") {
@@ -279,10 +290,10 @@ function matchesClause(card: TaggedCard, clause: ParsedClause): boolean {
       return matchesNumeric(card.toughness, clause.operator, clause.value);
     case "color":
     case "c":
-      return matchesColorClause(card, clause.value);
+      return matchesColorClause(card.colors, clause.value);
     case "identity":
     case "id":
-      return matchesColorClause(card, clause.value);
+      return matchesColorClause(card.color_identity, clause.value);
     case "kw":
     case "is":
       return matchesIsClause(card, clause.value);
@@ -308,7 +319,7 @@ export function createScryfallCardMatcher(query: string): (card: TaggedCard) => 
   });
 }
 
-export function filterCardsByScryfallQuery(cards: TaggedCard[], query: string): ScryfallOracleCard[] {
+export function filterCardsByScryfallQuery(cards: TaggedCard[], query: string): OracleCard[] {
   const matcher = createScryfallCardMatcher(query);
   return cards.filter(matcher);
 }

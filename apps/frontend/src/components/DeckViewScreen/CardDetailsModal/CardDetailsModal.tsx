@@ -1,6 +1,6 @@
 import {ActionIcon, Divider, Group, Modal, Text, Stack, Title} from "@mantine/core";
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
-import {DeckSectionName, type ScryfallOracleCard} from "@mtgit/shared";
+import {DeckSectionName, type OracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
@@ -32,7 +32,7 @@ export function CardDetailsModal({
 
   const cache = useScryfallCache();
 
-  const card: ScryfallOracleCard | undefined = cache.tryGetCard(oracle_id);
+  const card: OracleCard | undefined = cache.tryGetCard(oracle_id);
 
   const {repository} = useRepositoryContext();
 
