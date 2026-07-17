@@ -1,9 +1,11 @@
 import {z} from "zod";
 import {
   ScryfallSearchResponseSchema,
-  type ScryfallApiOracleCard,
+  type ScryfallApiOracleCard
 } from "./scryfall.js";
 import {OracleId} from "./repositoryTypes.ts";
+import {useState} from "react";
+import {useInfiniteQuery} from "@tanstack/react-query";
 
 export const ScryfallSearchQuerySchema = z.object({
   query: z.string(),
@@ -94,6 +96,45 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
       message: "Failed to fetch cards from Scryfall API."
     };
   }
+}
+
+export function useScryfallCardRetriever() {
+  const [query, setQuery] = useState("");
+
+  const queryResult = useInfiniteQuery({
+    queryKey: ["scryfall-cards", query],
+
+    queryFn: async ({pageParam}) => {
+      return await fetchScryfallSearchPage(query, pageParam);
+    },
+
+    initialPageParam: 1,
+
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.ok) {
+        return allPages.length + 1;
+      }
+      else {
+        return undefined;
+      }
+    },
+
+    enabled: query.length > 0
+  });
+
+  return {
+    ids: queryResult.data?.pages.flatMap(page => page.ok ? page.cards : []) ?? [],
+
+    query,
+    setQuery,
+
+    fetchNextPage: queryResult.fetchNextPage,
+
+    hasNextPage: queryResult.hasNextPage,
+    fetching: queryResult.isFetchingNextPage,
+    loading: queryResult.isLoading,
+    error: queryResult.error
+  };
 }
 
 export async function searchScryfallCards(

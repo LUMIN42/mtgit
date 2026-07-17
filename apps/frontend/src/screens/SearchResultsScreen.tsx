@@ -1,16 +1,16 @@
 import {useEffect, useMemo, useState} from "react";
-import {ActionIcon, Alert, Button, Center, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
-import {useQuery} from "@tanstack/react-query";
+import {ActionIcon, Button, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
-import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
+import {useScryfallCardRetriever} from "@mtgit/shared/scryfallSearch";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {Link} from "react-router-dom";
+import {useWindowScroll} from "@mantine/hooks";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -36,8 +36,6 @@ export function SearchResultsScreen() {
 
   const [editingDefaultQuery, setEditingDefaultQuery] = useState<boolean>(false);
 
-  const [fullSearchQuery, setFullSearchQuery] = useState<string>();
-
   useEffect(() => {
     handleSearchSubmit();
   }, []);
@@ -54,18 +52,20 @@ export function SearchResultsScreen() {
     hasNextRight
   } = useCardSelectionManager();
 
-  const usesServerOrder = hasScryfallOrderClause(searchQuery);
+  const [scroll] = useWindowScroll();
 
-  const searchQueryHook = useQuery({
-    queryKey: ["scryfall", "search", fullSearchQuery, 50, 0],
-    enabled: searchQuery.trim().length > 0,
-    queryFn: async () => searchScryfallCards(fullSearchQuery!, 50, 0)
-  });
+  useEffect(() => {
+    const atBottom =
+      window.innerHeight + scroll.y >=
+      document.documentElement.scrollHeight - 100; // 100px threshold
 
-  const cardIds = useMemo(
-    () => (searchQueryHook.data?.ok ? searchQueryHook.data.ids : []),
-    [searchQueryHook.data]
-  );
+    if (atBottom) {
+      console.log("at bottom!");
+      fetchNextPage();
+    }
+  }, [scroll.y]);
+
+  const {fetchNextPage, ids: cardIds, setQuery, fetching, loading} = useScryfallCardRetriever();
 
   const redownloadedCards = cardIds
     .map(tryGetCard).filter(card => card !== undefined);
@@ -75,9 +75,6 @@ export function SearchResultsScreen() {
   }, [cardIds]);
 
 
-  const showInitialLoading = searchQueryHook.isPending && searchQuery.trim().length > 0 && cardIds.length === 0;
-  const showRefreshLoading = searchQueryHook.isFetching && !showInitialLoading;
-
   const cardsWithTags = useMemo(
     () => redownloadedCards.map(card => ({...card, tags: []})),
     [redownloadedCards]
@@ -85,11 +82,13 @@ export function SearchResultsScreen() {
 
 
   const handleSearchSubmit = () => {
-    setFullSearchQuery(`${defaultQueryField} ${searchQuery}`);
+    setQuery(`${defaultQueryField} ${searchQuery}`);
 
-    updatePreferences({
-      defaultQuery: defaultQueryField
-    });
+    if (defaultQueryField) {
+      updatePreferences({
+        defaultQuery: defaultQueryField
+      });
+    }
   };
 
   return (
@@ -102,8 +101,7 @@ export function SearchResultsScreen() {
         value={searchQuery}
         onChange={text => setSearchQuery(text)}
         onSearch={handleSearchSubmit}
-        loading={searchQueryHook.isFetching}
-        placeholder={"t:creature mv<5 order:edhrec"}
+        placeholder={"Scryfall Search Query"}
         label={"Scryfall Search Query"}
       />
 
@@ -154,65 +152,41 @@ export function SearchResultsScreen() {
 
       <Text size="sm" c="dimmed">
         {searchQuery
-          ? `Showing ${cardIds.length} result(s) for: ${fullSearchQuery}`
+          ? `Showing ${cardIds.length} result(s) for: ${searchQuery}`
           : "Type a search and press Enter or click the search icon."}
       </Text>
+      <CardGroup
+        cards={cardsWithTags}
+        sectionName="Main"
+        quicklyAdjustable
+        onCardSelect={location => {
+          openModal(
+            // location set to empty, since there is only one location, thus is not needed
+            cardIds
+              .map(oracle_id => {
+                return {oracle_id, location: {}};
+              }),
+            {oracle_id: location.oracle_id, location: {}}
+          );
+        }}
+        minWidth={190}
+      />
 
-      {showRefreshLoading ? (
-        <Center>
-          <Loader type="dots" size="sm"/>
-        </Center>
-      ) : null}
+      {
+        (fetching || loading) &&
+          <Loader size={"xl"} mx={"auto"} w={"100%"}/>
+      }
 
-      {showInitialLoading ? (
-        <Center py="xl">
-          <Stack gap="xs" align="center">
-            <Loader type="dots" size="lg"/>
-            <Text size="sm" c="dimmed">Loading cards from Scryfall...</Text>
-          </Stack>
-        </Center>
-      ) : null}
-
-      {searchQueryHook.isError ? (
-        <Alert color="red" title="Search failed">
-          {searchQueryHook.error instanceof Error ? searchQueryHook.error.message : "Unknown error"}
-        </Alert>
-      ) : null}
-
-      {searchQueryHook.data && !searchQueryHook.data.ok ? (
-        <Alert color="red" title="Search failed">
-          {searchQueryHook.data.message}
-        </Alert>
-      ) : null}
-
-      {!showInitialLoading ? (
-        <CardGroup
-          cards={cardsWithTags}
-          sectionName="Main"
-          quicklyAdjustable
-          onCardSelect={location => {
-            openModal(
-              // location set to empty, since there is only one location, thus is not needed
-              cardIds
-                .map(oracle_id => {
-                  return {oracle_id, location: {}};
-                }),
-              {oracle_id: location.oracle_id, location: {}}
-            );
-          }}
-          minWidth={190}
-        />
-      ) : null}
 
       {
         oracleId &&
-          (<CardDetailsModal onClose={closeModal}
-            oracle_id={oracleId}
-            onPrev={moveLeft}
-            onNext={moveRight}
-            hasPrevious={hasNextLeft}
-            hasNext={hasNextRight}
-          />)
+        (<CardDetailsModal onClose={closeModal}
+          oracle_id={oracleId}
+          onPrev={moveLeft}
+          onNext={moveRight}
+          hasPrevious={hasNextLeft}
+          hasNext={hasNextRight}
+        />)
       }
 
     </Stack>

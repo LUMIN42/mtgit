@@ -105,7 +105,8 @@ const AdventureOracleCardSchema = DoubleFacedScryfallOracleCardSchema
 
 
 export const OracleCardSchema =
-  z.preprocess(
+  z
+    .preprocess(
       rawCard => {
         const singleFacedParsing = SingleFacedScryfallOracleCardSchema.safeParse(rawCard);
         if (singleFacedParsing.success) {
