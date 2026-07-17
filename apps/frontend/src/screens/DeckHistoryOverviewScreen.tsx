@@ -1,5 +1,5 @@
 import React, {useEffect} from "react";
-import {trpc} from "../trpcClient.ts";
+import {trpcHooks} from "../trpcClient.ts";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {Divider, Grid, Loader, Title, Text, Stack, Button} from "@mantine/core";
@@ -22,7 +22,7 @@ export function DeckHistoryOverviewScreen() {
   const {fetchMissingCards, partiallyReconstructedCounts, buildPartiallyReconstructedDeck} = useScryfallCache();
 
 
-  const historyQuery = trpc.decks.branchHistory.useQuery(
+  const historyQuery = trpcHooks.decks.branchHistory.useQuery(
     {
       repositoryId: repository!._id,
       branchName: selectedBranchName!

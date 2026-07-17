@@ -14,7 +14,7 @@ import {
   OracleCardSchema
 } from "@mtgit/shared/scryfall";
 
-import {trpcClient} from "../trpcClient.ts";
+import {trpcRaw} from "../trpcClient.ts";
 
 import {
   allDeckOracleIds,
@@ -80,7 +80,7 @@ export function ScryfallCacheProvider({
     missing.forEach(id => inflight.current.add(id));
 
     try {
-      const result = await trpcClient.cards.getMany.query({
+      const result = await trpcRaw.cards.getMany.query({
         cardIds: missing
       });
 

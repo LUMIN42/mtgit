@@ -1,7 +1,7 @@
 ﻿import {createContext, useContext, useEffect} from "react";
 import type {ReactNode} from "react";
 import {RepositoryPreferences, RepositoryPreferencesSchema} from "@mtgit/shared";
-import {trpc} from "../trpcClient.ts";
+import {trpcHooks} from "../trpcClient.ts";
 import {useRepositoryContext} from "./RepositoryContext.tsx";
 import {useDeckUiContext} from "./DeckUiContext.tsx";
 
@@ -27,7 +27,7 @@ export function RepositoryPreferencesProvider({
   const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
 
 
-  const {data, isFetching} = trpc.repositoryPreferences.get.useQuery(
+  const {data, isFetching} = trpcHooks.repositoryPreferences.get.useQuery(
     {
       repositoryId: repositoryId
     }
@@ -35,7 +35,7 @@ export function RepositoryPreferencesProvider({
 
   const preferences = RepositoryPreferencesSchema.parse(data ?? {});
 
-  const utils = trpc.useUtils();
+  const utils = trpcHooks.useUtils();
 
   useEffect(
     () => {
@@ -57,7 +57,7 @@ export function RepositoryPreferencesProvider({
   );
 
 
-  const setPreferencesMutation = trpc.repositoryPreferences.set.useMutation({
+  const setPreferencesMutation = trpcHooks.repositoryPreferences.set.useMutation({
     onSuccess: async () => {
       await utils.repositoryPreferences.get.invalidate();
     }

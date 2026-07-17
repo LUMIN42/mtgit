@@ -1,7 +1,7 @@
 import {createContext, useContext} from "react";
 import type {ReactNode} from "react";
 import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
-import {trpc} from "../trpcClient.ts";
+import {trpcHooks} from "../trpcClient.ts";
 import {useDeckUiContext} from "./DeckUiContext.tsx";
 
 type RepositoryContextValue = {
@@ -29,11 +29,11 @@ export function RepositoryProvider({
   children: ReactNode;
   repositoryId: string;
 }) {
-  const utils = trpc.useUtils();
+  const utils = trpcHooks.useUtils();
 
   const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
 
-  const deckQuery = trpc.decks.get.useQuery(
+  const deckQuery = trpcHooks.decks.get.useQuery(
     {deckId: repositoryId}
   );
 
@@ -41,7 +41,7 @@ export function RepositoryProvider({
     _id: repositoryId, branches: {}, format: "Standard", name: "", owner_id: "", tags: {}
   };
 
-  const updateTagEndpoint = trpc.decks.setTag.useMutation({
+  const updateTagEndpoint = trpcHooks.decks.setTag.useMutation({
     async onMutate(variables) {
       if (!variables) {
         return;
@@ -101,7 +101,7 @@ export function RepositoryProvider({
   });
 
 
-  const updateDeck = trpc.decks.update.useMutation({
+  const updateDeck = trpcHooks.decks.update.useMutation({
     onMutate: async (updatedRepo: Repository) => {
       const queryKey = {deckId: updatedRepo._id};
 

@@ -13,17 +13,17 @@ import {
   TextInput,
   Select
 } from "@mantine/core";
-import {trpc} from "../trpcClient.ts";
+import {trpcHooks} from "../trpcClient.ts";
 import {useNavigate} from "react-router-dom";
 import {Format, formats} from "@mtgit/shared";
 
 function DeckOverviewScreen() {
   const navigate = useNavigate();
 
-  const utils = trpc.useUtils();
+  const utils = trpcHooks.useUtils();
 
-  const decksQuery = trpc.decks.usersDecks.useQuery();
-  const createDeck = trpc.decks.create.useMutation({
+  const decksQuery = trpcHooks.decks.usersDecks.useQuery();
+  const createDeck = trpcHooks.decks.create.useMutation({
     onSuccess: () => utils.decks.usersDecks.invalidate()
   });
 

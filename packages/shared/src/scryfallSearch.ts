@@ -101,6 +101,7 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
 export function useScryfallCardRetriever() {
   const [query, setQuery] = useState("");
 
+
   const queryResult = useInfiniteQuery({
     queryKey: ["scryfall-cards", query],
 
