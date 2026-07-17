@@ -3,7 +3,6 @@ import {
   ScryfallSearchResponseSchema,
   type ScryfallApiOracleCard
 } from "./scryfall.js";
-import {OracleId} from "./repositoryTypes.ts";
 import {useState} from "react";
 import {useInfiniteQuery} from "@tanstack/react-query";
 
@@ -21,6 +20,7 @@ interface ScryfallSearchSuccess {
   totalCards: number;
   hasMore: boolean;
   message?: string;
+  nextPageUrl?: string;
 }
 
 interface ScryfallSearchFailure {
@@ -30,23 +30,15 @@ interface ScryfallSearchFailure {
 
 type ScryfallSearchPageResult = ScryfallSearchSuccess | ScryfallSearchFailure;
 
-export interface ScryfallSearchResult {
-  ok: boolean;
-  message: string;
-  ids: OracleId[];
-  total: number;
-}
-
-function buildSearchUrl(query: string, page: number): URL {
+function buildSearchUrl(query: string, page: number): string {
   const url = new URL("/cards/search", SCRYFALL_API_BASE_URL);
   url.searchParams.set("q", query);
   url.searchParams.set("page", String(page));
-  return url;
+  return url.toString();
 }
 
-async function fetchScryfallSearchPage(query: string, page: number): Promise<ScryfallSearchPageResult> {
+async function fetchScryfallSearchPage(url: string): Promise<ScryfallSearchPageResult> {
   try {
-    const url = buildSearchUrl(query, page);
     const response = await fetch(url, {
       headers: {
         Accept: "application/json"
@@ -87,7 +79,8 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
       cards: parsed.data.data,
       totalCards: parsed.data.total_cards,
       hasMore: parsed.data.has_more,
-      message: parsed.data.warnings?.join(" ")
+      message: parsed.data.warnings?.join(" "),
+      nextPageUrl: parsed.data.next_page
     };
   }
   catch {
@@ -99,19 +92,23 @@ async function fetchScryfallSearchPage(query: string, page: number): Promise<Scr
 }
 
 export function useScryfallCardRetriever() {
-  const [query, setQuery] = useState("");
+  const [queryString, setQueryString] = useState("");
 
 
-  const queryResult = useInfiniteQuery({
-    queryKey: ["scryfall-cards", query],
+  const query = useInfiniteQuery({
+    queryKey: ["scryfall-cards", queryString],
 
     queryFn: async ({pageParam}) => {
-      return await fetchScryfallSearchPage(query, pageParam);
+      return await fetchScryfallSearchPage(pageParam ?? buildSearchUrl(queryString, 1));
     },
 
-    initialPageParam: 1,
+    initialPageParam: null,
 
     getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.ok) {
+        return lastPage.nextPageUrl;
+      }
+
       if (lastPage.ok) {
         return allPages.length + 1;
       }
@@ -120,85 +117,15 @@ export function useScryfallCardRetriever() {
       }
     },
 
-    enabled: query.length > 0
+    enabled: queryString.length > 0
   });
 
   return {
-    ids: queryResult.data?.pages.flatMap(page => page.ok ? page.cards : []) ?? [],
+    ids: query.data?.pages.flatMap(page => page.ok ? page.cards : []) ?? [],
 
-    query,
-    setQuery,
+    query: queryString,
+    setQuery: setQueryString,
 
-    fetchNextPage: queryResult.fetchNextPage,
-
-    hasNextPage: queryResult.hasNextPage,
-    fetching: queryResult.isFetchingNextPage,
-    loading: queryResult.isLoading,
-    error: queryResult.error
-  };
-}
-
-export async function searchScryfallCards(
-  query: string,
-  limit: number = 20,
-  skip: number = 0
-): Promise<ScryfallSearchResult> {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
-    return {
-      ok: true,
-      message: "Found 0 card(s) matching the query.",
-      ids: [],
-      total: 0
-    };
-  }
-
-  const desiredEnd = skip + limit;
-  let page = 1;
-  let currentOffset = 0;
-  let total = 0;
-  let collectedCards: ScryfallApiOracleCard[] = [];
-
-  while (currentOffset < desiredEnd) {
-    const pageResult = await fetchScryfallSearchPage(trimmedQuery, page);
-
-    if (!pageResult.ok) {
-      return {
-        ok: false,
-        message: pageResult.message,
-        ids: [],
-        total: 0
-      };
-    }
-
-    const pageCards = pageResult.cards;
-    total = pageResult.totalCards;
-
-    if (pageCards.length === 0) {
-      break;
-    }
-
-    const pageStart = currentOffset;
-    const pageEnd = currentOffset + pageCards.length;
-
-    if (skip < pageEnd && desiredEnd > pageStart) {
-      const startInPage = Math.max(0, skip - pageStart);
-      const endInPage = Math.min(pageCards.length, desiredEnd - pageStart);
-      collectedCards = collectedCards.concat(pageCards.slice(startInPage, endInPage));
-    }
-
-    if (!pageResult.hasMore) {
-      break;
-    }
-
-    currentOffset = pageEnd;
-    page += 1;
-  }
-
-  return {
-    ok: true,
-    message: `Found ${collectedCards.length} card(s) matching the query.`,
-    ids: collectedCards,
-    total
+    ...query
   };
 }

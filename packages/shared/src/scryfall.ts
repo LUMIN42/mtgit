@@ -174,7 +174,7 @@ export const ScryfallSearchListSchema = z.object({
   has_more: z.boolean(),
   data: z.array(ScryfallApiCardIdSchema),
   total_cards: z.number().int().nonnegative(),
-  next_page: z.string().url().optional(),
+  next_page: z.string().optional(),
   warnings: z.array(z.string()).optional()
 });
 
