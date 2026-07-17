@@ -2,15 +2,9 @@ import {z} from "zod";
 import {
   ScryfallSearchResponseSchema,
   type ScryfallApiOracleCard
-} from "./scryfall.js";
+} from "@mtgit/shared/scryfall";
 import {useState} from "react";
 import {useInfiniteQuery} from "@tanstack/react-query";
-
-export const ScryfallSearchQuerySchema = z.object({
-  query: z.string(),
-  limit: z.number().int().positive().max(100).default(20),
-  skip: z.number().int().nonnegative().default(0)
-});
 
 const SCRYFALL_API_BASE_URL = "https://api.scryfall.com";
 

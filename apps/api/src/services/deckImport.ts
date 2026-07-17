@@ -51,8 +51,8 @@ function parseDeckEntry(rawLine: string, deckSection: DeckSectionName): ParsedDe
   const tags = match[3]
     ? match[3]
       .trim()
-      .split(/\s+/)
-      .map(tag => tag.replace(/^#+/, "").trim())
+      .split(/#/)
+      .map(tag => tag.trim())
       .filter(Boolean)
     : [];
 

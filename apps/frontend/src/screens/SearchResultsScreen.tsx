@@ -3,7 +3,6 @@ import {ActionIcon, Button, Group, Loader, Stack, Text, TextInput} from "@mantin
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
-import {useScryfallCardRetriever} from "@mtgit/shared/scryfallSearch";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
@@ -11,6 +10,7 @@ import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.
 import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {Link} from "react-router-dom";
 import {useWindowScroll} from "@mantine/hooks";
+import {useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -55,17 +55,18 @@ export function SearchResultsScreen() {
   const [scroll] = useWindowScroll();
 
   useEffect(() => {
+    const threshold = window.innerHeight;
+
     const atBottom =
-      window.innerHeight + scroll.y >=
-      document.documentElement.scrollHeight - 100; // 100px threshold
+      window.scrollY + window.innerHeight >=
+      document.documentElement.scrollHeight - threshold;
 
     if (atBottom) {
-      console.log("at bottom!");
       fetchNextPage();
     }
   }, [scroll.y]);
 
-  const {fetchNextPage, ids: cardIds, setQuery, fetching, loading} = useScryfallCardRetriever();
+  const {fetchNextPage, ids: cardIds, setQuery, isFetchingNextPage, isLoading} = useScryfallCardRetriever();
 
   const redownloadedCards = cardIds
     .map(tryGetCard).filter(card => card !== undefined);
@@ -173,7 +174,7 @@ export function SearchResultsScreen() {
       />
 
       {
-        (fetching || loading) &&
+        (isFetchingNextPage || isLoading) &&
           <Loader size={"xl"} mx={"auto"} w={"100%"}/>
       }
 
