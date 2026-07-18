@@ -25,6 +25,8 @@ export function CreateBranchModal() {
 
     setNewBranchName("");
     setBaseBranchName("Empty");
+
+    setIsOpened(false);
   };
 
   return (
