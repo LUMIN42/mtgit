@@ -1,7 +1,7 @@
 import {Grid, Stack} from "@mantine/core";
 import style from "../../assets/index.module.css";
 import {Card} from "./Card.tsx";
-import type {DeckSectionName, TaggedCard} from "@mtgit/shared";
+import type {DeckSectionName, OracleCard, TaggedCard} from "@mtgit/shared";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import type {CardSortMode} from "../../types/grouping.ts";
 import {useElementSize} from "@mantine/hooks";
@@ -26,8 +26,7 @@ export function CardGroup({
   cards,
   sectionName = undefined,
   groupKey = "",
-  onCardSelect = () => {
-  },
+  onCardSelect,
   onCardHover = () => {
   },
   quicklyAdjustable = false,
@@ -60,13 +59,16 @@ export function CardGroup({
             card={card}
             displayMode={displayMode}
             className={style.cardNameItem}
-            onSelect={() => onCardSelect({
-              oracle_id: card.oracle_id,
-              location: {
-                group: groupKey,
-                section: sectionName ?? null
-              }
-            })}
+            onSelect={
+              onCardSelect &&
+              ((_: OracleCard) => onCardSelect({
+                oracle_id: card.oracle_id,
+                location: {
+                  group: groupKey,
+                  section: sectionName ?? null
+                }
+              }))
+            }
             onHoverImage={onCardHover}
           />
         ))}
@@ -101,14 +103,16 @@ export function CardGroup({
             <Card
               card={card}
               displayMode={displayMode}
-              onSelect={() =>
+              onSelect={
+                onCardSelect &&
+              (() =>
                 onCardSelect({
                   oracle_id: card.oracle_id,
                   location: {
                     group: groupKey,
                     section: sectionName ?? null
                   }
-                })
+                }))
               }
               quicklyAdjustable={quicklyAdjustable}
               deckSection={sectionName}
