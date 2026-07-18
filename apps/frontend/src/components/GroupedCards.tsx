@@ -12,6 +12,7 @@ import {useDeckDataContext} from "../context/DeckDataContext.tsx";
 import {cardCount} from "@mtgit/shared";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useElementSize, useViewportSize} from "@mantine/hooks";
+import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
 export function GroupedCards() {
   const {groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
@@ -21,6 +22,8 @@ export function GroupedCards() {
   const {width: viewportWidth} = useViewportSize();
 
   const {filteredDeck} = useDeckDataContext();
+
+  const {preferences} = useRepositoryPreferences();
 
   let groups = performGrouping(
     filteredDeck,
@@ -119,6 +122,7 @@ export function GroupedCards() {
                       onCardHover={setHoveredCardImageUrl}
                       sectionName={section.name}
                       widthOverride={width ?? viewportWidth * 0.8}
+                      quicklyAdjustable={preferences.quickEdit}
                     />
                   </Stack>
                 );

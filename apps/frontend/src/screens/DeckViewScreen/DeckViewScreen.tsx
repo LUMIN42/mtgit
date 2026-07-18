@@ -16,6 +16,7 @@ import BranchManagementModalButton from "../../components/DeckViewScreen/BranchM
 import {Link} from "react-router-dom";
 import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {useState} from "react";
+import {QuickEditSwitch} from "../../components/DeckViewScreen/QuickEditSwitch.tsx";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
@@ -32,7 +33,6 @@ export function DeckViewScreen() {
 
   return (
     <Stack style={{maxWidth: "1500px", margin: "auto"}}>
-
       <Group>
         {
           renamingDeck
@@ -99,13 +99,7 @@ export function DeckViewScreen() {
           Branch History
         </Button>
 
-        {/*<Button variant="default" onClick={() => ui.setViewMode("Branches")}>*/}
-        {/*  View branches*/}
-        {/*</Button>*/}
-        {/**/}
-        {/*<Button variant="default" onClick={() => setIsCreateBranchOpen(true)}>*/}
-        {/*  Add branch*/}
-        {/*</Button>*/}
+        <QuickEditSwitch/>
       </Group>
 
       {/*<CreateBranchModal*/}
