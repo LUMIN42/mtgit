@@ -1,19 +1,88 @@
 import React, {useState} from "react";
-import {
-  Button,
-  Grid,
-  Modal,
-  TextInput,
-  Text,
-  ActionIcon,
-  Group, Stack
-} from "@mantine/core";
+import {ActionIcon, Button, Grid, Group, Modal, Stack, Text, TextInput} from "@mantine/core";
 import {IconCheck, IconEye, IconEyeClosed, IconPencil, IconTrash, IconX} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import {CreateBranchModal} from "./CreateBranchModal.tsx";
-import {useRepositoryPreferences} from "../../context/RepositoryPreferencesContext.tsx";
+import {trpcHooks} from "../../trpcClient.ts";
+
+function VisibilityEye({branchName}: {branchName: string}) {
+  const utils = trpcHooks.useUtils();
+  const {repository} = useRepositoryContext();
+
+  const visibilityQuery = trpcHooks.repositoryPreferences.getBranchVisibility.useQuery({
+    repositoryId: repository._id,
+    branchName
+  });
+
+
+  const preferencesMutation =
+    trpcHooks.repositoryPreferences.setBranchVisibility.useMutation({
+      onMutate: async ({repositoryId, branchName, hidden}) => {
+        await utils.repositoryPreferences.getBranchVisibility.cancel({
+          repositoryId,
+          branchName
+        });
+
+        const previous =
+          utils.repositoryPreferences.getBranchVisibility.getData({
+            repositoryId,
+            branchName
+          });
+
+        utils.repositoryPreferences.getBranchVisibility.setData(
+          {repositoryId, branchName},
+          {
+            hidden
+          }
+        );
+
+        return {previous};
+      },
+
+      onError: (_, variables, context) => {
+        utils.repositoryPreferences.getBranchVisibility.setData(
+          {
+            repositoryId: variables.repositoryId,
+            branchName: variables.branchName
+          },
+          context?.previous
+        );
+      },
+
+      onSettled: (_, __, variables) => {
+        utils.repositoryPreferences.getBranchVisibility.invalidate(variables);
+      }
+    });
+
+  const isHidden = visibilityQuery.data?.hidden;
+
+  const loading = preferencesMutation.isPending || visibilityQuery.isPending || isHidden === undefined;
+
+  return (
+    <ActionIcon
+      color="gray"
+      variant="light"
+      title={
+        isHidden
+          ? "Branch is Hidden ~ cannot be edited through card detail menu."
+          : "Branch is Revealed ~ can be edited through card detail menu."
+      }
+      style={{cursor: "pointer"}}
+      loading={loading}
+      onClick={() => {
+        preferencesMutation.mutate({
+          repositoryId: repository._id,
+          branchName,
+          hidden: !isHidden
+        });
+      }}
+    >
+      {isHidden ? <IconEyeClosed/> : <IconEye/>}
+    </ActionIcon>
+  );
+}
 
 function BranchManagementModalButton() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -21,7 +90,6 @@ function BranchManagementModalButton() {
 
   const {repository} = useRepositoryContext();
 
-  const {updatePreferences, preferences, isFetching} = useRepositoryPreferences();
 
   const branches = Object.keys(repository.branches);
 
@@ -151,44 +219,7 @@ function BranchManagementModalButton() {
                         </ActionIcon>
                       )}
 
-                      {
-                        preferences.hiddenBranches.includes(branchName)
-                          ?
-                          <ActionIcon
-                            color={"gray"}
-                            variant={"light"}
-                            title={"Branch is Hidden ~ cannot be edited through card detail menu."}
-
-                            style={{cursor:"pointer"}}
-
-                            onClick={() => {
-                              const copy = preferences.hiddenBranches.filter(
-                                branch => branch !== branchName
-                              );
-                              updatePreferences({hiddenBranches: copy});
-                            }}
-                            disabled={isFetching}
-                          >
-                            <IconEyeClosed/>
-                          </ActionIcon>
-                          :
-                          <ActionIcon
-                            color={"gray"}
-                            variant={"light"}
-                            title={"Branch is Revealed ~ can be edited through card detail menu."}
-
-                            style={{cursor:"pointer"}}
-
-                            onClick={() => {
-                              const copy = [...preferences.hiddenBranches, branchName];
-                              updatePreferences({hiddenBranches: copy});
-                            }}
-
-                            disabled={isFetching}
-                          >
-                            <IconEye/>
-                          </ActionIcon>
-                      }
+                      <VisibilityEye branchName={branchName}/>
 
 
                       <ActionIcon

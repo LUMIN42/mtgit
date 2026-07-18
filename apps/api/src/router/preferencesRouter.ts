@@ -42,7 +42,8 @@ export const repositoryPreferencesRouter = router({
         return RepositoryPreferencesSchema.parse({}); // defaults
       }
 
-      const dbPreferences = DbRepositoryPreferencesSchema.parse({...preferencesResult,
+      const dbPreferences = DbRepositoryPreferencesSchema.parse({
+        ...preferencesResult,
         _id: preferencesResult._id.toString()
       });
       return dbPreferences.preferences;
@@ -88,5 +89,65 @@ export const repositoryPreferencesRouter = router({
       }
 
       return result;
+    }),
+
+  setBranchVisibility: protectedProcedure
+    .input(
+      z.object({
+        repositoryId: ObjectIdSchema,
+        branchName: z.string(),
+        hidden: z.boolean()
+      })
+    )
+    .mutation(async ({ctx, input: {repositoryId, branchName, hidden}}) => {
+      const userId = ctx.user._id;
+
+      const preferencesCollection = getCollection<DbRepositoryPreferences>("repository_preferences");
+
+      const update = hidden
+        ? {
+          $addToSet: {
+            "preferences.hiddenBranches": branchName
+          }
+        }
+        : {
+          $pull: {
+            "preferences.hiddenBranches": branchName
+          }
+        };
+
+      const result = await preferencesCollection.findOneAndUpdate(
+        {
+          repositoryId,
+          userId
+        },
+        update
+      );
+
+      console.log(result);
+    }),
+
+  getBranchVisibility: protectedProcedure
+    .input(
+      z.object({
+        repositoryId: ObjectIdSchema,
+        branchName: z.string()
+      })
+    )
+    .query(async ({ctx, input: {repositoryId, branchName}}) => {
+      const userId = ctx.user._id;
+
+      const preferencesCollection =
+        getCollection<DbRepositoryPreferences>("repository_preferences");
+
+      const preferences = await preferencesCollection.findOne({
+        repositoryId,
+        userId
+      });
+
+      return {
+        hidden: preferences?.preferences.hiddenBranches.includes(branchName) ?? false
+      };
     })
+
 });
