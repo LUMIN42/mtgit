@@ -63,8 +63,8 @@ export function DeckHistoryOverviewScreen() {
     timestamp: Date;
   }[] = [];
   for (let i = 0; i < branchSnapshots.length - 1; i++) {
-    const olderCards: DeckCardCounts = branchSnapshots[i].cards;
-    const newerVersion: BranchSnapshot = branchSnapshots[i + 1];
+    const olderCards: DeckCardCounts = branchSnapshots[i + 1].cards;
+    const newerVersion: BranchSnapshot = branchSnapshots[i];
 
     const newerCards = newerVersion.cards;
 
