@@ -1,14 +1,28 @@
 {
   "name": "@mtgit/shared",
-  "private": true,
   "version": "0.1.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./deckImport": "./src/deckImport.ts",
-    "./scryfall": "./src/scryfall.ts",
-    "./scryfallSearch": "./src/scryfallSearch.ts",
-    "./repositoryTypes": "./src/repositoryTypes.ts"
+    ".": {
+      "browser": "./dist/index.js",
+      "module": "./dist/index.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./scryfall": {
+      "browser": "./dist/scryfall.js",
+      "module": "./dist/scryfall.js",
+      "import": "./dist/scryfall.js",
+      "require": "./dist/scryfall.js",
+      "types": "./dist/scryfall.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "zod": "^4.1.12"

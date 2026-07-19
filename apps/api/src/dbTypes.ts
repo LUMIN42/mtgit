@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {ObjectIdSchema, RepositoryPreferencesSchema, RepositorySchema} from "@mtgit/shared";
+import {BranchSnapshotSchema, ObjectIdSchema, RepositoryPreferencesSchema, RepositorySchema} from "@mtgit/shared";
 import {ObjectId} from "mongodb";
 
 export const DbRepositoryPreferencesSchema = z.object({
@@ -18,3 +18,13 @@ export const DbRepositorySchema = RepositorySchema
   .extend({_id: MongoObjectIdSchema});
 
 export type DbRepository = z.infer<typeof DbRepositorySchema>;
+
+export const DbBranchSnapshotSchema = z.object({
+  deckId: ObjectIdSchema,
+  branchName: z.string(),
+  snapshot: BranchSnapshotSchema,
+  isDailySnapshot: z.boolean(),
+  day: z.string() // e. g. 2026-07-14
+});
+
+export type DbBranchSnapshot = z.infer<typeof DbBranchSnapshotSchema>;
