@@ -1,10 +1,9 @@
-import {z} from "zod";
 import {
   ScryfallSearchResponseSchema,
   type ScryfallApiOracleCard
-} from "@mtgit/shared/scryfall";
+} from "@mtgit/shared";
 import {useState} from "react";
-import {useInfiniteQuery} from "@tanstack/react-query";
+import {InfiniteData, useInfiniteQuery} from "@tanstack/react-query";
 
 const SCRYFALL_API_BASE_URL = "https://api.scryfall.com";
 
@@ -89,7 +88,13 @@ export function useScryfallCardRetriever() {
   const [queryString, setQueryString] = useState("");
 
 
-  const query = useInfiniteQuery({
+  const query = useInfiniteQuery<
+    ScryfallSearchPageResult,
+    Error,
+    InfiniteData<ScryfallSearchPageResult>,
+    [string, string],
+    string | null
+  >({
     queryKey: ["scryfall-cards", queryString],
 
     queryFn: async ({pageParam}) => {
@@ -98,13 +103,9 @@ export function useScryfallCardRetriever() {
 
     initialPageParam: null,
 
-    getNextPageParam: (lastPage, allPages) => {
+    getNextPageParam: (lastPage) => {
       if (lastPage.ok) {
         return lastPage.nextPageUrl;
-      }
-
-      if (lastPage.ok) {
-        return allPages.length + 1;
       }
       else {
         return undefined;

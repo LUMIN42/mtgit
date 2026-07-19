@@ -4,7 +4,10 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   }
 }
 

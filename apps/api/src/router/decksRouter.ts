@@ -16,8 +16,7 @@ import {
 } from "@mtgit/shared";
 import {ObjectId} from "mongodb";
 import {saveBranchSnapshot} from "../services/saveBranchSnapshot.js";
-import {DbRepository, DbRepositorySchema} from "../dbTypes.js";
-import {DbBranchSnapshot, DbBranchSnapshotSchema} from "@mtgit/frontend/src/types/dbBranchSnapshot.js";
+import {DbRepository, DbRepositorySchema, DbBranchSnapshot, DbBranchSnapshotSchema} from "../dbTypes.js";
 
 
 export const decksRouter = router({

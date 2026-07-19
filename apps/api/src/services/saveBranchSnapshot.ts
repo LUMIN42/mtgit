@@ -1,6 +1,6 @@
 import {DeckCardCounts, Format, isLegalDeck} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
-import {DbBranchSnapshot} from "@mtgit/frontend/src/types/dbBranchSnapshot.js";
+import {DbBranchSnapshot} from "../dbTypes.js";
 import {hydrateDeck} from "./deckHydration.js";
 
 export async function performCleanup() {

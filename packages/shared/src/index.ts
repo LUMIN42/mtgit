@@ -1,7 +1,6 @@
 // simplifies importing from the package
 
 export * from "./scryfall.js";
-export * from "@mtgit/frontend/src/utils/scryfallSearch.ts";
 export * from "./deckTypes.js";
 export * from "./repositoryTypes.js";
 export * from "./dbTypes.js";
