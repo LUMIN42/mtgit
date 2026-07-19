@@ -30,15 +30,21 @@ for (const envPath of envPaths) {
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3001",
+  "https://mtgit.onrender.com"
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow same machine dev origins
+      // allow requests with no origin (like curl or mobile apps)
       if (!origin) {
         return callback(null, true);
       }
 
-      if (origin.startsWith("http://localhost")) {
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
