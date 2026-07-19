@@ -1,4 +1,4 @@
-﻿import {createContext, useContext, useEffect} from "react";
+﻿import {createContext, useContext, useEffect, useMemo} from "react";
 import type {ReactNode} from "react";
 import {RepositoryPreferences, RepositoryPreferencesSchema} from "@mtgit/shared";
 import {trpcHooks} from "../trpcClient.ts";
@@ -33,9 +33,27 @@ export function RepositoryPreferencesProvider({
     }
   );
 
+  const utils = trpcHooks.useUtils();
+
+
   const preferences = RepositoryPreferencesSchema.parse(data ?? {});
 
-  const utils = trpcHooks.useUtils();
+  const branchNames = useMemo(
+    () => Object.keys(repository.branches),
+    [repository.branches]
+  );
+
+  useEffect(() => {
+    for (const branchName of branchNames) {
+      utils.repositoryPreferences.getBranchVisibility.setData(
+        {repositoryId, branchName},
+        {
+          hidden: preferences.hiddenBranches.includes(branchName)
+        }
+      );
+    }
+  }, [preferences.hiddenBranches, branchNames]);
+
 
   useEffect(
     () => {
