@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import {ActionIcon, Button, Grid, Group, Modal, Stack, Text, TextInput} from "@mantine/core";
+import {ActionIcon, Button, Group, Modal, Stack, Text, TextInput} from "@mantine/core";
 import {IconCheck, IconEye, IconEyeClosed, IconPencil, IconTrash, IconX} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
@@ -131,111 +131,114 @@ function BranchManagementModalButton() {
         </Text>}
       >
         <Stack gap={"md"}>
-          <Grid align="center">
-            {branches.map(branchName => {
-              const renameValue = branchRenames[branchName];
+          {branches.map(branchName => {
+            const renameValue = branchRenames[branchName];
 
-              return (
-                <React.Fragment key={branchName}>
-                  <Grid.Col span={8}>
-                    {renameValue !== undefined ? (
-                      <TextInput
-                        value={renameValue}
-                        onChange={({currentTarget}) => {
-                          const value = currentTarget.value;
+            return (
+              <Group key={branchName} justify="space-between" align="center">
+                <div style={{flex: 1}}>
+                  {renameValue !== undefined ? (
+                    <TextInput
+                      style={{
+                        flexGrow: 1
+                      }}
+                      value={renameValue}
+                      onChange={({currentTarget}) => {
+                        const value = currentTarget.value;
 
-                          setBranchRenames(prev => ({
-                            ...prev,
-                            [branchName]: value
-                          }));
-                        }}
-                      />
-                    ) : (
-                      <Text>
-                        {branchName}
-                      </Text>
-                    )}
-                  </Grid.Col>
+                        setBranchRenames(prev => ({
+                          ...prev,
+                          [branchName]: value
+                        }));
+                      }}
+                    />
+                  ) : (
+                    <Text
+                      style={{
+                        flexGrow: 1
+                      }}
+                    >
+                      {branchName}
+                    </Text>
+                  )}
+                </div>
 
-                  <Grid.Col span={4}>
-                    <Group justify="flex-end" gap="xs">
-                      {renameValue !== undefined ? (
-                        <>
-                          <ActionIcon
-                            color="green"
-                            variant="light"
-                            title="Confirm rename"
-                            onClick={
-                              () => {
-                                const repoCopy = structuredClone(repository);
-                                const newName = branchRenames[branchName];
+                {/*Buttons*/}
+                <Group gap="xs" wrap="nowrap" w={"fit-content"}>
+                  {renameValue !== undefined ? (
+                    <>
+                      <ActionIcon
+                        color="green"
+                        variant="light"
+                        title="Confirm rename"
+                        onClick={
+                          () => {
+                            const repoCopy = structuredClone(repository);
+                            const newName = branchRenames[branchName];
 
-                                delete repoCopy.branches[branchName];
-                                repoCopy.branches[newName] = repository.branches[branchName];
+                            delete repoCopy.branches[branchName];
+                            repoCopy.branches[newName] = repository.branches[branchName];
 
-                                setRepositoryValue(repoCopy);
+                            setRepositoryValue(repoCopy);
 
-                                if (branchName === selectedBranchName) {
-                                  setSelectedBranchName(newName); // todo make sure this doesn't lead to void if request rollbacks
-                                }
-
-                                setBranchRenames(renames => {
-                                  const {[branchName]: _, ...rest} = renames;
-
-                                  return rest;
-                                });
-                              }}
-                          >
-                            <IconCheck size={16}/>
-                          </ActionIcon>
-
-                          <ActionIcon
-                            color="gray"
-                            variant="light"
-                            title="Cancel rename"
-                            onClick={() =>
-                              setBranchRenames(prev => {
-                                const next = {...prev};
-                                delete next[branchName];
-                                return next;
-                              })
+                            if (branchName === selectedBranchName) {
+                              setSelectedBranchName(newName);
                             }
-                          >
-                            <IconX size={16}/>
-                          </ActionIcon>
-                        </>
-                      ) : (
-                        <ActionIcon
-                          variant="light"
-                          title="Rename branch"
-                          onClick={() =>
-                            setBranchRenames(prev => ({
-                              ...prev,
-                              [branchName]: branchName
-                            }))
-                          }
-                        >
-                          <IconPencil size={16}/>
-                        </ActionIcon>
-                      )}
 
-                      <VisibilityEye branchName={branchName}/>
+                            setBranchRenames(renames => {
+                              const {[branchName]: _, ...rest} = renames;
 
+                              return rest;
+                            });
+                          }}
+                      >
+                        <IconCheck size={16}/>
+                      </ActionIcon>
 
                       <ActionIcon
-                        color="red"
+                        color="gray"
                         variant="light"
-                        title="Delete branch"
-                        onClick={() => setBranchToDelete(branchName)}
+                        title="Cancel rename"
+                        onClick={() =>
+                          setBranchRenames(prev => {
+                            const next = {...prev};
+                            delete next[branchName];
+                            return next;
+                          })
+                        }
                       >
-                        <IconTrash size={16}/>
+                        <IconX size={16}/>
                       </ActionIcon>
-                    </Group>
-                  </Grid.Col>
-                </React.Fragment>
-              );
-            })}
-          </Grid>
+                    </>
+                  ) : (
+                    <ActionIcon
+                      variant="light"
+                      title="Rename branch"
+                      onClick={() =>
+                        setBranchRenames(prev => ({
+                          ...prev,
+                          [branchName]: branchName
+                        }))
+                      }
+                    >
+                      <IconPencil size={16}/>
+                    </ActionIcon>
+                  )}
+
+                  <VisibilityEye branchName={branchName}/>
+
+                  <ActionIcon
+                    color="red"
+                    variant="light"
+                    title="Delete branch"
+                    onClick={() => setBranchToDelete(branchName)}
+                  >
+                    <IconTrash size={16}/>
+                  </ActionIcon>
+                </Group>
+              </Group>
+            );
+          })}
           <CreateBranchModal/>
         </Stack>
       </Modal>
