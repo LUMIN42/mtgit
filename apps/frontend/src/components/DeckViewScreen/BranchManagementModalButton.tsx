@@ -6,59 +6,15 @@ import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import {CreateBranchModal} from "./CreateBranchModal.tsx";
 import {trpcHooks} from "../../trpcClient.ts";
+import {useRepositoryPreferences} from "../../context/RepositoryPreferencesContext.tsx";
 
 function VisibilityEye({branchName}: {branchName: string}) {
   const utils = trpcHooks.useUtils();
   const {repository} = useRepositoryContext();
 
-  const visibilityQuery = trpcHooks.repositoryPreferences.getBranchVisibility.useQuery({
-    repositoryId: repository._id,
-    branchName
-  });
+  const {preferences, updatePreferences} = useRepositoryPreferences();
 
-
-  const preferencesMutation =
-    trpcHooks.repositoryPreferences.setBranchVisibility.useMutation({
-      onMutate: async ({repositoryId, branchName, hidden}) => {
-        await utils.repositoryPreferences.getBranchVisibility.cancel({
-          repositoryId,
-          branchName
-        });
-
-        const previous =
-          utils.repositoryPreferences.getBranchVisibility.getData({
-            repositoryId,
-            branchName
-          });
-
-        utils.repositoryPreferences.getBranchVisibility.setData(
-          {repositoryId, branchName},
-          {
-            hidden
-          }
-        );
-
-        return {previous};
-      },
-
-      onError: (_, variables, context) => {
-        utils.repositoryPreferences.getBranchVisibility.setData(
-          {
-            repositoryId: variables.repositoryId,
-            branchName: variables.branchName
-          },
-          context?.previous
-        );
-      },
-
-      onSettled: (_, __, variables) => {
-        utils.repositoryPreferences.getBranchVisibility.invalidate(variables);
-      }
-    });
-
-  const isHidden = visibilityQuery.data?.hidden;
-
-  const loading = preferencesMutation.isPending || visibilityQuery.isPending || isHidden === undefined;
+  const isHidden = preferences.hiddenBranches.includes(branchName);
 
   return (
     <ActionIcon
@@ -70,12 +26,10 @@ function VisibilityEye({branchName}: {branchName: string}) {
           : "Branch is Revealed ~ can be edited through card detail menu."
       }
       style={{cursor: "pointer"}}
-      loading={loading}
       onClick={() => {
-        preferencesMutation.mutate({
-          repositoryId: repository._id,
-          branchName,
-          hidden: !isHidden
+        updatePreferences({
+          hiddenBranches: isHidden ? preferences.hiddenBranches.filter(hiddenBranch => hiddenBranch !== branchName)
+            : [...preferences.hiddenBranches, branchName]
         });
       }}
     >

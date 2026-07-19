@@ -1,7 +1,7 @@
 ﻿import {createContext, useContext, useEffect, useMemo} from "react";
 import type {ReactNode} from "react";
 import {RepositoryPreferences, RepositoryPreferencesSchema} from "@mtgit/shared";
-import {trpcHooks} from "../trpcClient.ts";
+import {trpcHooks, trpcRaw} from "../trpcClient.ts";
 import {useRepositoryContext} from "./RepositoryContext.tsx";
 import {useDeckUiContext} from "./DeckUiContext.tsx";
 
@@ -75,17 +75,17 @@ export function RepositoryPreferencesProvider({
   );
 
 
-  const setPreferencesMutation = trpcHooks.repositoryPreferences.set.useMutation({
-    onSuccess: async () => {
-      await utils.repositoryPreferences.get.invalidate();
-    }
-  });
-
   function updatePreferences(newData: Partial<RepositoryPreferences>) {
-    setPreferencesMutation.mutate({
-      preferences: {...preferences, ...newData},
-      repositoryId: repository._id
-    });
+    const newPreferences = {...preferences, ...newData};
+
+    utils.repositoryPreferences.get.setData({repositoryId}, newPreferences);
+
+    trpcRaw.repositoryPreferences.set.mutate(
+      {
+        repositoryId,
+        preferences: newPreferences
+      }
+    );
   }
 
   return (
