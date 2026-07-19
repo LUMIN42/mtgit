@@ -2,6 +2,7 @@ import {CustomAppShell} from "./components/CustomAppShell.tsx";
 import {Routes, Route, Navigate, useNavigate} from "react-router-dom";
 
 import LoginScreen from "./screens/LoginScreen.tsx";
+import RegisterScreen from "./screens/RegisterScreen.tsx";
 import DeckSelectionScreen from "./screens/DeckSelectionScreen.tsx";
 
 import {useAuth} from "./hooks/LoginInfo.ts";
@@ -66,6 +67,15 @@ function App() {
           element={
             <RequireGuest>
               <LoginScreen/>
+            </RequireGuest>
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            <RequireGuest>
+              <RegisterScreen/>
             </RequireGuest>
           }
         />
