@@ -30,10 +30,13 @@ for (const envPath of envPaths) {
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
 
+// Default to same origin for production, localhost for dev
+const defaultBackendUrl = process.env.BACKEND_URL ?? "http://localhost:3001";
+
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3001",
-  "https://mtgit.onrender.com"
+  defaultBackendUrl
 ];
 
 app.use(

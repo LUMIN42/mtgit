@@ -9,5 +9,9 @@ services:
       - key: MONGODB_URI
         scope: build
         sync: false
+      - key: VITE_API_URL
+        value: https://mtgit.onrender.com/trpc
+      - key: BACKEND_URL
+        value: https://mtgit.onrender.com
       - key: PORT
         value: "3000"
