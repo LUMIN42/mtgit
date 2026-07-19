@@ -22,3 +22,5 @@ package-lock.json
 .idea/discord.xml
 *.tsbuildinfo
 .idea/workspace.xml~
+
+packages/shared/src/*.js

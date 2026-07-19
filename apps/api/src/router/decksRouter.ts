@@ -140,8 +140,7 @@ export const decksRouter = router({
       for (const updatedBranchName of updatedBranchNames) {
         const promise = saveBranchSnapshot(updatedRepo._id,
           updatedBranchName,
-          updatedRepo.branches[updatedBranchName],
-          updatedRepo.format);
+          updatedRepo.branches[updatedBranchName]);
         promises.push(promise);
       }
 

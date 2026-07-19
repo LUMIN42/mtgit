@@ -74,7 +74,7 @@ export const deckImportRouter = router({
         }
       );
 
-      await saveBranchSnapshot(deckId, branchName, nextBranchContent, deck.format);
+      await saveBranchSnapshot(deckId, branchName, nextBranchContent);
 
       return nextBranchContent;
     })

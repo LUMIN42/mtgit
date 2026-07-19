@@ -181,3 +181,13 @@ export function allRepositoryOracleIds(repository: Repository) {
       .flatMap((branchValue: DeckCardCounts) => allDeckOracleIds(branchValue))
   );
 }
+
+export function deckCardCount(cardCounts: DeckCardCounts) {
+  return Object.values(cardCounts).reduce(
+    (cum, cur) => cum + Object.values(cur)
+      .reduce(
+        (cum, cur) => cum + cur,
+        0
+      ),
+    0);
+}

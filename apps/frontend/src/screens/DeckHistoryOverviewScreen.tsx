@@ -5,10 +5,15 @@ import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {Divider, Grid, Loader, Title, Text, Stack, Button, Center} from "@mantine/core";
 import {
   allDeckOracleIds,
+  deckCardCount,
+  DeckCardCounts,
+  DeckSectionName,
+  withoutIdenticalParts
+} from "@mtgit/shared";
+import {
   BranchSnapshot,
   BranchSnapshotSchema,
-  DeckCardCounts, DeckSectionName, isLegalDeck,
-  withoutIdenticalParts
+  isLegalDeck
 } from "@mtgit/shared";
 import {z} from "zod";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
@@ -69,6 +74,8 @@ export function DeckHistoryOverviewScreen() {
     const newerCards = newerVersion.cards;
 
     const [before, after] = withoutIdenticalParts(olderCards, newerCards);
+    const isEmpty = (obj: DeckCardCounts) => deckCardCount(obj) === 0;
+    if (isEmpty(before) || isEmpty(after)) continue;
 
     diffs.push({
       before, after, timestamp: newerVersion.timestamp
