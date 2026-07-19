@@ -1,5 +1,5 @@
 import {CustomAppShell} from "./components/CustomAppShell.tsx";
-import {Routes, Route, Navigate} from "react-router-dom";
+import {Routes, Route, Navigate, useNavigate} from "react-router-dom";
 
 import LoginScreen from "./screens/LoginScreen.tsx";
 import DeckSelectionScreen from "./screens/DeckSelectionScreen.tsx";
@@ -14,6 +14,8 @@ import {ScrollToTopButton} from "./components/ScrollToTopButton.tsx";
  * 🧠 Auth gate
  */
 function RequireAuth({children}: {children: JSX.Element}) {
+  const navigate = useNavigate();
+
   const auth = useAuth();
 
   if (auth.isLoading) {
@@ -21,7 +23,7 @@ function RequireAuth({children}: {children: JSX.Element}) {
   }
 
   if (!auth.isAuthenticated) {
-    return <Navigate to="/login" replace/>;
+    return <Navigate to={"/login"}/>;
   }
 
   return children;

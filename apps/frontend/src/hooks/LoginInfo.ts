@@ -5,6 +5,15 @@ export function useAuth() {
     retry: false
   });
 
+  if (meQuery.isError) {
+    return {
+      user: null,
+      isLoading: false,
+      isAuthenticated: false,
+      refetch: meQuery.refetch
+    };
+  }
+
   return {
     user: meQuery.data ?? null,
     isLoading: meQuery.isLoading,
@@ -18,7 +27,7 @@ export function useLogin() {
 
   return trpcHooks.auth.login.useMutation({
     onSuccess: async () => {
-      await utils.auth.me.invalidate();
+      await utils.auth.me.invalidate(undefined);
     }
   });
 }

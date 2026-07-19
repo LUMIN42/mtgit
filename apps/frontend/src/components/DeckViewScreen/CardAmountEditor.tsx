@@ -18,7 +18,7 @@ function CardAmountEditor({
   deckSection = "Main",
   originalCardAmount = undefined
 }: CardAmountEditorProps) {
-  const {repository, setCardAmount, selectedBranchContent} = useRepositoryContext();
+  const {repository, setCardAmount} = useRepositoryContext();
   const setAmountCurried = (newAmount: number) => setCardAmount(oracleId, branchName, newAmount, deckSection);
 
   const correspondingBranchContent = repository.branches?.[branchName] ?? {};

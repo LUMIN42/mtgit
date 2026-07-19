@@ -1,6 +1,15 @@
 import {z} from "zod";
-import {BranchSnapshotSchema, ObjectIdSchema, RepositoryPreferencesSchema, RepositorySchema} from "@mtgit/shared";
+import {BranchSnapshotSchema, ObjectIdSchema, RepositoryPreferencesSchema, RepositorySchema, SessionSchema} from "@mtgit/shared";
 import {ObjectId} from "mongodb";
+
+export const UserSchema = z.object({
+  _id: z.string(),
+  username: z.string(),
+  password_hash: z.string()
+});
+
+export type User = z.infer<typeof UserSchema>;
+export type Session = z.infer<typeof SessionSchema>;
 
 export const DbRepositoryPreferencesSchema = z.object({
   userId: z.uuid(),

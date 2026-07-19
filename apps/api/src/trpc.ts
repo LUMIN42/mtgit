@@ -2,8 +2,10 @@ import {TRPCError, initTRPC} from "@trpc/server";
 import type {Request, Response} from "express";
 
 import {getCollection} from "./db/mongo.js";
-import type {Session, User} from "@mtgit/shared";
-import {SessionSchema, UserSchema} from "@mtgit/shared";
+import type {Session} from "@mtgit/shared";
+import {SessionSchema} from "@mtgit/shared";
+import type {User} from "./dbTypes.js";
+import {UserSchema} from "./dbTypes.js";
 
 export type TrpcContext = {
   req: Request;

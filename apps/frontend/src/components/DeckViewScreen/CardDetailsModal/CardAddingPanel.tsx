@@ -5,6 +5,7 @@ import {Paper, Table} from "@mantine/core";
 import CardAmountEditor from "../CardAmountEditor.tsx";
 import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
 import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
+import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
 
 type CardAddingPanelProps =
@@ -17,6 +18,8 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
   const {tryGetCard} = useScryfallCache();
 
   const {preferences} = useRepositoryPreferences();
+
+  const {selectedBranchName} = useDeckUiContext();
 
   const hydratedCard = tryGetCard(oracle_id);
 
@@ -55,7 +58,7 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
 
         <Table.Tbody>
           {Object.keys(repository.branches)
-            .filter(branchName => !preferences.hiddenBranches.includes(branchName))
+            .filter(branchName => !preferences.hiddenBranches.includes(branchName) || branchName === selectedBranchName)
             .map(branchName => {
               return (
                 <Table.Tr key={branchName}>

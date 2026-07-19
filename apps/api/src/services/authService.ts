@@ -1,6 +1,6 @@
 import {getCollection} from "../db/mongo.js";
-import type {Session, User} from "@mtgit/shared";
-import {UserSchema} from "@mtgit/shared";
+import type {Session, User} from "../dbTypes.js";
+import {UserSchema} from "../dbTypes.js";
 
 import {randomUUID} from "node:crypto";
 import argon2 from "argon2";
@@ -99,4 +99,9 @@ export async function register(username: string, password: string) {
     username,
     ...session
   };
+}
+
+export async function invalidateSession(sessionId: string) {
+  const sessionsCollection = getCollection<Session>("sessions");
+  await sessionsCollection.deleteOne({_id: sessionId});
 }

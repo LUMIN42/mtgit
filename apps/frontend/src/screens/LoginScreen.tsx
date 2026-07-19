@@ -1,12 +1,9 @@
 import React, {useState} from "react";
-import {Box, Button, Paper, PasswordInput, Stack, Text, TextInput, Title} from "@mantine/core";
+import {Anchor, Box, Button, Paper, PasswordInput, Stack, TextInput, Title} from "@mantine/core";
 import {useLogin} from "../hooks/LoginInfo.ts";
+import {Link} from "react-router-dom";
 
-function LoginScreen(props: {
-  onLogin?: (data: {username: string, password: string}) => void;
-  loading?: boolean;
-  error?: string | null;
-}) {
+function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -48,16 +45,14 @@ function LoginScreen(props: {
             onChange={e => setPassword(e.currentTarget.value)}
           />
 
-          {props.error && (
-            <Text size="sm" c="red">
-              {props.error}
-            </Text>
-          )}
+          <Anchor component={Link} to={"/register"}>
+            Register
+          </Anchor>
 
           <Button
             fullWidth
             onClick={handleSubmit}
-            loading={props.loading}
+            loading={loginMutation.isPending}
             disabled={!username || !password}
           >
             Sign in

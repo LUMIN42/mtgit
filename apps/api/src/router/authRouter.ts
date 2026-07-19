@@ -1,7 +1,11 @@
 import {z} from "zod";
 
 import {protectedProcedure, publicProcedure, router} from "../trpc.js";
-import {authService, register} from "../services/authService.js";
+import {authService, invalidateSession, register} from "../services/authService.js";
+import {TRPCError} from "@trpc/server";
+import {getCollection} from "../db/mongo.js";
+import {FrontendUserDataSchema, Session, SessionSchema} from "@mtgit/shared";
+import {User} from "../dbTypes.js";
 
 export const SESSION_COOKIE_NAME = "mtgit_session";
 
@@ -54,12 +58,46 @@ export const authRouter = router({
       return session;
     }),
 
-  me: protectedProcedure.query(({ctx}) => {
-    return {
-      sessionId: ctx.session._id,
-      userId: ctx.user._id,
-      username: ctx.user.username,
-      expiresAt: ctx.session.validity_ends
-    };
-  })
+  me: publicProcedure.query(async ({ctx}) => {
+    const sessionId = ctx.req.cookies?.[SESSION_COOKIE_NAME];
+
+    if (!sessionId) {
+      return null;
+    }
+
+    const sessionsCollection = getCollection<Session>("sessions");
+    const rawSession = await sessionsCollection.findOne({
+      _id: sessionId,
+      validity_ends: {$gt: new Date()}
+    });
+
+    if (!rawSession) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Session not found or expired."
+      });
+    }
+
+    const session = SessionSchema.parse(rawSession);
+
+    const userCollection = getCollection<User>("users");
+
+    // todo handle deleted users
+    const userRaw = await userCollection.findOne({_id: session.user_id});
+    return FrontendUserDataSchema.parse(userRaw);
+  }),
+
+  logout: protectedProcedure
+    .mutation(async ({ctx}) => {
+      await invalidateSession(ctx.session._id);
+
+      ctx.res.clearCookie(SESSION_COOKIE_NAME, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/"
+      });
+
+      return {success: true};
+    })
 });

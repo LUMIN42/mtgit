@@ -2,19 +2,40 @@ import type {ReactNode} from "react";
 import {Text, Button, Group, Menu, Paper} from "@mantine/core";
 import {useAuth} from "../hooks/LoginInfo.ts";
 import {useNavigate} from "react-router-dom";
+import {trpcHooks} from "../trpcClient.ts";
 
 export function CustomAppShell({children}: {children: ReactNode}) {
   const auth = useAuth();
   const navigate = useNavigate();
 
+  const utils = trpcHooks.useUtils();
+  const logoutMutation = trpcHooks.auth.logout.useMutation(
+    {
+      onSuccess: async () => {
+        await utils.auth.me.invalidate();
+        navigate("/");
+      }
+    }
+  );
+
   return (
     <>
-      <Paper withBorder>
+      <Paper
+        mb={"xs"}
+        radius={0}
+        style={{
+          background: "linear-gradient(0deg, #fdc, #fec)",
+          // boxShadow: "0 0px 10px rgba(0, 0, 0, 0.25)",
+          zIndex: 2
+        }}
+      >
         <Group px="md" justify="space-between">
 
           {/* LEFT SIDE */}
           <Group gap="sm">
-            <Paper>(App logo)</Paper>
+            <Text fw={"bolder"}>
+              MTGit
+            </Text>
 
             <Button
               variant="subtle"
@@ -36,7 +57,12 @@ export function CustomAppShell({children}: {children: ReactNode}) {
               Logged in as: {auth?.user?.username ?? "Guest"}
             </Text>
 
-            <Button variant="filled" color="red">
+            <Button
+              loading={logoutMutation.isPending}
+              variant="subtle"
+              color="red"
+              onClick={() => logoutMutation.mutate()}
+            >
               Logout
             </Button>
           </Group>

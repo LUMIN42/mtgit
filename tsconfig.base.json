@@ -7,7 +7,11 @@
     "strictNullChecks": true,
     "target": "ESNext",
     "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "paths": {
+      "@mtgit/shared": ["packages/shared/src"]
+    }
   }
 }
 
