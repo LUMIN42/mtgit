@@ -1,5 +1,5 @@
 import {Grid, Stack} from "@mantine/core";
-import style from "../../assets/index.module.css";
+import style from "@styles/index.module.css";
 import {Card} from "./Card.tsx";
 import type {DeckSectionName, OracleCard, TaggedCard} from "@mtgit/shared";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";

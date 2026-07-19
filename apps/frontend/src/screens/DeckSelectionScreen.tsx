@@ -1,23 +1,23 @@
 import React, {useState} from "react";
 import {
-  Card,
   Stack,
   Title,
   Text,
   Loader,
   Center,
-  Anchor,
   Group,
   Button,
   Modal,
   TextInput,
-  Select
+  Select, Paper
 } from "@mantine/core";
 import {trpcHooks} from "../trpcClient.ts";
 import {useNavigate} from "react-router-dom";
 import {Format, formats} from "@mtgit/shared";
 
-function DeckOverviewScreen() {
+import classes from "@styles/index.module.css";
+
+function DeckSelectionScreen() {
   const navigate = useNavigate();
 
   const utils = trpcHooks.useUtils();
@@ -67,36 +67,31 @@ function DeckOverviewScreen() {
   return (
     <>
       <Stack p="md" gap="sm">
-        <Group>
-          <Title order={2}>Your decks</Title>
+        <Title order={2}>Your decks</Title>
 
-          <Button onClick={() => setOpened(true)}>
-            New Deck
-          </Button>
-        </Group>
+        <Button onClick={() => setOpened(true)} w={"fit-content"}>
+          Create New Deck
+        </Button>
 
-        {decks.map(deck => (
-          <Card
-            key={deck._id}
-            shadow="sm"
-            padding="md"
-            radius="md"
-            withBorder
-            style={{cursor: "pointer"}}
-            onClick={() => navigate(`/app/deck/${deck._id}`)}
-          >
-            <Anchor
-              component="button"
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+          gap: "1rem"
+        }}>
+          {
+            decks.map(deck => <Paper
               onClick={() => navigate(`/app/deck/${deck._id}`)}
+              withBorder
+              p={"md"}
+              ta={"center"}
+              shadow="sm"
+              key={deck._id}
+              className={classes.hoverRiseShadow}
             >
               {deck.name}
-            </Anchor>
-
-            <Text size="xs" c="dimmed">
-              Click to open
-            </Text>
-          </Card>
-        ))}
+            </Paper>)
+          }
+        </div>
       </Stack>
 
       {/* CREATE DECK MODAL */}
@@ -142,4 +137,4 @@ function DeckOverviewScreen() {
   );
 }
 
-export default DeckOverviewScreen;
+export default DeckSelectionScreen;

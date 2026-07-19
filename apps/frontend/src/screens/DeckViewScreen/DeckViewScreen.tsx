@@ -2,7 +2,7 @@ import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {ActionIcon, Button, Grid, Group, Stack, TextInput, Title, Tooltip} from "@mantine/core";
 
-import style from "../../assets/index.module.css";
+import style from "@styles/index.module.css";
 import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
 import {DeckDisplayModeSection} from "../../components/DeckViewScreen/DeckViewingOptions/DeckDisplayModeSection.tsx";
 

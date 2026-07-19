@@ -2,7 +2,7 @@ import {CustomAppShell} from "./components/CustomAppShell.tsx";
 import {Routes, Route, Navigate} from "react-router-dom";
 
 import LoginScreen from "./screens/LoginScreen.tsx";
-import DeckOverviewScreen from "./screens/DeckOverviewScreen.tsx";
+import DeckSelectionScreen from "./screens/DeckSelectionScreen.tsx";
 
 import {useAuth} from "./hooks/LoginInfo.ts";
 import {JSX} from "react";
@@ -75,7 +75,7 @@ function App() {
             <RequireAuth>
               <AppLayout>
                 <Routes>
-                  <Route path="decks" element={<DeckOverviewScreen/>}/>
+                  <Route path="decks" element={<DeckSelectionScreen/>}/>
                   <Route path="deck/:deckId/*" element={<DeckViewScreenWrapper/>}/>
                   <Route path="*" element={<Navigate to="decks" replace/>}/>
                 </Routes>
