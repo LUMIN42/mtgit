@@ -1,6 +1,6 @@
 import {DeckSectionName, HydratedDeck, HydratedDeckSection, TaggedDeckCard} from "@mtgit/shared";
-import {CardGroupingMode, CardSortMode, SECTION_SCREEN_SORT_ORDER} from "../types/grouping.ts";
-import {handleSection, sortGroupHeadings} from "./cardGrouping.ts";
+import {CardGroupingMode, CardSortMode, SECTION_SCREEN_SORT_ORDER} from "../types/grouping.js";
+import {handleSection, sortGroupHeadings} from "./cardGrouping.js";
 
 
 export type DeckComparisonGroup = {

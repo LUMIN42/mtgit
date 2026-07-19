@@ -1,7 +1,7 @@
 import {Box, Button, Group, Modal, Text, Textarea} from "@mantine/core";
 import {useState} from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
-import {trpc} from "../../trpcClient.ts";
+import {trpcHooks} from "../../trpcClient.ts";
 import {useDeckDataContext} from "../../context/DeckDataContext.tsx";
 import {isEmpty} from "@mtgit/shared";
 import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
@@ -11,15 +11,17 @@ export function DeckImportModalButton() {
   const {selectedBranchName} = useDeckUiContext();
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   const [importDeckText, setImportDeckText] = useState("");
+
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const utils = trpc.useUtils();
+  const utils = trpcHooks.useUtils();
 
   const {deck} = useDeckDataContext();
 
-  const importDeckMutation = trpc.deckImport.parse.useMutation({
+  const importDeckMutation = trpcHooks.deckImport.parse.useMutation({
     onSuccess: async () => {
       await utils.decks.get.invalidate();
     }
@@ -126,6 +128,7 @@ export function DeckImportModalButton() {
               variant="default"
               onClick={() => handleConfirmImport("merge")}
               loading={isImporting}
+              disabled={importDeckText.length === 0}
             >
               Add to deck
             </Button>
@@ -133,6 +136,7 @@ export function DeckImportModalButton() {
             <Button
               onClick={() => handleConfirmImport("overwrite")}
               loading={isImporting}
+              disabled={importDeckText.length === 0}
             >
               Replace deck
             </Button>

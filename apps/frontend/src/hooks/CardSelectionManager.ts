@@ -2,8 +2,8 @@ import {useState} from "react";
 import {CardLocation} from "../types/addressedCards.ts";
 
 function equalRecords(
-  a: Record<string, string>,
-  b: Record<string, string>
+  a: Record<string, string | null>,
+  b: Record<string, string | null>
 ): boolean {
   for (const key in a) {
     if (a[key] !== b[key]) return false;
@@ -14,10 +14,10 @@ function equalRecords(
 export function useCardSelectionManager() {
   const [locations, setLocations] = useState<CardLocation[]>([]);
 
-  const [index, setIndex] = useState<number | null>();
+  const [index, setIndex] = useState<number | null>(null);
 
-  const hasNextLeft = index > 0;
-  const hasNextRight = index < locations.length - 1;
+  const hasNextLeft = index === null ? false : index > 0;
+  const hasNextRight = index === null ? false : index < locations.length - 1;
 
   const oracleId = index != null ? locations[index]?.oracle_id : null;
 
@@ -50,11 +50,11 @@ export function useCardSelectionManager() {
   }
 
   function moveLeft() {
-    setIndex(index - 1);
+    setIndex(index! - 1);
   }
 
   function moveRight() {
-    setIndex(index + 1);
+    setIndex(index! + 1);
   }
 
   return {

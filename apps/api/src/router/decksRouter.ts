@@ -2,9 +2,21 @@ import {z} from "zod";
 import {protectedProcedure, router} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
 import {TRPCError} from "@trpc/server";
+import {isDeepStrictEqual} from "node:util";
 
-import {createEmptyRepositoryTemplate, ObjectIdSchema, RepositorySchema, FormatSchema} from "@mtgit/shared";
+
+import {
+  BranchSnapshot,
+  BranchSnapshotSchema,
+  createEmptyRepositoryTemplate,
+  FormatSchema,
+  ObjectIdSchema,
+  Repository,
+  RepositorySchema
+} from "@mtgit/shared";
 import {ObjectId} from "mongodb";
+import {saveBranchSnapshot} from "../services/saveBranchSnapshot.js";
+import {DbRepository, DbRepositorySchema, DbBranchSnapshot, DbBranchSnapshotSchema} from "../dbTypes.js";
 
 
 export const decksRouter = router({
@@ -15,10 +27,13 @@ export const decksRouter = router({
       })
     )
     .query(async ({input, ctx}) => {
-      const decksCollection = getCollection("repositories");
+      const decksCollection = getCollection<DbRepository>("repositories");
 
       const rawDeck = await decksCollection
-        .findOne({_id: new ObjectId(input.deckId)});
+        .findOne({
+          _id: new ObjectId(input.deckId),
+          owner_id: ctx.user._id
+        });
 
       if (rawDeck === null) {
         throw new TRPCError({
@@ -26,18 +41,10 @@ export const decksRouter = router({
         });
       }
 
-      const deck = RepositorySchema.parse({
+      return RepositorySchema.parse({
         ...rawDeck,
         _id: rawDeck._id.toString()
       });
-
-      if (deck.owner_id !== ctx.user._id) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED"
-        });
-      }
-
-      return deck;
     }),
 
   create: protectedProcedure
@@ -78,18 +85,20 @@ export const decksRouter = router({
     .mutation(async ({ctx, input}) => {
       const reposCollection = getCollection("repositories");
 
-      const currentDeck = await reposCollection.findOne({
+      const originalRepoResult = await reposCollection.findOne({
         _id: new ObjectId(input._id)
       });
 
-      if (!currentDeck) {
+      if (!originalRepoResult) {
         throw new TRPCError({
           code: "NOT_FOUND"
         });
       }
 
+      const originalRepo: Repository = RepositorySchema.parse(originalRepoResult);
+
       // ownership check
-      if (currentDeck.owner_id !== ctx.user._id) {
+      if (originalRepo.owner_id !== ctx.user._id) {
         throw new TRPCError({
           code: "UNAUTHORIZED"
         });
@@ -97,15 +106,15 @@ export const decksRouter = router({
 
       // update document
       await reposCollection.replaceOne(
-        {_id: currentDeck._id},
+        {_id: originalRepoResult._id},
         {
           ...input,
-          _id: currentDeck._id
+          _id: originalRepoResult._id
         }
       );
 
       const updated = await reposCollection.findOne({
-        _id: currentDeck._id
+        _id: originalRepoResult._id
       });
 
       if (!updated) {
@@ -114,10 +123,33 @@ export const decksRouter = router({
         });
       }
 
-      return RepositorySchema.parse({
+      const updatedRepo = RepositorySchema.parse({
         ...updated,
         _id: updated._id.toString()
       });
+
+      const updatedBranchNames = Object.entries(updatedRepo.branches)
+        .filter(([branchName, branchContent]) =>
+          !isDeepStrictEqual(branchContent, originalRepo.branches[branchName])
+        )
+        .map(([branchName]) => branchName);
+
+
+      // todo double-check that it is fully parallelized
+      const promises: Promise<void>[] = [];
+      for (const updatedBranchName of updatedBranchNames) {
+        const promise = saveBranchSnapshot(updatedRepo._id,
+          updatedBranchName,
+          updatedRepo.branches[updatedBranchName],
+          updatedRepo.format);
+        promises.push(promise);
+      }
+
+      for (const promise of promises) {
+        await promise;
+      }
+
+      return updatedRepo;
     }),
 
   setTag: protectedProcedure
@@ -168,5 +200,56 @@ export const decksRouter = router({
       }
 
       return {success: true};
+    }),
+
+  branchHistory: protectedProcedure
+    .input(z.object({
+      repositoryId: ObjectIdSchema,
+      branchName: z.string()
+      // todo batching
+    }))
+    .output(
+      z.array(BranchSnapshotSchema)
+    )
+    .query(async ({ctx, input: {branchName, repositoryId}}) => {
+      const reposCollection = getCollection("repositories");
+
+      const repoFilter: Partial<DbRepository> =
+        {
+          _id: new ObjectId(repositoryId),
+          owner_id: ctx.user._id
+        };
+
+      const rawRepo = await reposCollection.findOne(repoFilter);
+
+      if (!rawRepo) {
+        throw new TRPCError({code: "NOT_FOUND", message: "Repo not found."});
+      }
+
+      const repo = DbRepositorySchema.parse(rawRepo);
+
+      if (!(branchName in repo.branches)) {
+        throw new TRPCError({code: "NOT_FOUND", message: "Branch not found."});
+      }
+
+      const snapshotsCollection = getCollection<DbBranchSnapshot>("branch_snapshots");
+
+
+      const rawSnapshots = await snapshotsCollection
+        .find({
+          branchName,
+          deckId: repositoryId
+        })
+        .sort({"snapshot.timestamp": -1})
+        .toArray();
+
+      const snapshotsSchema = z.array(DbBranchSnapshotSchema);
+
+      const dbSnapshots = snapshotsSchema.parse(rawSnapshots);
+      const snapshots: BranchSnapshot[] = dbSnapshots.map(
+        snapshot => snapshot.snapshot
+      );
+
+      return snapshots;
     })
 });

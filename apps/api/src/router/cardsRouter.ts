@@ -1,17 +1,10 @@
 import {z} from "zod";
 import {router, publicProcedure} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
-import {ScryfallOracleCard, ScryfallOracleCardSchema} from "@mtgit/shared";
+import {OracleCardSchema} from "@mtgit/shared";
 import {TRPCError} from "@trpc/server";
 
 const CardIdSchema = z.string();
-
-/**
- * Internal helper: normalize + validate Mongo document
- */
-function parseCard(raw: unknown): ScryfallOracleCard {
-  return ScryfallOracleCardSchema.parse(raw);
-}
 
 export const cardRouter = router({
   /**
@@ -37,7 +30,7 @@ export const cardRouter = router({
         });
       }
 
-      return parseCard(raw);
+      return OracleCardSchema.parse(raw);
     }),
 
   /**
@@ -52,13 +45,17 @@ export const cardRouter = router({
     .query(async ({input}) => {
       const cardsCollection = getCollection("scryfall_cards");
 
+      const cardIds = [...new Set(input.cardIds)];
+
+      console.log(cardIds);
+
       const rawCards = await cardsCollection
         .find({
-          oracle_id: {$in: input.cardIds}
+          oracle_id: {$in: cardIds}
         })
         .toArray();
 
-      const cards = rawCards.map(parseCard);
+      const cards = z.array(OracleCardSchema).parse(rawCards);
 
 
       return Object.fromEntries(

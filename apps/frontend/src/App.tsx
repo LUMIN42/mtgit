@@ -8,6 +8,7 @@ import {useAuth} from "./hooks/LoginInfo.ts";
 import {JSX} from "react";
 import React from "react";
 import {DeckViewScreenWrapper} from "./screens/DeckViewScreen/DeckViewScreenWrapper.tsx";
+import {ScrollToTopButton} from "./components/ScrollToTopButton.tsx";
 
 /**
  * 🧠 Auth gate
@@ -55,36 +56,40 @@ function AppLayout({children}: {children: React.ReactNode}) {
  */
 function App() {
   return (
-    <Routes>
-      {/* 🔓 LOGIN (ONLY when NOT authenticated) */}
-      <Route
-        path="/login"
-        element={
-          <RequireGuest>
-            <LoginScreen/>
-          </RequireGuest>
-        }
-      />
+    <>
+      <Routes>
+        {/* 🔓 LOGIN (ONLY when NOT authenticated) */}
+        <Route
+          path="/login"
+          element={
+            <RequireGuest>
+              <LoginScreen/>
+            </RequireGuest>
+          }
+        />
 
-      {/* 🔐 APP (ONLY when authenticated) */}
-      <Route
-        path="/app/*"
-        element={
-          <RequireAuth>
-            <AppLayout>
-              <Routes>
-                <Route path="decks" element={<DeckOverviewScreen/>}/>
-                <Route path="deck/:deckId" element={<DeckViewScreenWrapper />} />
-                <Route path="*" element={<Navigate to="decks" replace/>}/>
-              </Routes>
-            </AppLayout>
-          </RequireAuth>
-        }
-      />
+        {/* 🔐 APP (ONLY when authenticated) */}
+        <Route
+          path="/app/*"
+          element={
+            <RequireAuth>
+              <AppLayout>
+                <Routes>
+                  <Route path="decks" element={<DeckOverviewScreen/>}/>
+                  <Route path="deck/:deckId/*" element={<DeckViewScreenWrapper/>}/>
+                  <Route path="*" element={<Navigate to="decks" replace/>}/>
+                </Routes>
+              </AppLayout>
+            </RequireAuth>
+          }
+        />
 
-      {/* fallback */}
-      <Route path="*" element={<Navigate to="/app/decks" replace/>}/>
-    </Routes>
+        {/* fallback */}
+        <Route path="*" element={<Navigate to="/app/decks" replace/>}/>
+      </Routes>
+      <ScrollToTopButton/>
+    </>
+
   );
 }
 

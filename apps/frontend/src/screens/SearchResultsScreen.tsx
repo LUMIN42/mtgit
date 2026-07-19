@@ -1,13 +1,16 @@
 import {useEffect, useMemo, useState} from "react";
-import {Alert, Button, Center, Loader, Stack, Text} from "@mantine/core";
-import {useQuery} from "@tanstack/react-query";
+import {ActionIcon, Button, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
-import {searchScryfallCards} from "@mtgit/shared/scryfallSearch";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
+import {IconCheck, IconPencil} from "@tabler/icons-react";
+import {Link} from "react-router-dom";
+import {useWindowScroll} from "@mantine/hooks";
+import {useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
 
 // todo make sure to handle tags properly here
 function hasScryfallOrderClause(query: string): boolean {
@@ -25,12 +28,19 @@ function hasScryfallOrderClause(query: string): boolean {
 
 export function SearchResultsScreen() {
 
-  const uiContext = useDeckUiContext();
+  const {searchQuery, setSearchQuery} = useDeckUiContext();
 
-  const submittedSearch = uiContext.submittedSearch;
-  const [searchInput, setSearchInput] = useState(submittedSearch);
+  const {preferences: {defaultQuery}, updatePreferences} = useRepositoryPreferences();
 
-  const {fetchMissingCards} = useScryfallCache();
+  const [defaultQueryField, setDefaultQueryField] = useState(defaultQuery);
+
+  const [editingDefaultQuery, setEditingDefaultQuery] = useState<boolean>(false);
+
+  useEffect(() => {
+    handleSearchSubmit();
+  }, []);
+
+  const {fetchMissingCards, tryGetCard} = useScryfallCache();
 
   const {
     oracleId,
@@ -42,120 +52,144 @@ export function SearchResultsScreen() {
     hasNextRight
   } = useCardSelectionManager();
 
+  const [scroll] = useWindowScroll();
 
   useEffect(() => {
-    setSearchInput(submittedSearch);
-  }, [submittedSearch]);
+    const threshold = window.innerHeight;
 
-  const usesServerOrder = hasScryfallOrderClause(submittedSearch);
+    const atBottom =
+      window.scrollY + window.innerHeight >=
+      document.documentElement.scrollHeight - threshold;
 
-  const searchQuery = useQuery({
-    queryKey: ["scryfall", "search", submittedSearch, 50, 0],
-    enabled: submittedSearch.trim().length > 0,
-    queryFn: async () => searchScryfallCards(submittedSearch, 50, 0)
-  });
+    if (atBottom) {
+      fetchNextPage();
+    }
+  }, [scroll.y]);
 
-  const cards = useMemo(
-    () => (searchQuery.data?.ok ? searchQuery.data.cards : []),
-    [searchQuery.data]
-  );
+  const {fetchNextPage, ids: cardIds, setQuery, isFetchingNextPage, isLoading} = useScryfallCardRetriever();
+
+  const redownloadedCards = cardIds
+    .map(tryGetCard).filter(card => card !== undefined);
 
   useEffect(() => {
-    fetchMissingCards(cards.map(card => card.oracle_id));
-  }, [cards]);
+    fetchMissingCards(cardIds);
+  }, [cardIds]);
 
-  const showInitialLoading = searchQuery.isPending && submittedSearch.trim().length > 0 && cards.length === 0;
-  const showRefreshLoading = searchQuery.isFetching && !showInitialLoading;
 
   const cardsWithTags = useMemo(
-    () => cards.map(card => ({...card, count: 1, tags: []})),
-    [cards]
-  );
-
-  const resultsGroup = useMemo(
-    () => ({heading: "Results", cards: cardsWithTags}),
-    [cardsWithTags]
+    () => redownloadedCards.map(card => ({...card, tags: []})),
+    [redownloadedCards]
   );
 
 
-  const handleSearchSubmit = (value: string) => {
-    const trimmedValue = value.trim();
-    uiContext.setSubmittedSearch(trimmedValue);
+  const handleSearchSubmit = () => {
+    setQuery(`${defaultQueryField} ${searchQuery}`);
+
+    if (defaultQueryField) {
+      updatePreferences({
+        defaultQuery: defaultQueryField
+      });
+    }
   };
 
   return (
-    <Stack gap={"md"}>
-      <Button onClick={() => uiContext.setIsSearching(false)} w={"fit-content"}>
+    <Stack gap={"md"} maw={1200} mx={"auto"}>
+      <Button component={Link} to={".."} w={"fit-content"}>
         Return to Deck View
+        {/*  todo rewrite as a chevron */}
       </Button>
       <SearchBox
-        value={searchInput}
-        onChange={setSearchInput}
+        value={searchQuery}
+        onChange={text => setSearchQuery(text)}
         onSearch={handleSearchSubmit}
-        loading={searchQuery.isFetching}
+        placeholder={"Scryfall Search Query"}
+        label={"Scryfall Search Query"}
       />
+
+      <Group w="100%" gap={"xs"} align="center" c={editingDefaultQuery ? "inherit" : "dimmed"}>
+        <Text size={editingDefaultQuery ? "md" : "xs"} fw={500}>
+          Default Query:
+        </Text>
+
+        {editingDefaultQuery ? (
+          <>
+            <TextInput
+              value={defaultQueryField}
+              onInput={event => setDefaultQueryField(event.currentTarget.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  handleSearchSubmit();
+                }
+              }}
+              style={{flex: 1}}
+            />
+
+            <ActionIcon
+              variant={"gradient"}
+              onClick={() => {
+                handleSearchSubmit();
+                setEditingDefaultQuery(false);
+              }}
+            >
+              <IconCheck/>
+            </ActionIcon>
+          </>
+        ) : (
+          <>
+            <Text size="xs">
+              {defaultQueryField}
+            </Text>
+            <ActionIcon
+              variant="white"
+              size="xs"
+              onClick={() => setEditingDefaultQuery(true)}
+            >
+              <IconPencil size={14} color="var(--mantine-color-dimmed)"/>
+            </ActionIcon>
+          </>
+        )}
+      </Group>
+
 
       <Text size="sm" c="dimmed">
-        {submittedSearch
-          ? `Showing ${cards.length} result(s) for: ${submittedSearch}`
+        {searchQuery
+          ? `Showing ${cardIds.length} result(s) for: ${searchQuery}`
           : "Type a search and press Enter or click the search icon."}
       </Text>
-
-      {showRefreshLoading ? (
-        <Center>
-          <Loader type="dots" size="sm"/>
-        </Center>
-      ) : null}
-
-      {showInitialLoading ? (
-        <Center py="xl">
-          <Stack gap="xs" align="center">
-            <Loader type="dots" size="lg"/>
-            <Text size="sm" c="dimmed">Loading cards from Scryfall...</Text>
-          </Stack>
-        </Center>
-      ) : null}
-
-      {searchQuery.isError ? (
-        <Alert color="red" title="Search failed">
-          {searchQuery.error instanceof Error ? searchQuery.error.message : "Unknown error"}
-        </Alert>
-      ) : null}
-
-      {searchQuery.data && !searchQuery.data.ok ? (
-        <Alert color="red" title="Search failed">
-          {searchQuery.data.message}
-        </Alert>
-      ) : null}
-
-      {!showInitialLoading ? (
-        <CardGroup
-          group={resultsGroup}
-          sectionName="Main"
-          groupKey={submittedSearch || "search-results"}
-          quicklyAdjustable
-          onCardSelect={location => {
-            openModal(
-              // location set to empty as it is not needed
-              cards.map(card => {
-                  return {oracle_id: card.oracle_id, location: {}};
-                }
-              ),
-              {oracle_id: location.oracle_id, location: {}}
-            );
-          }}
-        />
-      ) : null}
-
-      <CardDetailsModal onClose={closeModal}
-        oracle_id={oracleId}
-        onPrev={moveLeft}
-        onNext={moveRight}
-        hasPrevious={hasNextLeft}
-        hasNext={hasNextRight}
+      <CardGroup
+        cards={cardsWithTags}
+        sectionName="Main"
+        quicklyAdjustable
+        onCardSelect={location => {
+          openModal(
+            // location set to empty, since there is only one location, thus is not needed
+            cardIds
+              .map(oracle_id => {
+                return {oracle_id, location: {}};
+              }),
+            {oracle_id: location.oracle_id, location: {}}
+          );
+        }}
+        minWidth={190}
       />
+
+      {
+        (isFetchingNextPage || isLoading) &&
+          <Loader size={"xl"} mx={"auto"} w={"100%"}/>
+      }
+
+
+      {
+        oracleId &&
+        (<CardDetailsModal onClose={closeModal}
+          oracle_id={oracleId}
+          onPrev={moveLeft}
+          onNext={moveRight}
+          hasPrevious={hasNextLeft}
+          hasNext={hasNextRight}
+        />)
+      }
+
     </Stack>
   );
 }
-
-export default SearchResultsScreen;

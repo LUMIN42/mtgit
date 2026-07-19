@@ -29,14 +29,14 @@ interface DeckUIContextValue {
   isSearching: boolean;
   setIsSearching: Dispatch<SetStateAction<boolean>>;
 
-  submittedSearch: string;
-  setSubmittedSearch: Dispatch<SetStateAction<string>>;
+  searchQuery: string;
+  setSearchQuery: Dispatch<SetStateAction<string>>;
 
   comparisonBranchName: string | null;
   setComparisonBranchName: Dispatch<SetStateAction<string | null>>;
 
-  selectedBranchName: string | null;
-  setSelectedBranchName: (n: string | null) => void;
+  selectedBranchName: string;
+  setSelectedBranchName: (n: string) => void;
 
   diffsOnly: boolean;
   setDiffsOnly: (value: boolean) => void;
@@ -60,13 +60,13 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [sortingMode, setSortingMode] = useState<CardSortMode>("name");
   const [cardFilterQuery, setCardFilterQuery] = useState("");
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [submittedSearch, setSubmittedSearch] = useState("");
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
-  const [selectedBranchName, setSelectedBranchName] = useState(null);
+  const [selectedBranchName, setSelectedBranchName] = useState<string>(null!);
   const [diffsOnly, setDiffsOnly] = useState<boolean>(true);
 
-  const [deckExportModalOpen, setDeckExportModalOpen] = useState<boolean>();
+  const [deckExportModalOpen, setDeckExportModalOpen] = useState<boolean>(false);
 
   // todo set to mtga if deck format is standard
   const [deckExportMode, setDeckExportMode] = useState<DeckExportMode>("MTGO");
@@ -87,8 +87,8 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
     setHoveredCardImageUrl,
     isSearching,
     setIsSearching,
-    submittedSearch,
-    setSubmittedSearch,
+    searchQuery,
+    setSearchQuery,
     comparisonBranchName,
     setComparisonBranchName,
 

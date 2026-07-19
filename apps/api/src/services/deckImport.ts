@@ -1,7 +1,7 @@
 import {DeckCardCounts, DeckSectionName} from "@mtgit/shared";
 import {SECTION_BY_LABEL} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
-import {ScryfallOracleCardSchema} from "@mtgit/shared";
+import {OracleCardSchema} from "@mtgit/shared";
 import {z} from "zod";
 
 /**
@@ -51,8 +51,8 @@ function parseDeckEntry(rawLine: string, deckSection: DeckSectionName): ParsedDe
   const tags = match[3]
     ? match[3]
       .trim()
-      .split(/\s+/)
-      .map(tag => tag.replace(/^#+/, "").trim())
+      .split(/#/)
+      .map(tag => tag.trim())
       .filter(Boolean)
     : [];
 
@@ -73,7 +73,7 @@ async function lookupOracleId(name: string): Promise<string | null> {
     .toArray();
 
   for (const raw of cards) {
-    const parsed = ScryfallOracleCardSchema.safeParse(raw);
+    const parsed = OracleCardSchema.safeParse(raw);
     if (parsed.success) {
       return parsed.data.oracle_id ?? parsed.data.id;
     }
@@ -93,6 +93,8 @@ export async function parseDeckImportText(
   const sectionHeaderPattern =
     /^(Commander|Main|Sideboard|Considering)\s*:?$/i;
 
+  const hasExplicitSectionNames = lines.some(line => sectionHeaderPattern.test(line));
+
   let currentSection: DeckSectionName = "Main";
 
   const oracleTagsMap: Record<string, string[]> = {};
@@ -103,7 +105,7 @@ export async function parseDeckImportText(
     const line = rawLine.trim();
 
     // comments
-    if (!line || line.startsWith("//") || line.startsWith("#")) {
+    if ((!line && hasExplicitSectionNames) || line.startsWith("//") || line.startsWith("#")) {
       continue;
     }
 
@@ -118,9 +120,13 @@ export async function parseDeckImportText(
 
 
     if (!parsingResult) {
-      continue;
+      if (line.trim() === "" && !hasExplicitSectionNames) {
+        currentSection = "Commander";
+      }
     }
-    parsedLines.push(parsingResult);
+    else {
+      parsedLines.push(parsingResult);
+    }
   }
 
   const allNames = parsedLines.map(line => line.cardName);
@@ -153,15 +159,24 @@ export async function parseDeckImportText(
     (card.normalized_name).map(nName => [nName, card.oracle_id])
   );
 
-  const cardsLookup = Object.fromEntries(cardsEntries);
+  const cardsLookup: Record<string, string> = Object.fromEntries(cardsEntries);
 
-  const resultingDeck:DeckCardCounts = {};
+  const resultingDeck: DeckCardCounts = {};
 
   for (const parsedLine of parsedLines) {
-    resultingDeck[parsedLine.deckSection] ??= {};
+    const oracleId = cardsLookup[parsedLine.cardName];
 
-    resultingDeck[parsedLine.deckSection]![cardsLookup[parsedLine.cardName]] ??= 0;
-    resultingDeck[parsedLine.deckSection]![cardsLookup[parsedLine.cardName]] += parsedLine.quantity;
+    if (!oracleId) {
+      console.error(`can't find card with name ${parsedLine.cardName}`);
+      continue;
+      // todo show which cards were not found
+    }
+
+    resultingDeck[parsedLine.deckSection] ??= {};
+    resultingDeck[parsedLine.deckSection]![oracleId] ??= 0;
+    resultingDeck[parsedLine.deckSection]![oracleId] += parsedLine.quantity;
+
+    oracleTagsMap[oracleId] = parsedLine.tags;
   }
 
 

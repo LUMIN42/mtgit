@@ -1,6 +1,6 @@
 import {DeckSectionName} from "@mtgit/shared";
 
-export type Location = Record<string, string>;
+export type Location = Record<string, string | null>;
 
 
 export type CardLocation = {
@@ -9,8 +9,8 @@ export type CardLocation = {
 };
 
 export type DeckGroupLocation = {
-  section: DeckSectionName;
-  group: string;
+  section: DeckSectionName | null;
+  group: string | null;
 };
 
 export type DeckGroupCardLocation = {

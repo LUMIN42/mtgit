@@ -4,7 +4,6 @@ import {FieldSection} from "./FieldSection.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 
 
-
 export function DeckGroupingSection() {
   const {groupingMode, setGroupingMode} = useDeckUiContext();
 
@@ -20,7 +19,8 @@ export function DeckGroupingSection() {
           {label: "None", value: "none"},
           {label: "Type", value: "type"},
           {label: "Mana Value", value: "manaValue"},
-          {label: "Tags", value: "tags"}
+          {label: "Tags", value: "tags"},
+          {label: "Color", value: "color"}
         ]}
       />
     </FieldSection>

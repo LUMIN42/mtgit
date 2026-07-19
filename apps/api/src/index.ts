@@ -1,14 +1,17 @@
 import path from "node:path";
+import {fileURLToPath} from "node:url";
 
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import * as trpcExpress from "@trpc/server/adapters/express";
 
-import {appRouter} from "./router/index.js";
+import {appRouter} from "./router/routerDispatcher.js";
 import {initMongo} from "./db/mongo.js";
 
 import cookieParser from "cookie-parser";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 
 const envPaths = [
@@ -62,6 +65,18 @@ app.use(
     createContext: ({req, res}) => ({req, res})
   })
 );
+
+
+const frontendDist = path.resolve(
+  __dirname,
+  "../../frontend/dist"
+);
+
+app.use(express.static(frontendDist));
+
+app.get(/.*/, (_, res) => {
+  res.sendFile(path.join(frontendDist, "index.html"));
+});
 
 async function main(): Promise<void> {
   await initMongo();

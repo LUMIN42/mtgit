@@ -12,13 +12,13 @@ import App from "./App.tsx";
 import {createTheme, MantineProvider} from "@mantine/core";
 import {ScryfallCacheProvider} from "./context/ScryfallCacheContext.tsx";
 
-import {trpc, trpcLinks} from "./trpcClient";
+import {trpcHooks, trpcLinks} from "./trpcClient";
 import {Notifications} from "@mantine/notifications";
-import '@mantine/notifications/styles.css';
+import "@mantine/notifications/styles.css";
 
 const queryClient = new QueryClient();
 
-const trpcClient = trpc.createClient({
+const trpcClient = trpcHooks.createClient({
   links: trpcLinks
 });
 
@@ -27,6 +27,13 @@ const theme = createTheme({
     Button: {
       defaultProps: {
         variant: "gradient"
+      },
+      styles: {
+        root: {
+          "&:disabled": {
+            cursor: "wait"
+          }
+        }
       }
     }
   },
@@ -42,17 +49,16 @@ const theme = createTheme({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <trpcHooks.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <MantineProvider theme={theme}>
             <ScryfallCacheProvider>
               <Notifications/>
-
               <App/>
             </ScryfallCacheProvider>
           </MantineProvider>
         </QueryClientProvider>
-      </trpc.Provider>
+      </trpcHooks.Provider>
     </BrowserRouter>
   </StrictMode>
 );

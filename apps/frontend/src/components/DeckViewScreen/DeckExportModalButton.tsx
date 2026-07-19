@@ -39,12 +39,11 @@ function DeckExportModalButton() {
             flexDirection: "column",
             height: "fit-content",
             width: "fit-content",
-            overflow: "hidden"
+            flex: "none"
           },
           body: {
             flex: 1,
-            display: "flex",
-            overflow: "hidden"
+            display: "flex"
           }
         }}
       >
@@ -54,6 +53,7 @@ function DeckExportModalButton() {
           style={{flex: 1}}
           align="stretch"
           w="100%"
+          p={"xs"}
         >
           {/* LEFT SIDE */}
           <Stack style={{flex: 2, height: "100%"}}>
@@ -70,8 +70,8 @@ function DeckExportModalButton() {
               w={"fit-content"}
             >
               <ScrollArea h={"100%"} pr={"lg"} pl={"sm"}>
-                <Text size="xs" style={{whiteSpace: "pre-wrap", textWrap:"nowrap"}}>
-                  {exportText}
+                <Text size="xs" style={{whiteSpace: "pre-wrap", textWrap: "nowrap"}}>
+                  {exportText || "(deck is empty, nothing to export)"}
                 </Text>
               </ScrollArea>
             </Paper>
@@ -80,7 +80,7 @@ function DeckExportModalButton() {
           {/* RIGHT SIDE */}
           <Stack
             style={{flex: 1, minHeight: 0}}
-            p="md"
+            // p="md"
             justify="space-between"
           >
             <Radio.Group
@@ -101,7 +101,20 @@ function DeckExportModalButton() {
 
             <Stack>
               <Button
-                variant="light"
+                fullWidth
+                onClick={async () => {
+                  await navigator.clipboard.writeText(exportText);
+
+                  notifications.show({
+                    title: "Copied",
+                    message: "Deck exported to clipboard"
+                  });
+                }}
+              >
+                Copy to Clipboard
+              </Button>
+              <Button
+                variant="subtle"
                 fullWidth
                 onClick={() => {
                   const blob = new Blob([exportText], {
@@ -119,20 +132,6 @@ function DeckExportModalButton() {
                 }}
               >
                 Download for MTGO
-              </Button>
-
-              <Button
-                fullWidth
-                onClick={async () => {
-                  await navigator.clipboard.writeText(exportText);
-
-                  notifications.show({
-                    title: "Copied",
-                    message: "Deck exported to clipboard"
-                  });
-                }}
-              >
-                Copy to Clipboard
               </Button>
             </Stack>
           </Stack>

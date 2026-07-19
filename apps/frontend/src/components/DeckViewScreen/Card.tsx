@@ -1,21 +1,24 @@
-import {Box, Text, Image, Overlay, Paper} from "@mantine/core";
-import {type DeckCard, DeckSectionName, getCardImageUrl, isDeckCard} from "@mtgit/shared";
-import type {ScryfallOracleCard} from "@mtgit/shared/scryfall";
+import {Box, Text, Image, Overlay, Paper, ActionIcon, Tooltip} from "@mantine/core";
+import {type DeckCard, DeckSectionName, getCardImageUrls, isDeckCard} from "@mtgit/shared";
+import type {OracleCard} from "@mtgit/shared/scryfall";
 import {CardDisplayMode, useDeckUiContext} from "../../context/DeckUiContext.tsx";
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import CardAmountEditor from "./CardAmountEditor.tsx";
+import {IconRefresh} from "@tabler/icons-react";
 
 
 type CardProps = {
-  card: ScryfallOracleCard | DeckCard;
+  card: OracleCard | DeckCard;
   displayMode?: CardDisplayMode;
   className?: string;
-  onSelect?: (card: ScryfallOracleCard) => void;
+  onSelect?: (card: OracleCard) => void;
   onHoverImage?: (imageUrl: string | null) => void;
   quicklyAdjustable?: boolean;
   actualCardCount?: number;
-  deckSection?:DeckSectionName;
+  deckSection?: DeckSectionName;
+  shellStyle?: React.CSSProperties;
+  imageStyle?: React.CSSProperties;
 };
 
 
@@ -26,22 +29,41 @@ export function Card({
   onSelect,
   onHoverImage,
   quicklyAdjustable = false,
-  deckSection = "Main"
+  deckSection = "Main",
+  shellStyle = {},
+  imageStyle = {}
 }: CardProps) {
-  const imageUrl = getCardImageUrl(card);
+  const imageUrls = getCardImageUrls(card);
   const {selectedBranchContent} = useRepositoryContext();
   const {selectedBranchName} = useDeckUiContext();
 
+  const [currentFaceImageUrl, setCurrentFaceImageUrl] = useState<string>(imageUrls[0]);
+
+  const outdatedState = !imageUrls.includes(currentFaceImageUrl);
+
+  useEffect(() => {
+    if (!currentFaceImageUrl || outdatedState) {
+      setCurrentFaceImageUrl(imageUrls[0]);
+    }
+  }, [imageUrls]);
+
+  function nextImage() {
+    const currentIndex = imageUrls.indexOf(currentFaceImageUrl);
+
+    const nextIndex = (currentIndex + 1) % imageUrls.length;
+
+    setCurrentFaceImageUrl(imageUrls[nextIndex]);
+  }
+
 
   const cardAmount: number | undefined = isDeckCard(card) ? card.count : undefined;
-
 
 
   if (displayMode === "Text") {
     return (
       <Box
         className={className}
-        onMouseEnter={() => onHoverImage?.(imageUrl)}
+        onMouseEnter={() => onHoverImage?.(currentFaceImageUrl)}
         onClick={() => onSelect?.(card)}
         style={onSelect ? {cursor: "pointer"} : undefined}
       >
@@ -50,25 +72,60 @@ export function Card({
     );
   }
 
-  if (!imageUrl) {
+  if (!currentFaceImageUrl) {
     return null;
   }
 
   return (
-    <Box style={{position: "relative", width: "100%"}}>
+    <Box style={{position: "relative", width: "100%", ...shellStyle}}>
       <Overlay color="black" opacity={1} zIndex={0} style={{backgroundColor: "black"}}/>
 
-      <Image
-        src={imageUrl}
-        alt={card.name}
-        width="100%"
-        onClick={() => onSelect?.(card)}
-        pos="relative"
-        style={{
-          cursor: onSelect ? "pointer" : undefined
-        }}
-        radius="lg"
-      />
+      {
+        imageUrls.length > 1 &&
+        (
+          <Tooltip label="Flip card" openDelay={1000}>
+            <ActionIcon
+              pos="absolute"
+              top="11.5%"
+              left="8%"
+              style={{
+                zIndex: 4,
+                backgroundColor: "#b80c"
+              }}
+              variant="filled"
+              color="orange"
+              radius="xl"
+              size="lg"
+              onClick={nextImage}
+              aria-label="Flip card"
+            >
+              <IconRefresh size={18}/>
+            </ActionIcon>
+          </Tooltip>)
+      }
+
+
+      {
+        imageUrls.map(
+          (imageUrl, imageIdx) => <Image
+            src={imageUrl}
+            key={imageUrl}
+            alt={card.name}
+            width="100%"
+            onClick={() => onSelect?.(card)}
+            pos="relative"
+            style={{
+              cursor: onSelect ? "pointer" : undefined,
+              display: (imageUrl === currentFaceImageUrl
+                || outdatedState && imageIdx === 0
+              ) ? "block" : "none",
+              objectFit: "contain",
+              ...imageStyle
+            }}
+            radius="lg"
+          />
+        )
+      }
 
       {/*// display card amount if there's more than one of it*/}
       {(isDeckCard(card) && cardAmount !== 1 && !quicklyAdjustable) && (
@@ -98,7 +155,10 @@ export function Card({
           right="8%"
           top="11%"
         >
-          <CardAmountEditor originalCardAmount={cardAmount} branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={deckSection}/>
+          <CardAmountEditor originalCardAmount={cardAmount}
+            branchName={selectedBranchName!}
+            oracleId={card.oracle_id}
+            deckSection={deckSection}/>
         </Paper>
       )}
 

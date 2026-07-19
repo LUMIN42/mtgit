@@ -1,7 +1,7 @@
-import {trpc} from "../trpcClient.ts";
+import {trpcHooks} from "../trpcClient.ts";
 
 export function useAuth() {
-  const meQuery = trpc.auth.me.useQuery(undefined, {
+  const meQuery = trpcHooks.auth.me.useQuery(undefined, {
     retry: false
   });
 
@@ -14,9 +14,9 @@ export function useAuth() {
 }
 
 export function useLogin() {
-  const utils = trpc.useUtils();
+  const utils = trpcHooks.useUtils();
 
-  return trpc.auth.login.useMutation({
+  return trpcHooks.auth.login.useMutation({
     onSuccess: async () => {
       await utils.auth.me.invalidate();
     }

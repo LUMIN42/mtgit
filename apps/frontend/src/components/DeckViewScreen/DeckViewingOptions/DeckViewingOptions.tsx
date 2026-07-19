@@ -5,11 +5,12 @@ import {FilterSection} from "./FilterSection.tsx";
 import {DeckGroupingSection} from "./DeckGroupingSection.tsx";
 import {SortingSelector} from "./SortingSelector.tsx";
 import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
-import {DeckOverview} from "./DeckCardCount.tsx";
+import {DeckOverview} from "./DeckOverview.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 import BranchSelector from "./BranchSelector.tsx";
 import {FieldSection} from "./FieldSection.tsx";
+import {DeckPieChart} from "../CardDetailsModal/DeckPieChart.tsx";
 
 export function DeckViewingOptions({horizontal = false, comparison = false}: {
   horizontal?: boolean;
@@ -98,10 +99,15 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
               {commonContent}
 
               {
-                groupingMode === "manaValue" ?
-                  <ManaCurvePlot/> :
-                  <DeckSectionsToc/>
+                groupingMode === "manaValue" &&
+                  <ManaCurvePlot/>
               }
+
+              {
+                (groupingMode !== "manaValue" && groupingMode !== "none") &&
+                  <DeckPieChart/>
+              }
+
             </Stack>
           </Paper>
 

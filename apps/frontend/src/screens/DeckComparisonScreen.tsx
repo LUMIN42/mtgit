@@ -11,6 +11,7 @@ import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {DeckGroupLocation} from "../types/addressedCards.ts";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
+import {useElementSize, useViewportSize} from "@mantine/hooks";
 
 export function DeckComparisonScreen() {
   const {
@@ -23,13 +24,18 @@ export function DeckComparisonScreen() {
   } = useDeckUiContext();
   const {repository, selectedBranchContent, setBranchValue} = useRepositoryContext();
 
-  const comparisonBranchContent = repository.branches[comparisonBranchName];
+  const comparisonBranchContent = repository!.branches[comparisonBranchName!];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
 
+  const {width: viewportWidth} = useViewportSize();
+
+  const {width, ref} = useElementSize();
+  const widthOfOneHalf = Math.floor((viewportWidth ?? width) / 11 * 5);
+
 
   const originalLeftCardCounts = useMemo(
-    () => selectedBranchContent,
+    () => selectedBranchContent!,
     [map, selectedBranchName, comparisonBranchName]
   );
 
@@ -46,7 +52,7 @@ export function DeckComparisonScreen() {
 
   const originalLeftDeck = usePartiallyReconstructedDeck(
     leftCardCounts,
-    repository.tags
+    repository!.tags
   );
   const filteredLeftDeck = filterDeckByScryfallQuery(
     originalLeftDeck,
@@ -55,7 +61,7 @@ export function DeckComparisonScreen() {
 
   const originalRightDeck = usePartiallyReconstructedDeck(
     rightCardCounts,
-    repository.tags
+    repository!.tags
   );
   const filteredRightDeck = filterDeckByScryfallQuery(
     originalRightDeck,
@@ -139,11 +145,11 @@ export function DeckComparisonScreen() {
   );
 
   function selectChanged() {
-    setBranchValue(selectedBranchName, originalRightCardCounts);
+    setBranchValue(selectedBranchName!, originalRightCardCounts);
   }
 
   function selectOriginal() {
-    setBranchValue(selectedBranchName, originalLeftCardCounts);
+    setBranchValue(selectedBranchName!, originalLeftCardCounts);
   }
 
   const {
@@ -170,7 +176,7 @@ export function DeckComparisonScreen() {
 
 
   return (
-    <Stack>
+    <Stack ref={ref}>
       <DeckViewingOptions horizontal={true} comparison={true}/>
       <Grid columns={11}>
         <Grid.Col span={5} style={{display: "flex", justifyContent: "flex-end"}}>
@@ -187,6 +193,7 @@ export function DeckComparisonScreen() {
 
 
         {
+          widthOfOneHalf &&
           comparison.map(
             section => (
               <React.Fragment key={`${section.sectionName}-fragment`}>
@@ -204,12 +211,14 @@ export function DeckComparisonScreen() {
 
                         <Grid.Col span={5} key={`${section.sectionName}-${group.heading}-left`}>
                           <Stack pos={"relative"} h={"100%"}>
-                            <CardGroup group={{heading: group.heading, cards: group.leftCards}}
+                            <CardGroup
+                              cards={group.leftCards}
                               sectionName={section.sectionName}
                               groupKey={group.heading}
                               sticky={true}
                               rightToLeft={true}
                               quicklyAdjustable={true}
+                              widthOverride={widthOfOneHalf}
                               onCardSelect={location => {
                                 const loc: ComparisonCardLocation = {
                                   oracle_id: location.oracle_id,
@@ -234,11 +243,13 @@ export function DeckComparisonScreen() {
 
                         <Grid.Col pos={"relative"} span={5} key={`${section.sectionName}-${group.heading}-right`}>
                           <Stack pos={"relative"} h={"100%"}>
-                            <CardGroup group={{heading: group.heading, cards: group.rightCards}}
+                            <CardGroup
+                              cards={group.rightCards}
                               sectionName={section.sectionName}
                               groupKey={group.heading}
                               sticky={true}
                               quicklyAdjustable={true}
+                              widthOverride={widthOfOneHalf}
 
                               onCardSelect={location => {
                                 const loc: ComparisonCardLocation = {
@@ -265,12 +276,18 @@ export function DeckComparisonScreen() {
         }
       </Grid>
 
-      <CardDetailsModal onClose={closeModal}
-        oracle_id={oracleId}
-        onPrev={moveLeft}
-        onNext={moveRight}
-        hasPrevious={hasNextLeft}
-        hasNext={hasNextRight}/>
+      {
+        oracleId &&
+        (
+          <CardDetailsModal onClose={closeModal}
+            oracle_id={oracleId}
+            onPrev={moveLeft}
+            onNext={moveRight}
+            hasPrevious={hasNextLeft}
+            hasNext={hasNextRight}/>
+        )
+      }
+
     </Stack>
 
   );

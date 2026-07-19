@@ -1,16 +1,17 @@
-import {ActionIcon, Divider, Group, Modal, Text, Image, Stack, Title} from "@mantine/core";
+import {ActionIcon, Divider, Group, Modal, Text, Stack, Title} from "@mantine/core";
 import {IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
-import {DeckSectionName, getCardImageUrl, type ScryfallOracleCard} from "@mtgit/shared";
+import {DeckSectionName, type OracleCard} from "@mtgit/shared";
 import {useEffect, useRef} from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
 import CardAddingPanel from "./CardAddingPanel.tsx";
 import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
+import {Card} from "../Card.tsx";
 
 interface CardDetailsModalProps {
   onClose: () => void;
 
-  oracle_id: string | null;
+  oracle_id: string;
   onPrev: () => void;
   onNext: () => void;
 
@@ -31,12 +32,11 @@ export function CardDetailsModal({
 
   const cache = useScryfallCache();
 
-  const card: ScryfallOracleCard | undefined = cache.tryGetCard(oracle_id);
+  const card: OracleCard | undefined = cache.tryGetCard(oracle_id);
 
   const {repository} = useRepositoryContext();
 
-  const tagSearchInputRef = useRef(undefined);
-  const cardImageUrl = card ? getCardImageUrl(card) : undefined;
+  const tagSearchInputRef = useRef<HTMLInputElement>(null);
 
   const currentTags = repository.tags[oracle_id] ?? [];
 
@@ -101,12 +101,17 @@ export function CardDetailsModal({
             <Stack style={{maxWidth: 420}} h={"100%"} align={"center"} gap={"xl"}>
 
               <Stack h={"60%"} align={"center"} gap={0}>
-                {cardImageUrl ? (
-                  <Image src={cardImageUrl} /*maw={"400px"}*/
-                    alt={card.name}
-                    h={"90%"}
-                    style={{borderRadius: 8}}
-                    fit={"contain"}
+                {card ? (
+                  <Card card={card}
+                    shellStyle={{
+                      height: "90%",
+                      borderRadius: 8,
+                      objectFit: "contain"
+                    }}
+                    imageStyle={{
+                      height: "100%",
+                      width: "auto"
+                    }}
                   />
                 ) : (
                   <Text c="dimmed">No card image available.</Text>
@@ -116,7 +121,6 @@ export function CardDetailsModal({
                   {card?.prices?.usd && `${card?.prices?.usd} $`}
                 </Text>
               </Stack>
-
 
 
               <CardAddingPanel oracle_id={oracle_id}/>

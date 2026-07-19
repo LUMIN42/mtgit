@@ -11,20 +11,43 @@ import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useDeckDataContext} from "../context/DeckDataContext.tsx";
 import {cardCount} from "@mtgit/shared";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
+import {useElementSize, useViewportSize} from "@mantine/hooks";
+import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
 export function GroupedCards() {
   const {groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
 
+  const {width, ref} = useElementSize();
+
+  const {width: viewportWidth} = useViewportSize();
+
   const {filteredDeck} = useDeckDataContext();
 
-  const groups = performGrouping(
+  const {preferences} = useRepositoryPreferences();
+
+  let groups = performGrouping(
     filteredDeck,
     groupingMode,
     sortingMode
   );
+  if (groupingMode === "color") {
+    const allGroups = groups.flatMap(
+      section => section.groups
+    );
+
+    const consumedColors = allGroups
+      .filter(group => !group.heading.includes("Producer") && group.heading)
+      .map(group => group.heading);
+
+    groups = groups.map(section => {
+      return {
+        name: section.name,
+        groups: section.groups.filter(group => consumedColors.some(color => group.heading.includes(color)))
+      };
+    });
+  }
 
   const sections = groups;
-  console.log("groups:", sections);
   const pageCards = flatten(groups);
 
 
@@ -42,7 +65,7 @@ export function GroupedCards() {
   return (
     <>
       {/* Render all deck sections */}
-      <Stack gap="md">
+      <Stack gap="md" ref={ref}>
         {sections.map(section => {
           // Skip empty sections
           // if (section.cards.length === 0) {
@@ -58,10 +81,10 @@ export function GroupedCards() {
                 size="lg"
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading
-                data-card-count={cardCount(filteredDeck[section.name])}
+                data-card-count={cardCount(filteredDeck[section.name]!)}
                 data-heading-text={section.name}
               >
-                {section.name} ({cardCount(filteredDeck[section.name])})
+                {section.name} ({cardCount(filteredDeck[section.name]!)})
               </Title>
 
               {/* Render groups within the section */}
@@ -91,13 +114,15 @@ export function GroupedCards() {
 
                     {/* Render cards in the group */}
                     <CardGroup
-                      group={group}
-                      groupKey={`${section.name}-${group.heading}`}
+                      cards={group.cards}
+                      groupKey={`${group.heading}`}
                       onCardSelect={cardLoc => {
                         openModal(pageCards, cardLoc);
                       }}
                       onCardHover={setHoveredCardImageUrl}
                       sectionName={section.name}
+                      widthOverride={width ?? viewportWidth * 0.8}
+                      quicklyAdjustable={preferences.quickEdit}
                     />
                   </Stack>
                 );
@@ -108,13 +133,17 @@ export function GroupedCards() {
       </Stack>
 
       {/* Card details modal for selected card, supports navigation */}
-      <CardDetailsModal oracle_id={oracleId}
-        onClose={() => closeModal()}
-        onPrev={moveLeft}
-        onNext={moveRight}
-        hasPrevious={hasNextLeft}
-        hasNext={hasNextRight}
-      />
+      {oracleId
+        &&
+        (<CardDetailsModal oracle_id={oracleId}
+          onClose={() => closeModal()}
+          onPrev={moveLeft}
+          onNext={moveRight}
+          hasPrevious={hasNextLeft}
+          hasNext={hasNextRight}
+        />)
+      }
+
     </>
   );
 }

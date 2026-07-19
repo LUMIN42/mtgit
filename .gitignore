@@ -21,3 +21,4 @@ apps/api/.env*
 package-lock.json
 .idea/discord.xml
 *.tsbuildinfo
+.idea/workspace.xml~

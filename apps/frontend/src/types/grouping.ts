@@ -1,6 +1,6 @@
 import {DeckSectionName} from "@mtgit/shared";
 
-export type CardGroupingMode = "none" | "type" | "manaValue" | "tags";
+export type CardGroupingMode = "none" | "type" | "manaValue" | "tags" | "color";
 
 export type CardSortMode = "name" | "priceUsd" | "manaValue" | "rarity";
 

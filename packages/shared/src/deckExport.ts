@@ -1,11 +1,11 @@
-import {DeckCard, HydratedDeck, HydratedDeckSection} from "./deckTypes";
-import {DECK_SECTION_NAMES, DeckSectionName} from "./repositoryTypes";
+import {DeckCard, HydratedDeck, HydratedDeckSection} from "./deckTypes.js";
+import {DECK_SECTION_NAMES, DeckSectionName} from "./repositoryTypes.js";
 
 export const DECK_EXPORT_MODES = ["Arena", "MTGO"] as const;
 export type DeckExportMode = (typeof DECK_EXPORT_MODES)[number];
 
 const ARENA_DECK_SECTION_TRANSLATOR = {
-  ...Object.fromEntries(DECK_SECTION_NAMES.map(name => [name, name])),
+  ...Object.fromEntries(DECK_SECTION_NAMES.map((name: DeckSectionName) => [name, name])), 
   Main: "Deck"
 } as Record<DeckSectionName, string>;
 
@@ -46,7 +46,7 @@ function toMtgoText(deck: HydratedDeck) {
 ${output}
 
 SIDEBOARD:
-${serializeSectionContent(deck.Sideboard)}
+${serializeSectionContent(deck.Sideboard!)}
 `.trim();
   }
 
@@ -54,7 +54,7 @@ ${serializeSectionContent(deck.Sideboard)}
     output = `
 ${output}
 
-${serializeSectionContent(deck.Commander)}
+${serializeSectionContent(deck.Commander!)}
 `.trim();
   }
 

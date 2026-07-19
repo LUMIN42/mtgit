@@ -1,4 +1,3 @@
-
 print("Starting batched normalized_name migration...");
 
 const batchSize = 1000;
@@ -13,7 +12,8 @@ function isBadCard(card) {
 
     return (
         layout === "art_series" ||
-        setType === "memorabilia"
+        setType === "memorabilia" ||
+        layout === "token"
     );
 }
 
@@ -88,7 +88,7 @@ function computeNormalized(card) {
 // ----------------------------
 const cursor = db.scryfall_cards.find(
     {},
-    { name: 1, card_faces: 1, layout: 1, set_type: 1 }
+    {name: 1, card_faces: 1, layout: 1, set_type: 1}
 );
 
 cursor.forEach(card => {
@@ -103,7 +103,7 @@ cursor.forEach(card => {
 
     ops.push({
         updateOne: {
-            filter: { _id: card._id },
+            filter: {_id: card._id},
             update: {
                 $set: {
                     normalized_name: normalized
@@ -113,7 +113,7 @@ cursor.forEach(card => {
     });
 
     if (ops.length >= batchSize) {
-        db.scryfall_cards.bulkWrite(ops, { ordered: false });
+        db.scryfall_cards.bulkWrite(ops, {ordered: false});
         print(`✓ processed ${ops.length} updates`);
         ops = [];
     }
@@ -121,7 +121,7 @@ cursor.forEach(card => {
 
 // flush remaining
 if (ops.length > 0) {
-    db.scryfall_cards.bulkWrite(ops, { ordered: false });
+    db.scryfall_cards.bulkWrite(ops, {ordered: false});
     print(`✓ processed final ${ops.length} updates`);
 }
 

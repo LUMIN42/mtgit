@@ -35,13 +35,18 @@ function getCookieValue(cookieHeader: string | undefined, name: string): string 
   return undefined;
 }
 
-const t = initTRPC.context<TrpcContext>().create();
+const t = initTRPC.context<TrpcContext>().create({});
 
 const loggerMiddleware = t.middleware(async ({path, type, next}) => {
   const start = Date.now();
 
   try {
+    console.log("waiting for the next");
     const result = await next();
+    if (!result.ok) {
+      console.error(result.error);
+      return result;
+    }
     console.log(`➡️ ${type} ${path} (${Date.now() - start}ms)`);
     return result;
   }
@@ -104,5 +109,5 @@ const authMiddleware = t.middleware(async ({ctx, next}) => {
 
 export const router = t.router;
 export const publicProcedure = t.procedure.use(loggerMiddleware);
-export const protectedProcedure = t.procedure.use(authMiddleware).use(loggerMiddleware);
+export const protectedProcedure = t.procedure.use(loggerMiddleware).use(authMiddleware);
 

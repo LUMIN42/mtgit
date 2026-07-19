@@ -27,7 +27,10 @@ export const OracleIdSchema = z.string();
 
 export const CardCountsSchema = z.record(OracleIdSchema, z.number().int().positive());
 
-export const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
+export const ObjectIdSchema = z.preprocess(
+  value => String(value),
+  z.string().regex(/^[0-9a-fA-F]{24}$/)
+);
 
 /**
  * Each deck section must contain optional sections,
@@ -35,18 +38,9 @@ export const ObjectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
  */
 export const DeckCardCountsSchema = z
   .partialRecord(
-    OptionalDeckSectionNameSchema.or(z.literal("Main")),
+    DeckSectionNameSchema,
     CardCountsSchema
-  )
-  .superRefine((val, ctx) => {
-    if (!val.Main) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Main is required",
-        path: ["Main"]
-      });
-    }
-  });
+  );
 
 export function emptyDeckCardCounts(format?: Format): DeckCardCounts {
   if (format === undefined) {
@@ -64,6 +58,7 @@ export const BranchesSchema = z.record(
   DeckCardCountsSchema
 );
 
+
 export const RepositorySchema = z.object({
   name: z.string(),
   _id: ObjectIdSchema,
@@ -71,6 +66,7 @@ export const RepositorySchema = z.object({
   tags: TagsMapSchema,
   branches: BranchesSchema,
   format: FormatSchema
+  // colorIdentity: ColorIdentitySchema.default(null)
 });
 
 export type OracleId = z.infer<typeof OracleIdSchema>;
@@ -104,10 +100,6 @@ export function allDeckOracleIds(cardCounts: DeckCardCounts) {
   }
 
   return [...result.keys()];
-}
-
-export function copyDeckCardAmounts(cardAmounts: DeckCardCounts) {
-  return {...cardAmounts};
 }
 
 export function mergeTagsMaps(currentTags: TagsMap, importedTags: TagsMap): TagsMap {
@@ -181,4 +173,11 @@ export function withoutIdenticalParts(
   }
 
   return [result1, result2];
+}
+
+export function allRepositoryOracleIds(repository: Repository) {
+  return new Set(
+    Object.values(repository.branches)
+      .flatMap((branchValue: DeckCardCounts) => allDeckOracleIds(branchValue))
+  );
 }

@@ -18,12 +18,17 @@ function CardAmountEditor({
   deckSection = "Main",
   originalCardAmount = undefined
 }: CardAmountEditorProps) {
-  const repositoryContext = useRepositoryContext();
-  const repository = repositoryContext.repository;
-  const setCardAmount = (newAmount: number) => repositoryContext
-    .setCardAmount(oracleId, branchName, newAmount, deckSection);
+  const {repository, setCardAmount, selectedBranchContent} = useRepositoryContext();
+  const setAmountCurried = (newAmount: number) => setCardAmount(oracleId, branchName, newAmount, deckSection);
 
-  const currentCount = repository.branches?.[branchName]?.[deckSection]?.[oracleId] ?? 0;
+  const correspondingBranchContent = repository.branches?.[branchName] ?? {};
+
+  const currentCount = correspondingBranchContent[deckSection]?.[oracleId] ?? 0;
+
+  const totalCountInDeck = Object.values(correspondingBranchContent).reduce(
+    (cum, cur) => cum + (cur[oracleId] ?? 0),
+    0
+  );
 
 
   const {tryGetCard} = useScryfallCache();
@@ -37,16 +42,19 @@ function CardAmountEditor({
         <Checkbox
           checked={currentCount >= 1}
           onChange={event =>
-            setCardAmount(event.currentTarget.checked ? 1 : 0)
+            setAmountCurried(event.currentTarget.checked ? 1 : 0)
           }
+
+          disabled={totalCountInDeck >= maxCount && currentCount < 1}
         />
+        // todo make the disabling less of a fuck you thing to the user
       )}
       {maxCount > 1 && (
         <Group gap="xs" justify="flex-end" wrap={"nowrap"}>
           <ActionIcon
             variant="light"
             onClick={() =>
-              setCardAmount(currentCount - 1)
+              setAmountCurried(currentCount - 1)
             }
             disabled={currentCount <= 0}
           >
@@ -64,9 +72,9 @@ function CardAmountEditor({
           <ActionIcon
             variant="light"
             onClick={() =>
-              setCardAmount(currentCount + 1)
+              setAmountCurried(currentCount + 1)
             }
-            disabled={currentCount >= maxCount}
+            disabled={totalCountInDeck >= maxCount}
           >
             <IconPlus size={16}/>
           </ActionIcon>

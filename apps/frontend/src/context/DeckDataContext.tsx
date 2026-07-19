@@ -27,8 +27,12 @@ export interface DeckDataProviderProps {
   children: ReactNode;
 }
 
-const DeckDataContext = createContext<DeckDataContextValue | undefined>(
-  undefined
+const DeckDataContext = createContext<DeckDataContextValue>(
+  {
+    deck: {},
+    filteredDeck: {},
+    isLoading: true
+  }
 );
 
 /**
@@ -101,7 +105,7 @@ export function DeckDataProviderInner({
   const {repository} = useRepositoryContext();
   const ui = useDeckUiContext();
 
-  const deck = usePartiallyReconstructedDeck(sections, repository.tags);
+  const deck = usePartiallyReconstructedDeck(sections ?? {}, repository.tags);
 
   let filteredDeck = {};
   if (deck !== null) {
@@ -109,7 +113,9 @@ export function DeckDataProviderInner({
   }
 
   useEffect(() => {
-    fetchMissingDeckCards(sections);
+    if (sections) {
+      fetchMissingDeckCards(sections);
+    }
   }, [sections]);
 
   return (

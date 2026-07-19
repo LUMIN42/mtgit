@@ -15,13 +15,13 @@ export function ManaCurvePlot() {
   const manaCurveData = useMemo(() => {
     const countsPerCMC: Record<number, number> = {};
 
-    for (const card of Object.values(filteredDeck.Main) ?? []) {
+    for (const card of Object.values(filteredDeck?.Main ?? {})) {
       if (card.type_line.toLowerCase().includes("land")) {
         continue;
       }
 
       const cmc = Math.min(Math.floor(card.cmc), 10);
-      countsPerCMC[cmc] = (countsPerCMC[cmc] || 0) + 1;
+      countsPerCMC[cmc] = (countsPerCMC[cmc] ?? 0) + card.count;
     }
 
     return Object.entries(countsPerCMC).map(([cmc, count]) => ({
