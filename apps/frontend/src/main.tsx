@@ -35,6 +35,11 @@ const theme = createTheme({
           }
         }
       }
+    },
+    Loader: {
+      defaultProps: {
+        variant: "dots"
+      }
     }
   },
   defaultGradient: {

@@ -2,7 +2,7 @@ import React, {useEffect} from "react";
 import {trpcHooks} from "../trpcClient.ts";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
-import {Divider, Grid, Loader, Title, Text, Stack, Button} from "@mantine/core";
+import {Divider, Grid, Loader, Title, Text, Stack, Button, Center} from "@mantine/core";
 import {
   allDeckOracleIds,
   BranchSnapshot,
@@ -45,7 +45,7 @@ export function DeckHistoryOverviewScreen() {
   }, [allIds]);
 
   if (!branchSnapshotsParsing.success || repository === null) {
-    return <Loader/>;
+    return <Center><Loader/></Center>;
   }
 
   const branchSnapshots = branchSnapshotsParsing.data

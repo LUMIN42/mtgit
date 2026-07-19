@@ -1,4 +1,4 @@
-import {Group, Loader, Text} from "@mantine/core";
+import {Center, Group, Loader, Text} from "@mantine/core";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {DeckSectionName, expectedSectionCardCounts} from "@mtgit/shared";
 import PriceOverviewBadge from "./PriceOverviewBadge.tsx";
@@ -11,7 +11,7 @@ export function DeckOverview() {
   console.log("selected branch content:", selectedBranchContent);
 
   if (!selectedBranchContent) {
-    return <Loader/>;
+    return <Center><Loader/></Center>;
   }
 
   return (

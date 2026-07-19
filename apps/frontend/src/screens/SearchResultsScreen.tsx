@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from "react";
-import {ActionIcon, Button, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
+import {ActionIcon, Button, Center, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
@@ -93,7 +93,7 @@ export function SearchResultsScreen() {
   };
 
   return (
-    <Stack gap={"md"} maw={1200} mx={"auto"}>
+    <Stack gap={"md"} maw={1200} mx={"auto"} w={"100%"}>
       <Button component={Link} to={".."} w={"fit-content"}>
         Return to Deck View
         {/*  todo rewrite as a chevron */}
@@ -175,9 +175,10 @@ export function SearchResultsScreen() {
 
       {
         (isFetchingNextPage || isLoading) &&
-          <Loader size={"xl"} mx={"auto"} w={"100%"}/>
+        (<Center>
+          <Loader size={"xl"}/>
+        </Center>)
       }
-
 
       {
         oracleId &&
