@@ -12,8 +12,8 @@ import {
 } from "@mtgit/shared";
 import {
   BranchSnapshot,
-  BranchSnapshotSchema,
-  isLegalDeck
+  BranchSnapshotSchema
+  // isLegalDeck
 } from "@mtgit/shared";
 import {z} from "zod";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
@@ -54,8 +54,9 @@ export function DeckHistoryOverviewScreen() {
   }
 
   const branchSnapshots = branchSnapshotsParsing.data
-    .filter(snapshot => isLegalDeck(buildPartiallyReconstructedDeck(snapshot.cards, repository.tags),
-      repository.format));
+    // .filter(snapshot => isLegalDeck(buildPartiallyReconstructedDeck(snapshot.cards, repository.tags),
+    //   repository.format))
+  ;
 
 
   // if (historyQuery.data === undefined) {
@@ -206,7 +207,5 @@ export function DeckHistoryOverviewScreen() {
         )
       }
     </Grid>
-  </Stack>
-
-    ;
+  </Stack>;
 }
