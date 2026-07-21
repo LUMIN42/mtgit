@@ -22,7 +22,7 @@ import {Link} from "react-router-dom";
 
 export function DeckHistoryOverviewScreen() {
   const {repository} = useRepositoryContext();
-  const {selectedBranchName} = useDeckUiContext();
+  const {selectedBranchName, displayMode} = useDeckUiContext();
 
   const {fetchMissingCards, partiallyReconstructedCounts, buildPartiallyReconstructedDeck} = useScryfallCache();
 
@@ -183,6 +183,7 @@ export function DeckHistoryOverviewScreen() {
                       cards={
                         Object.values(partiallyReconstructedCounts(diff.before[sectionName]!, repository?.tags))
                       }
+                      displayMode={displayMode}
                       rightToLeft={true}
                     />
                   </Grid.Col>
@@ -192,9 +193,11 @@ export function DeckHistoryOverviewScreen() {
                   </Grid.Col>
 
                   <Grid.Col span={5}>
-                    <CardGroup cards={
-                      Object.values(partiallyReconstructedCounts(diff.after[sectionName]!, repository?.tags))
-                    }/>
+                    <CardGroup
+                      displayMode={displayMode}
+                      cards={
+                        Object.values(partiallyReconstructedCounts(diff.after[sectionName]!, repository?.tags))
+                      }/>
                   </Grid.Col>
 
                 </>)

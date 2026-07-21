@@ -38,7 +38,7 @@ const theme = createTheme({
     },
     Loader: {
       defaultProps: {
-        variant: "dots"
+        type: "dots"
       }
     }
   },

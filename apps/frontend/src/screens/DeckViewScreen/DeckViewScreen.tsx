@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {ActionIcon, Button, Grid, Group, Stack, TextInput, Title, Tooltip} from "@mantine/core";
+import {ActionIcon, Box, Button, Flex, Group, Stack, TextInput, Title, Tooltip} from "@mantine/core";
 
 import style from "@styles/index.module.css";
 import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
@@ -17,6 +17,7 @@ import {Link} from "react-router-dom";
 import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {useState} from "react";
 import {QuickEditSwitch} from "../../components/DeckViewScreen/QuickEditSwitch.tsx";
+import {useMediaQuery} from "@mantine/hooks";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
@@ -30,9 +31,11 @@ export function DeckViewScreen() {
     ui.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
   };
 
+  const verticalized = useMediaQuery("(max-width: 900px)");
+
 
   return (
-    <Stack style={{maxWidth: "1500px", margin: "auto"}}>
+    <Stack style={{maxWidth: "1400px", margin: "auto"}}>
       <Group>
         {
           renamingDeck
@@ -107,15 +110,24 @@ export function DeckViewScreen() {
       {/*  onClose={() => setIsCreateBranchOpen(false)}*/}
       {/*/>*/}
 
-      <Grid className={style.stretchChildren} gap={"xl"}>
-        <Grid.Col className={`${style.stretchMe} ${style.relative}`} span={3}>
-          <DeckViewingOptions/>
-        </Grid.Col>
+      <Flex
+        gap="xl"
+        direction={verticalized ? "column" : "row"}
+        align="stretch"
+        className={style.stretchChildren}
+      >
+        <Box
+          w={verticalized ? "100%" : "20rem"}
+          className={`${style.stretchMe} ${style.relative}`}
+          style={{flexShrink: 0}}
+        >
+          <DeckViewingOptions narrowViewport={verticalized}/>
+        </Box>
 
-        <Grid.Col span={9}>
+        <Box style={{flex: 1, minWidth: 0}}>
           <GroupedCards/>
-        </Grid.Col>
-      </Grid>
+        </Box>
+      </Flex>
     </Stack>
   );
 }

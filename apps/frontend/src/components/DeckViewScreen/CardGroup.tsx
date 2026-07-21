@@ -1,8 +1,7 @@
-import {Grid, Stack} from "@mantine/core";
-import style from "@styles/index.module.css";
+import {Grid} from "@mantine/core";
 import {Card} from "./Card.tsx";
-import type {DeckSectionName, OracleCard, TaggedCard} from "@mtgit/shared";
-import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
+import type {DeckSectionName, TaggedCard} from "@mtgit/shared";
+import {CardDisplayMode} from "../../context/DeckUiContext.tsx";
 import type {CardSortMode} from "../../types/grouping.ts";
 import {useElementSize} from "@mantine/hooks";
 import {useMemo} from "react";
@@ -20,6 +19,7 @@ interface CardGroupProps {
   sticky?: boolean;
   minWidth?: number;
   widthOverride?: number | undefined;
+  displayMode: CardDisplayMode;
 }
 
 export function CardGroup({
@@ -27,20 +27,29 @@ export function CardGroup({
   sectionName = undefined,
   groupKey = "",
   onCardSelect,
-  onCardHover = () => {
-  },
+  onCardHover = undefined,
   quicklyAdjustable = false,
   rightToLeft = false,
   sticky = false,
-  minWidth = 160,
-  widthOverride
+  minWidth = 150,
+  widthOverride,
+  displayMode
 }: CardGroupProps) {
-  const {displayMode} = useDeckUiContext();
   const {ref, height, width} = useElementSize();
+
+  if (displayMode === "Text") {
+    minWidth = 250;
+
+    if (quicklyAdjustable) {
+      minWidth += 80;
+    }
+  }
 
 
   const calculationWidth = widthOverride ?? width;
   let columnCount = Math.floor(calculationWidth / minWidth);
+
+
   if (columnCount === 0 && calculationWidth > 0) columnCount = 1;
 
   const isTall = useMemo(() => {
@@ -50,31 +59,30 @@ export function CardGroup({
     return height >= window.innerHeight * 0.9;
   }, [height]);
 
-  if (displayMode === "Text") {
-    return (
-      <Stack w={"100%"} gap="xs">
-        {cards.map((card, index) => (
-          <Card
-            key={`${sectionName}-${groupKey}-${card.id}-${index}`}
-            card={card}
-            displayMode={displayMode}
-            className={style.cardNameItem}
-            onSelect={
-              onCardSelect &&
-              ((_: OracleCard) => onCardSelect({
-                oracle_id: card.oracle_id,
-                location: {
-                  group: groupKey,
-                  section: sectionName ?? null
-                }
-              }))
-            }
-            onHoverImage={onCardHover}
-          />
-        ))}
-      </Stack>
-    );
-  }
+  // if (displayMode === "Text") {
+  //   return (
+  //     <Stack w={"100%"} gap="xs">
+  //       {cards.map((card, index) => (
+  //         <Card
+  //           key={`${sectionName}-${groupKey}-${card.id}-${index}`}
+  //           card={card}
+  //           displayMode={displayMode}
+  //           onSelect={
+  //             onCardSelect &&
+  //             ((_: OracleCard) => onCardSelect({
+  //               oracle_id: card.oracle_id,
+  //               location: {
+  //                 group: groupKey,
+  //                 section: sectionName ?? null
+  //               }
+  //             }))
+  //           }
+  //           onHoverImage={onCardHover}
+  //         />
+  //       ))}
+  //     </Stack>
+  //   );
+  // }
 
   return (
     <Grid
@@ -98,21 +106,22 @@ export function CardGroup({
       }}>
 
       {!!columnCount &&
-        cards.map((card) => (
+        cards.map(card => (
           <Grid.Col key={card.oracle_id} span={1}>
             <Card
               card={card}
               displayMode={displayMode}
+              onHoverImage={onCardHover}
               onSelect={
                 onCardSelect &&
-              (() =>
-                onCardSelect({
-                  oracle_id: card.oracle_id,
-                  location: {
-                    group: groupKey,
-                    section: sectionName ?? null
-                  }
-                }))
+                (() =>
+                  onCardSelect({
+                    oracle_id: card.oracle_id,
+                    location: {
+                      group: groupKey,
+                      section: sectionName ?? null
+                    }
+                  }))
               }
               quicklyAdjustable={quicklyAdjustable}
               deckSection={sectionName}

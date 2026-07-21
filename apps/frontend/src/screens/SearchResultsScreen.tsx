@@ -171,6 +171,7 @@ export function SearchResultsScreen() {
           );
         }}
         minWidth={190}
+        displayMode={"Images"}
       />
 
       {

@@ -68,3 +68,33 @@ html, body, #root, .gridRoot {
             0 2px 8px rgba(0, 0, 0, 0.08);
     cursor: pointer;
 }
+
+
+.box {
+    position: relative;
+}
+
+.box::before {
+    content: "";
+    position: absolute;
+    inset: -2px; /* outline thickness */
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ff00ff, #00ffff);
+    z-index: -1;
+}
+
+.box::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ff00ff, #00ffff);
+
+    -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: 2px;
+}

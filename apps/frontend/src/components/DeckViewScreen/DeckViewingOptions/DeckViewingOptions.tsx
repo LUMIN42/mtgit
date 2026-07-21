@@ -4,7 +4,6 @@ import {CardSearchSection} from "./CardSearchSection.tsx";
 import {FilterSection} from "./FilterSection.tsx";
 import {DeckGroupingSection} from "./DeckGroupingSection.tsx";
 import {SortingSelector} from "./SortingSelector.tsx";
-import {DeckSectionsToc} from "./DeckSectionsToc.tsx";
 import {DeckOverview} from "./DeckOverview.tsx";
 import {ManaCurvePlot} from "./ManaCurvePlot.tsx";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
@@ -12,9 +11,10 @@ import BranchSelector from "./BranchSelector.tsx";
 import {FieldSection} from "./FieldSection.tsx";
 import {DeckPieChart} from "../CardDetailsModal/DeckPieChart.tsx";
 
-export function DeckViewingOptions({horizontal = false, comparison = false}: {
+export function DeckViewingOptions({horizontal = false, comparison = false, narrowViewport = false}: {
   horizontal?: boolean;
   comparison?: boolean;
+  narrowViewport?: boolean;
 }) {
   const {
     displayMode,
@@ -27,7 +27,8 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
 
   const commonContent = (
     <>
-      <DeckPreviewImage visible={displayMode !== "Images"} imageUrl={hoveredCardImageUrl}/>
+      <DeckPreviewImage visible={displayMode !== "Images" && !horizontal && !narrowViewport}
+        imageUrl={hoveredCardImageUrl}/>
       {comparison || <CardSearchSection/>}
       <FilterSection/>
       <BranchSelector/>
@@ -47,6 +48,21 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
       <DeckOverview/>
     </>
   );
+
+  const verticalContent = <Stack align="stretch" gap="xl" h="fit-content">
+    {commonContent}
+
+    {
+      groupingMode === "manaValue" &&
+        <ManaCurvePlot/>
+    }
+
+    {
+      (groupingMode !== "manaValue" && groupingMode !== "none") &&
+        <DeckPieChart/>
+    }
+
+  </Stack>;
 
   if (horizontal) {
     return (
@@ -75,6 +91,12 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
     );
   }
 
+  else if (narrowViewport) {
+    return <Paper h={"fit-content"}>
+      {verticalContent}
+    </Paper>;
+  }
+
   else {
     return (
       <Paper pos={"relative"} top={"-0.75rem"} h={"100%"} style={{zIndex: 3}}>
@@ -95,20 +117,7 @@ export function DeckViewingOptions({horizontal = false, comparison = false}: {
           radius={0}
         >
           <Paper h="100%" px={"sm"} py={"xs"}>
-            <Stack align="stretch" gap="xl" h="100%">
-              {commonContent}
-
-              {
-                groupingMode === "manaValue" &&
-                  <ManaCurvePlot/>
-              }
-
-              {
-                (groupingMode !== "manaValue" && groupingMode !== "none") &&
-                  <DeckPieChart/>
-              }
-
-            </Stack>
+            {verticalContent}
           </Paper>
 
         </Paper>

@@ -20,7 +20,8 @@ export function DeckComparisonScreen() {
     sortingMode,
     selectedBranchName,
     diffsOnly,
-    cardFilterQuery
+    cardFilterQuery,
+    displayMode
   } = useDeckUiContext();
   const {repository, selectedBranchContent, setBranchValue} = useRepositoryContext();
 
@@ -219,6 +220,7 @@ export function DeckComparisonScreen() {
                               rightToLeft={true}
                               quicklyAdjustable={true}
                               widthOverride={widthOfOneHalf}
+                              displayMode={displayMode}
                               onCardSelect={location => {
                                 const loc: ComparisonCardLocation = {
                                   oracle_id: location.oracle_id,
@@ -250,6 +252,7 @@ export function DeckComparisonScreen() {
                               sticky={true}
                               quicklyAdjustable={true}
                               widthOverride={widthOfOneHalf}
+                              displayMode={displayMode}
 
                               onCardSelect={location => {
                                 const loc: ComparisonCardLocation = {

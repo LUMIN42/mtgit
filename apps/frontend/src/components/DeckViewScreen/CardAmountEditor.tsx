@@ -57,11 +57,12 @@ function CardAmountEditor({
               setAmountCurried(currentCount - 1)
             }
             disabled={currentCount <= 0}
+            size={"sm"}
           >
-            <IconMinus size={16}/>
+            <IconMinus size={10}/>
           </ActionIcon>
 
-          <Text fw={500} w={40} ta="center">
+          <Text fw={500} w={"fit-content"} ta="center" size={"sm"}>
             {currentCount}
 
             {
@@ -75,8 +76,9 @@ function CardAmountEditor({
               setAmountCurried(currentCount + 1)
             }
             disabled={totalCountInDeck >= maxCount}
+            size={"sm"}
           >
-            <IconPlus size={16}/>
+            <IconPlus size={10}/>
           </ActionIcon>
         </Group>
       )}

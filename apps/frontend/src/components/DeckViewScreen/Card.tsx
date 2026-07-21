@@ -1,4 +1,4 @@
-import {Box, Text, Image, Overlay, Paper, ActionIcon, Tooltip} from "@mantine/core";
+import {Box, Text, Image, Overlay, Paper, ActionIcon, Tooltip, Stack, Loader, Group} from "@mantine/core";
 import {type DeckCard, DeckSectionName, getCardImageUrls, isDeckCard} from "@mtgit/shared";
 import type {OracleCard} from "@mtgit/shared/scryfall";
 import {CardDisplayMode, useDeckUiContext} from "../../context/DeckUiContext.tsx";
@@ -25,7 +25,6 @@ type CardProps = {
 export function Card({
   card,
   displayMode = "Images",
-  className,
   onSelect,
   onHoverImage,
   quicklyAdjustable = false,
@@ -61,14 +60,30 @@ export function Card({
 
   if (displayMode === "Text") {
     return (
-      <Box
-        className={className}
+      <Group
         onMouseEnter={() => onHoverImage?.(currentFaceImageUrl)}
-        onClick={() => onSelect?.(card)}
-        style={onSelect ? {cursor: "pointer"} : undefined}
+        justify={"space-between"}
+        gap={0}
+        style={{
+          // outline: "1px 0 0 0 solid var(--mantine-color-gray-3)"
+          borderBottom: "1px solid var(--mantine-color-gray-2)",
+          borderTop: "1px solid var(--mantine-color-gray-2)"
+        }}
+        mt={"-1px"}
+        ml={"lg"}
+        pr={"xs"}
+        // withBorder
       >
-        <Text>{card.name}</Text>
-      </Box>
+        <Text style={{flex: 1, cursor: onSelect ? "pointer" : undefined}} pl={"xs"}
+          py={"4px"} size={"sm"} onClick={() => onSelect?.(card)}>
+          {(cardAmount ? cardAmount > 1 : false) && `${cardAmount}x`} {card.name}
+        </Text>
+        {
+          quicklyAdjustable &&
+            <CardAmountEditor branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={deckSection}/>
+        }
+      </Group>
+
     );
   }
 
@@ -77,8 +92,25 @@ export function Card({
   }
 
   return (
-    <Box style={{position: "relative", width: "100%", ...shellStyle}}>
-      <Overlay color="black" opacity={1} zIndex={0} style={{backgroundColor: "black"}}/>
+    <Box style={{
+      position: "relative", ...shellStyle,
+      aspectRatio: "63 / 88",
+      cursor: onSelect ? "pointer" : undefined
+    }}>
+      <Overlay color="black"
+        opacity={1}
+        zIndex={0}
+        style={{backgroundColor: "black"}}
+        onClick={() => onSelect?.(card)}/>
+
+      <Stack pos={"absolute"}
+        h={"100%"}
+        w={"100%"}
+        align={"center"}
+        justify={"center"}
+        onClick={() => onSelect?.(card)}>
+        <Loader size={"lg"}/>
+      </Stack>
 
       {
         imageUrls.length > 1 &&
@@ -108,14 +140,14 @@ export function Card({
       {
         imageUrls.map(
           (imageUrl, imageIdx) => <Image
+            onClick={() => onSelect?.(card)}
+            loading={"eager"}
             src={imageUrl}
             key={imageUrl}
             alt={card.name}
             width="100%"
-            onClick={() => onSelect?.(card)}
             pos="relative"
             style={{
-              cursor: onSelect ? "pointer" : undefined,
               display: (imageUrl === currentFaceImageUrl
                 || outdatedState && imageIdx === 0
               ) ? "block" : "none",

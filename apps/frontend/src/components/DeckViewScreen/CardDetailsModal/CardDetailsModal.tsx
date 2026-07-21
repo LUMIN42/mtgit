@@ -100,7 +100,7 @@ export function CardDetailsModal({
             {/*image*/}
             <Stack style={{maxWidth: 420}} h={"100%"} align={"center"} gap={"xl"}>
 
-              <Stack h={"60%"} align={"center"} gap={0}>
+              <Stack h={"60%"} align={"center"} w={"100%"} gap={0}>
                 {card ? (
                   <Card card={card}
                     shellStyle={{

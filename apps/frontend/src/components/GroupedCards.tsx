@@ -15,7 +15,7 @@ import {useElementSize, useViewportSize} from "@mantine/hooks";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
 export function GroupedCards() {
-  const {groupingMode, sortingMode, setHoveredCardImageUrl} = useDeckUiContext();
+  const {groupingMode, sortingMode, setHoveredCardImageUrl, displayMode} = useDeckUiContext();
 
   const {width, ref} = useElementSize();
 
@@ -78,11 +78,14 @@ export function GroupedCards() {
               <Title
                 order={3}
                 fw={700}
-                size="lg"
                 id={`deck-section-${section.name.toLowerCase()}`}
                 data-deck-heading
                 data-card-count={cardCount(filteredDeck[section.name]!)}
                 data-heading-text={section.name}
+                style={{
+                  borderBottom: "1px solid black"
+                }}
+                ta={"center"}
               >
                 {section.name} ({cardCount(filteredDeck[section.name]!)})
               </Title>
@@ -102,8 +105,13 @@ export function GroupedCards() {
                       <Title
                         fw={600}
                         order={4}
+                        ta={displayMode === "Text" ? "center" : "left"}
+                        mt={displayMode === "Text" ? "xl" : 0}
                         id={getGroupHeadingId(groupingMode, section.name, group.heading)}
-                        style={groupingMode === "manaValue" ? {scrollMarginTop: "1rem"} : undefined}
+                        style={{
+                          scrollMarginTop: groupingMode === "manaValue" ? "1rem" : undefined
+                          // borderBottom: "1px solid lightgray"
+                        }}
                         data-deck-heading
                         data-card-count={cardCount}
                         data-heading-text={headingText}
@@ -114,6 +122,7 @@ export function GroupedCards() {
 
                     {/* Render cards in the group */}
                     <CardGroup
+                      displayMode={displayMode}
                       cards={group.cards}
                       groupKey={`${group.heading}`}
                       onCardSelect={cardLoc => {
