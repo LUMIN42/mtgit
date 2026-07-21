@@ -8,7 +8,7 @@ export function ScrollToTopButton() {
   return (
     <Affix position={{bottom: 20, right: 20}}>
       <Transition
-        mounted={scroll.y > 300}
+        mounted={scroll.y > 100}
         transition="slide-up"
       >
         {transitionStyles => (

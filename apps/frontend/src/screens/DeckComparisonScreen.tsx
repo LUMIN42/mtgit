@@ -15,7 +15,7 @@ import {useElementSize, useViewportSize} from "@mantine/hooks";
 
 export function DeckComparisonScreen() {
   const {
-    comparisonBranchName,
+    comparisonContent,
     groupingMode,
     sortingMode,
     selectedBranchName,
@@ -25,7 +25,12 @@ export function DeckComparisonScreen() {
   } = useDeckUiContext();
   const {repository, selectedBranchContent, setBranchValue} = useRepositoryContext();
 
-  const comparisonBranchContent = repository!.branches[comparisonBranchName!];
+
+  if (comparisonContent === null) {
+    throw new Error("comparison content cannot be null here!");
+  }
+  const comparisonBranchContent = typeof comparisonContent === "string" ? repository!.branches[comparisonContent!] : comparisonContent!;
+  // repository!.branches[comparisonContent!];
 
   const {usePartiallyReconstructedDeck, map} = useScryfallCache();
 
@@ -37,12 +42,12 @@ export function DeckComparisonScreen() {
 
   const originalLeftCardCounts = useMemo(
     () => selectedBranchContent!,
-    [map, selectedBranchName, comparisonBranchName]
+    [map, selectedBranchName, comparisonContent]
   );
 
   const originalRightCardCounts = useMemo(
     () => comparisonBranchContent,
-    [map, selectedBranchName, comparisonBranchName]
+    [map, selectedBranchName, comparisonContent]
   );
 
   const [leftCardCounts, rightCardCounts] = diffsOnly ? withoutIdenticalParts(

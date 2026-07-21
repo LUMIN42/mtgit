@@ -7,7 +7,7 @@ import {Routes, Route, Navigate} from "react-router-dom";
 import {DeckHistoryOverviewScreen} from "../DeckHistoryOverviewScreen.tsx";
 
 export function DeckViewScreenRouter() {
-  const {comparisonBranchName} = useDeckUiContext();
+  const {comparisonContent} = useDeckUiContext();
 
   return (
     <Routes>
@@ -16,7 +16,7 @@ export function DeckViewScreenRouter() {
       <Route
         index
         element={
-          comparisonBranchName === null
+          comparisonContent === null
             ? <DeckViewScreen/>
             : <DeckComparisonScreen/>
         }

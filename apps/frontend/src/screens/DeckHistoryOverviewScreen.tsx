@@ -2,7 +2,7 @@ import React, {useEffect} from "react";
 import {trpcHooks} from "../trpcClient.ts";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
-import {Divider, Grid, Loader, Title, Text, Stack, Button, Center} from "@mantine/core";
+import {Grid, Loader, Title, Text, Stack, Button, Center, Group, Divider} from "@mantine/core";
 import {
   allDeckOracleIds,
   deckCardCount,
@@ -18,13 +18,15 @@ import {
 import {z} from "zod";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 export function DeckHistoryOverviewScreen() {
   const {repository} = useRepositoryContext();
-  const {selectedBranchName, displayMode} = useDeckUiContext();
+  const {selectedBranchName, displayMode, setComparisonContent} = useDeckUiContext();
 
   const {fetchMissingCards, partiallyReconstructedCounts, buildPartiallyReconstructedDeck} = useScryfallCache();
+
+  const navigate = useNavigate();
 
 
   const historyQuery = trpcHooks.decks.branchHistory.useQuery(
@@ -64,22 +66,29 @@ export function DeckHistoryOverviewScreen() {
   // }
 
   const diffs: {
-    before: DeckCardCounts;
-    after: DeckCardCounts;
+    beforeDiff: DeckCardCounts;
+    afterDiff: DeckCardCounts;
+
+    beforeFull: DeckCardCounts;
+    afterFull: DeckCardCounts;
     timestamp: Date;
   }[] = [];
   for (let i = 0; i < branchSnapshots.length - 1; i++) {
-    const olderCards: DeckCardCounts = branchSnapshots[i + 1].cards;
-    const newerVersion: BranchSnapshot = branchSnapshots[i];
+    const beforeFull: DeckCardCounts = branchSnapshots[i + 1].cards;
+    const afterFull: BranchSnapshot = branchSnapshots[i];
 
-    const newerCards = newerVersion.cards;
+    const newerCards = afterFull.cards;
 
-    const [before, after] = withoutIdenticalParts(olderCards, newerCards);
+    const [before, after] = withoutIdenticalParts(beforeFull, newerCards);
     const isEmpty = (obj: DeckCardCounts) => deckCardCount(obj) === 0;
     if (isEmpty(before) || isEmpty(after)) continue;
 
     diffs.push({
-      before, after, timestamp: newerVersion.timestamp
+      beforeDiff: before,
+      afterDiff: after,
+      timestamp: afterFull.timestamp,
+      beforeFull: beforeFull,
+      afterFull: afterFull.cards
     });
   }
 
@@ -150,27 +159,43 @@ export function DeckHistoryOverviewScreen() {
             </Grid.Col>
 
             <Grid.Col span={5}>
-              <Text ta={"right"}>
-                Before:
-              </Text>
+              <Group justify={"right"}>
+                <Button variant={"subtle"} onClick={() => {
+                  setComparisonContent(diff.beforeFull);
+                  navigate("..");
+                }}>
+                  Compare to Current
+                </Button>
+                <Text>
+                  Before:
+                </Text>
+              </Group>
             </Grid.Col>
             <Grid.Col span={1}>
-
+              {/*<Divider orientation={"vertical"} h={"100%"} mx={"auto"} w={"fit-content"}/>*/}
             </Grid.Col>
             <Grid.Col span={5}>
-              <Text>
-                After:
-              </Text>
+              <Group justify={"left"}>
+                <Text>
+                  After:
+                </Text>
+                <Button variant={"subtle"} onClick={() => {
+                  setComparisonContent(diff.afterFull);
+                  navigate("..");
+                }}>
+                  Compare to Current
+                </Button>
+              </Group>
             </Grid.Col>
 
             {
-              sectionsToShow(diff.before, diff.after)
+              sectionsToShow(diff.beforeDiff, diff.afterDiff)
                 .map(sectionName => <>
 
                   {
                     sectionName as DeckSectionName !== "Main" &&
                     (
-                      <Grid.Col span={11}>
+                      <Grid.Col span={12}>
                         <Title ta={"center"} order={3}>
                           {sectionName}
                         </Title>
@@ -182,7 +207,7 @@ export function DeckHistoryOverviewScreen() {
                   <Grid.Col span={5}>
                     <CardGroup
                       cards={
-                        Object.values(partiallyReconstructedCounts(diff.before[sectionName]!, repository?.tags))
+                        Object.values(partiallyReconstructedCounts(diff.beforeDiff[sectionName]!, repository?.tags))
                       }
                       displayMode={displayMode}
                       rightToLeft={true}
@@ -190,14 +215,14 @@ export function DeckHistoryOverviewScreen() {
                   </Grid.Col>
 
                   <Grid.Col span={1}>
-                    <Divider orientation={"vertical"}/>
+                    <Divider orientation={"vertical"} h={"100%"} mx={"auto"} w={"fit-content"}/>
                   </Grid.Col>
 
                   <Grid.Col span={5}>
                     <CardGroup
                       displayMode={displayMode}
                       cards={
-                        Object.values(partiallyReconstructedCounts(diff.after[sectionName]!, repository?.tags))
+                        Object.values(partiallyReconstructedCounts(diff.afterDiff[sectionName]!, repository?.tags))
                       }/>
                   </Grid.Col>
 
