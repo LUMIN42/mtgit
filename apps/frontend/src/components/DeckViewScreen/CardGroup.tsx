@@ -20,6 +20,7 @@ interface CardGroupProps {
   minWidth?: number;
   widthOverride?: number | undefined;
   displayMode: CardDisplayMode;
+  comparison?: boolean;
 }
 
 export function CardGroup({
@@ -33,7 +34,8 @@ export function CardGroup({
   sticky = false,
   minWidth = 150,
   widthOverride,
-  displayMode
+  displayMode,
+  comparison = false
 }: CardGroupProps) {
   const {ref, height, width} = useElementSize();
 
@@ -125,6 +127,7 @@ export function CardGroup({
               }
               quicklyAdjustable={quicklyAdjustable}
               deckSection={sectionName}
+              comparison={comparison}
             />
           </Grid.Col>
         ))}

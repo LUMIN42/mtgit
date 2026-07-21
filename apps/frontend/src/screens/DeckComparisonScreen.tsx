@@ -219,6 +219,7 @@ export function DeckComparisonScreen() {
                               sticky={true}
                               rightToLeft={true}
                               quicklyAdjustable={true}
+                              comparison={true}
                               widthOverride={widthOfOneHalf}
                               displayMode={displayMode}
                               onCardSelect={location => {
@@ -253,6 +254,7 @@ export function DeckComparisonScreen() {
                               quicklyAdjustable={true}
                               widthOverride={widthOfOneHalf}
                               displayMode={displayMode}
+                              comparison={true}
 
                               onCardSelect={location => {
                                 const loc: ComparisonCardLocation = {

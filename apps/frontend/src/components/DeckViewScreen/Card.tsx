@@ -19,6 +19,7 @@ type CardProps = {
   deckSection?: DeckSectionName;
   shellStyle?: React.CSSProperties;
   imageStyle?: React.CSSProperties;
+  comparison?: boolean;
 };
 
 
@@ -30,7 +31,8 @@ export function Card({
   quicklyAdjustable = false,
   deckSection = "Main",
   shellStyle = {},
-  imageStyle = {}
+  imageStyle = {},
+  comparison = false
 }: CardProps) {
   const imageUrls = getCardImageUrls(card);
   const {selectedBranchContent} = useRepositoryContext();
@@ -57,6 +59,8 @@ export function Card({
 
   const cardAmount: number | undefined = isDeckCard(card) ? card.count : undefined;
 
+  const originalCardAmount = comparison ? cardAmount : undefined;
+
 
   if (displayMode === "Text") {
     return (
@@ -80,7 +84,10 @@ export function Card({
         </Text>
         {
           quicklyAdjustable &&
-            <CardAmountEditor branchName={selectedBranchName} oracleId={card.oracle_id} deckSection={deckSection}/>
+            <CardAmountEditor originalCardAmount={originalCardAmount}
+                branchName={selectedBranchName!}
+                oracleId={card.oracle_id}
+                deckSection={deckSection}/>
         }
       </Group>
 
@@ -187,7 +194,7 @@ export function Card({
           right="8%"
           top="11%"
         >
-          <CardAmountEditor originalCardAmount={cardAmount}
+          <CardAmountEditor originalCardAmount={originalCardAmount}
             branchName={selectedBranchName!}
             oracleId={card.oracle_id}
             deckSection={deckSection}/>
