@@ -51,7 +51,7 @@ function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-export const COLOR_NAMES = ["Black", "White", "Blue", "Red", "Green"] as const;
+export const COLOR_NAMES = ["Black", "White", "Blue", "Red", "Green", "Colorless"] as const;
 export const ColorNameSchema = z.preprocess(
   raw => {
     if (typeof raw === "string") {
@@ -70,7 +70,8 @@ export const COLOR_CODE_TO_NAMES: Record<ColorCode, ColorName> = {
   W: "White",
   U: "Blue",
   R: "Red",
-  G: "Green"
+  G: "Green",
+  C: "Colorless"
 } as const;
 
 export const COLOR_NAME_TO_CODE: Record<ColorName, ColorCode> = {
@@ -78,5 +79,6 @@ export const COLOR_NAME_TO_CODE: Record<ColorName, ColorCode> = {
   White: "W",
   Blue: "U",
   Red: "R",
-  Green: "G"
+  Green: "G",
+  Colorless: "C"
 } as const;

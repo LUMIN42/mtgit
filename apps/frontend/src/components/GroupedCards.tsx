@@ -14,7 +14,11 @@ import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useElementSize, useViewportSize} from "@mantine/hooks";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
-export function GroupedCards() {
+type GroupedCardsProps = {
+  comparison?: boolean;
+};
+
+export function GroupedCards({comparison = false}: GroupedCardsProps) {
   const {groupingMode, sortingMode, setHoveredCardImageUrl, displayMode} = useDeckUiContext();
 
   const {width, ref} = useElementSize();

@@ -197,7 +197,9 @@ export function DeckPieChart() {
     "W": "yellow.1",
     "U": "blue",
     "R": "red",
-    "G": "green"
+    "G": "green",
+    "C": "gray",
+    Colorless: "gray"
   };
 
 

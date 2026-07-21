@@ -34,7 +34,7 @@ export const PricesSchema = z
   })
 ;
 
-export const COLOR_CODES = ["B", "W", "U", "R", "G"] as const;
+export const COLOR_CODES = ["B", "W", "U", "R", "G", "C"] as const;
 
 
 export const ColorCodeSchema = z.enum(COLOR_CODES);

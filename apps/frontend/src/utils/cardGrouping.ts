@@ -9,6 +9,8 @@ import type {TaggedDeckCard} from "@mtgit/shared";
 import {MAIN_TYPE_ORDER} from "@mtgit/shared";
 import {DeckGroupCardLocation} from "../types/addressedCards.ts";
 
+import type {ColorName} from "@mtgit/shared";
+
 /**
  * Represents a group of cards with a heading and the associated cards.
  */
@@ -167,10 +169,13 @@ export function sortGroupHeadings(headings: string[], mode: CardGroupingMode): s
 
 function getColorGroupKeys(card: OracleCard) {
 
-
-  let fromIdentity = card.color_identity.map(
-    colorCode => `${COLOR_CODE_TO_NAMES[colorCode]}`
+  let fromIdentity: ColorName[] = card.color_identity.map(
+    colorCode => COLOR_CODE_TO_NAMES[colorCode]
   );
+
+  if (card.color_identity.length === 0) {
+    fromIdentity.push("Colorless");
+  }
 
   if (card.type_line.includes("Land")) {
     fromIdentity = [];
