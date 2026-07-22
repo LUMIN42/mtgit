@@ -1,4 +1,7 @@
 {
+  "compilerOptions": {
+    "target": "esnext"
+  },
   "files": [],
   "references": [
     { "path": "./apps/api/tsconfig.json" },

@@ -5,7 +5,9 @@ export const RepositoryPreferencesSchema = z.object({
   defaultQuery: z.string().default(""),
   openBranchName: z.string().optional(),
   hiddenBranches: z.array(z.string()).default(() => [] as string[]),
-  quickEdit: z.boolean().default(false)
+  quickEdit: z.boolean().default(false),
+  compressedHistory: z.boolean().default(true),
+  legalOnlyHistory: z.boolean().default(false)
 });
 
 export type RepositoryPreferences = z.infer<typeof RepositoryPreferencesSchema>;
