@@ -106,7 +106,15 @@ export function ManaCurvePlot() {
           }
         ]}
         withLegend={false}
-        barChartProps={barChartProps}
+        barChartProps={{
+          ...barChartProps,
+          margin: {
+            left: -25,
+            right: 0,
+            top: 0,
+            bottom: 0
+          }
+        }}
         tooltipProps={tooltipProps}
       />
     </Stack>
