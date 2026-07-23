@@ -9,10 +9,10 @@ import {
   Button,
   Modal,
   TextInput,
-  Select, Paper
+  Select, Paper, Anchor
 } from "@mantine/core";
 import {trpcHooks} from "../trpcClient.ts";
-import {useNavigate} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {Format, formats} from "@mtgit/shared";
 
 import classes from "@styles/index.module.css";
@@ -54,7 +54,7 @@ function DeckSelectionScreen() {
       return;
     }
 
-    await createDeck.mutateAsync({
+    const repoId = await createDeck.mutateAsync({
       deckName: name,
       format
     });
@@ -62,6 +62,8 @@ function DeckSelectionScreen() {
     setName("");
     setFormat(null);
     setOpened(false);
+
+    navigate(`../deck/${repoId}`);
   };
 
   return (
@@ -79,17 +81,21 @@ function DeckSelectionScreen() {
           gap: "1rem"
         }}>
           {
-            decks.map(deck => <Paper
-              onClick={() => navigate(`/app/deck/${deck._id}`)}
-              withBorder
-              p={"md"}
-              ta={"center"}
-              shadow="sm"
-              key={deck._id}
-              className={classes.hoverRiseShadow}
+            decks.map(deck => <Anchor
+              component={Link}
+              to={`/app/deck/${deck._id}`}
+              underline="never"
             >
-              {deck.name}
-            </Paper>)
+              <Paper
+                withBorder
+                p="md"
+                ta="center"
+                shadow="sm"
+                className={classes.hoverRiseShadow}
+              >
+                {deck.name}
+              </Paper>
+            </Anchor>)
           }
         </div>
       </Stack>
