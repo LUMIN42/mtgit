@@ -3,6 +3,7 @@ import type {ReactNode} from "react";
 import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
 import {trpcHooks} from "../trpcClient.ts";
 import {useDeckUiContext} from "./DeckUiContext.tsx";
+import {notifications} from "@mantine/notifications";
 
 type RepositoryContextValue = {
   repository: Repository;
@@ -102,6 +103,8 @@ export function RepositoryProvider({
 
 
   const updateDeck = trpcHooks.decks.update.useMutation({
+    networkMode: "always",
+
     onMutate: async (updatedRepo: Repository) => {
       const queryKey = {deckId: updatedRepo._id};
 
@@ -125,6 +128,13 @@ export function RepositoryProvider({
           context.previousRepo
         );
       }
+
+      notifications.show({
+        title: "Update failed",
+        message: "The deck could not be updated. Please check your internet connection and try again later.",
+        color: "red",
+        autoClose: 5000
+      });
     }
   });
 
