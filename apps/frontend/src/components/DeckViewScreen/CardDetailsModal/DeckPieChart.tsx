@@ -21,6 +21,8 @@ import {useDeckDataContext} from "../../../context/DeckDataContext.tsx";
 import {performGrouping} from "../../../utils/cardGrouping.ts";
 import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 import {COLOR_CODE_TO_NAMES, ColorCode, ColorName, MainCardType, mainTypes} from "@mtgit/shared";
+import {CardGroupingMode} from "../../../types/grouping.ts";
+import {useElementSize} from "@mantine/hooks";
 
 type ChartData = {
   name: string;
@@ -33,9 +35,15 @@ type DumbPieChartProps = {
   chartData: ChartData[];
 };
 
+type DeckPieChartProps = {
+  groupingMode?: CardGroupingMode;
+};
+
 
 function DumbPieChart({chartData}: DumbPieChartProps) {
   const theme = useMantineTheme();
+
+  const {ref, height} = useElementSize();
 
   function resolveColor(color: MantineColor): string {
     if (color.startsWith("hsl")) {
@@ -51,99 +59,99 @@ function DumbPieChart({chartData}: DumbPieChartProps) {
     return theme.colors[name]?.[6] ?? color;
   }
 
-  return <Group w="100%">
-    <Flex w="100%" align="center">
-      <Box style={{flex: "1 1 50%", minWidth: 0}}>
-        <ResponsiveContainer width="100%" height={150}>
-          <PieChart>
-            <Tooltip
-              content={({active, payload}) => {
-                if (!active || !payload?.length) {
-                  return null;
-                }
-
-                const item = payload[0].payload as ChartData;
-
-                return (
-                  <Paper p="xs" withBorder>
-                    <Text fw={600}>
-                      {item.name}
-                    </Text>
-
-                    <Text>
-                      Cards: {item.actualValue}
-                    </Text>
-                  </Paper>
-                );
-              }}
-            />
-
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-
-              isAnimationActive={false}
-
-              onClick={
-                item => {
-                  document
-                    .getElementById(item["anchorId"])
-                    ?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start"
-                    });
-                }
+  return <Flex w="100%" align="center" flex={1} mah={150} mih={0}>
+    <Stack h={"100%"} ref={ref} mih={0} w={"50%"} style={{overflow: "hidden"}}>
+      <ResponsiveContainer height={height}>
+        <PieChart height={height} style={{overflow: "hidden", minHeight: 0, maxHeight: "100%"}}>
+          <Tooltip
+            content={({active, payload}) => {
+              if (!active || !payload?.length) {
+                return null;
               }
 
-              cursor={"pointer"}
+              const item = payload[0].payload as ChartData;
 
-              outerRadius={"100%"}
-              shape={props => {
-                const entry = props.payload as ChartData;
+              return (
+                <Paper p="0" withBorder>
+                  <Text fw={600}>
+                    {item.name}
+                  </Text>
 
-                return (
-                  <Sector
-                    {...props}
-                    fill={resolveColor(entry.color)}
-                  />
-                );
+                  <Text>
+                    Cards: {item.actualValue}
+                  </Text>
+                </Paper>
+              );
+            }}
+          />
+          <Pie
+            data={chartData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+
+            isAnimationActive={false}
+
+            onClick={
+              item => {
+                document
+                  .getElementById(item["anchorId"])
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                  });
+              }
+            }
+
+            cursor={"pointer"}
+
+            outerRadius={"100%"}
+            shape={props => {
+              const entry = props.payload as ChartData;
+
+              return (
+                <Sector
+                  {...props}
+                  fill={resolveColor(entry.color)}
+                />
+              );
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </Stack>
+
+    <Box style={{flex: "1 1 50%", minWidth: 0}}>
+      <div>
+        {chartData.map(item => (
+          <Group key={item.name} gap="xs">
+            <div
+              style={{
+                width: 12,
+                height: 12,
+                background: resolveColor(item.color),
+                borderRadius: 2
               }}
             />
-          </PieChart>
-        </ResponsiveContainer>
-      </Box>
 
-      <Box style={{flex: "1 1 50%", minWidth: 0}}>
-        <div>
-          {chartData.map(item => (
-            <Group key={item.name} gap="xs">
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  background: resolveColor(item.color),
-                  borderRadius: 2
-                }}
-              />
-
-              <Text>
-                {item.name}
-              </Text>
-            </Group>
-          ))}
-        </div>
-      </Box>
-    </Flex>
-  </Group>;
+            <Text>
+              {item.name}
+            </Text>
+          </Group>
+        ))}
+      </div>
+    </Box>
+  </Flex>;
 }
 
 
-export function DeckPieChart() {
+export function DeckPieChart({groupingMode}: DeckPieChartProps) {
   const {filteredDeck} = useDeckDataContext();
-  const {groupingMode, sortingMode} = useDeckUiContext();
+  const uiContext = useDeckUiContext();
+
+  groupingMode ??= uiContext.groupingMode;
+  const sortingMode = uiContext.sortingMode;
 
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null); // todo
 
@@ -305,14 +313,14 @@ export function DeckPieChart() {
   const colorProductionData: ChartData[] = productionChartData();
 
 
-  return <Stack>
-    <Stack gap={0}>
+  return <Stack flex={1} style={{overflow: "hidden"}}>
+    <Stack gap={0} flex={1} mih={0} mah={180}>
       {groupingMode === "color" && <Text>Consumption:</Text>}
       <DumbPieChart chartData={chartData}/>
     </Stack>
     {
       groupingMode === "color" &&
-      (<Stack gap={0}>
+      (<Stack gap={0} flex={1} mih={0} mah={180}>
         <Text>Production:</Text>
         <DumbPieChart chartData={colorProductionData}/>
       </Stack>)

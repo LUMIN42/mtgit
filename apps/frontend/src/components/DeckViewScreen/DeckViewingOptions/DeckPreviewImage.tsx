@@ -11,7 +11,7 @@ export function DeckPreviewImage({visible, imageUrl}: DeckPreviewImageProps) {
   }
 
   return (
-    <AspectRatio ratio={63 / 88} w={"60%"} mx={"auto"}>
+    <AspectRatio ratio={63 / 88} w={"70%"} mx={"auto"}>
       <img src={imageUrl ?? "1.jpg"} alt="card preview" style={{objectFit: "cover"}}/>
     </AspectRatio>
   );

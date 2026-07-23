@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {ActionIcon, Box, Button, Flex, Group, Stack, TextInput, Title, Tooltip} from "@mantine/core";
+import {ActionIcon, Box, Button, Flex, Group, SimpleGrid, Stack, TextInput, Title, Tooltip} from "@mantine/core";
 
 import style from "@styles/index.module.css";
 import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
@@ -18,6 +18,8 @@ import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {useState} from "react";
 import {QuickEditSwitch} from "../../components/DeckViewScreen/QuickEditSwitch.tsx";
 import {useMediaQuery} from "@mantine/hooks";
+import {ManaCurvePlot} from "../../components/DeckViewScreen/DeckViewingOptions/ManaCurvePlot.tsx";
+import {DeckPieChart} from "../../components/DeckViewScreen/CardDetailsModal/DeckPieChart.tsx";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
@@ -128,6 +130,17 @@ export function DeckViewScreen() {
           <GroupedCards/>
         </Box>
       </Flex>
+
+
+      {ui.displayMode === "Text" && (
+        <SimpleGrid cols={4}>
+          <ManaCurvePlot/>
+
+          <DeckPieChart groupingMode={"color"}/>
+          <DeckPieChart groupingMode={"tags"}/>
+          <DeckPieChart groupingMode={"type"}/>
+        </SimpleGrid>)}
+
     </Stack>
   );
 }
