@@ -301,13 +301,17 @@ export function DeckPieChart({groupingMode}: DeckPieChartProps) {
       }
     }
 
-    return Object.entries(counts).map(([name, weight]) => ({
+    const unsorted = Object.entries(counts).map(([name, weight]) => ({
       name: COLOR_CODE_TO_NAMES[name],
       value: weight,
       actualValue: counts[name],
       color: COLOR_CODE_TO_COLOR[name],
       anchorId: sectionId(`${COLOR_CODE_TO_NAMES[name]} Producer`)
     }));
+
+    return unsorted.sort(
+      (a, b) => (a.name as string).localeCompare(b.name as string)
+    );
   }
 
   const colorProductionData: ChartData[] = productionChartData();
