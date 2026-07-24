@@ -98,45 +98,46 @@ export function DeckManagementModalButton() {
             }))}
           />
 
-          <Group justify="flex-end">
+          <Group justify={"space-between"}>
             <Button
-              variant="default"
-              onClick={() => setOpened(false)}
+              color="red"
+              variant="subtle"
+              leftSection={<IconTrash size={16}/>}
+              w={"fit-content"}
+              p={"xs"}
+              onClick={() => {
+                setOpened(false);
+                setDeleteConfirmation("");
+                setDeleteOpened(true);
+              }}
             >
-              Cancel
+              Delete Deck
             </Button>
 
-            <Button
-              onClick={handleSave}
-              disabled={!name || !format}
-            >
-              Save
-            </Button>
+            <Group>
+              <Button
+                variant="default"
+                onClick={() => setOpened(false)}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={handleSave}
+                disabled={!name || !format}
+              >
+                Save
+              </Button>
+            </Group>
           </Group>
 
-          <Text c="dimmed" size="sm" mt="md">
-            Danger zone
-          </Text>
-
-          <Button
-            color="red"
-            variant="light"
-            leftSection={<IconTrash size={16}/>}
-            onClick={() => {
-              setOpened(false);
-              setDeleteConfirmation("");
-              setDeleteOpened(true);
-            }}
-          >
-            Delete deck
-          </Button>
         </Stack>
       </Modal>
 
       <Modal
         opened={deleteOpened}
         onClose={() => setDeleteOpened(false)}
-        title="Delete deck"
+        title="Delete Deck"
       >
         <Stack>
           <Text c="red" fw={500}>
@@ -166,6 +167,7 @@ export function DeckManagementModalButton() {
 
             <Button
               color="red"
+              variant={"filled"}
               leftSection={<IconTrash size={16}/>}
               loading={deleteMutation.isPending}
               disabled={deleteConfirmation !== deck.name}
@@ -173,7 +175,7 @@ export function DeckManagementModalButton() {
                 deleteMutation.mutate({deckId: deck._id})
               }
             >
-              Delete deck
+              Delete Deck
             </Button>
           </Group>
         </Stack>
