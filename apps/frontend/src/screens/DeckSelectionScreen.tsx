@@ -85,6 +85,7 @@ function DeckSelectionScreen() {
               component={Link}
               to={`/app/deck/${deck._id}`}
               underline="never"
+              key={deck._id}
             >
               <Paper
                 withBorder
