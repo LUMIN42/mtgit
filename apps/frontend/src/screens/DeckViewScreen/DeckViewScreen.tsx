@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {ActionIcon, Box, Button, Flex, Group, Stack, TextInput, Title, Tooltip} from "@mantine/core";
+import {Box, Button, Flex, Group, SimpleGrid, Stack, Title} from "@mantine/core";
 
 import style from "@styles/index.module.css";
 import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
@@ -9,23 +9,19 @@ import {DeckDisplayModeSection} from "../../components/DeckViewScreen/DeckViewin
 import {
   useDeckUiContext
 } from "../../context/DeckUiContext.tsx";
-
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
+
 import DeckExportModalButton from "../../components/DeckViewScreen/DeckExportModalButton.tsx";
-import BranchManagementModalButton from "../../components/DeckViewScreen/BranchManagementModalButton.tsx";
 import {Link} from "react-router-dom";
-import {IconCheck, IconPencil} from "@tabler/icons-react";
-import {useState} from "react";
 import {QuickEditSwitch} from "../../components/DeckViewScreen/QuickEditSwitch.tsx";
 import {useMediaQuery} from "@mantine/hooks";
+import {ManaCurvePlot} from "../../components/DeckViewScreen/DeckViewingOptions/ManaCurvePlot.tsx";
+import {DeckPieChart} from "../../components/DeckViewScreen/CardDetailsModal/DeckPieChart.tsx";
+import {DeckManagementModalButton} from "../../components/DeckViewScreen/DeckManagementModalButton.tsx";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
   const repo = useRepositoryContext();
-
-  const [renamingDeck, setRenamingDeck] = useState<boolean>(false);
-  const [deckRenamingTextbox, setDeckRenamingTextbox] = useState("");
-
 
   const toggleDisplayMode = () => {
     ui.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
@@ -36,57 +32,7 @@ export function DeckViewScreen() {
 
   return (
     <Stack style={{maxWidth: "1400px", margin: "auto"}}>
-      <Group>
-        {
-          renamingDeck
-            ?
-            <TextInput
-              // h={"2em"}
-              value={deckRenamingTextbox}
-              onChange={e => setDeckRenamingTextbox(e.currentTarget.value)}
-
-              size={"xl"}
-
-              styles={{
-                input: {
-                  fontSize: "var(--mantine-h1-font-size)",
-                  fontWeight: "var(--mantine-h1-font-weight)",
-                  lineHeight: "var(--mantine-h1-line-height)"
-                }
-              }}
-            />
-            :
-            <Title order={1}>
-              {repo.repository?.name}
-            </Title>
-        }
-
-        <Tooltip label={"Rename Deck"}>
-          {renamingDeck ? (
-            <ActionIcon
-              variant="outline"
-              onClick={() => {
-                repo.updateRepository({name: deckRenamingTextbox});
-                setRenamingDeck(false);
-              }}
-            >
-              <IconCheck/>
-            </ActionIcon>
-          ) : (
-            <ActionIcon
-              color="var(--mantine-color-dimmed)"
-              variant="subtle"
-              onClick={() => {
-                setDeckRenamingTextbox(repo.repository.name);
-                setRenamingDeck(true);
-              }}
-            >
-              <IconPencil/>
-            </ActionIcon>
-          )}
-        </Tooltip>
-      </Group>
-
+      <Title order={1}>{repo.repository?.name}</Title>
       <Group>
         <DeckImportModalButton/>
         <DeckExportModalButton/>
@@ -96,11 +42,11 @@ export function DeckViewScreen() {
           onToggle={toggleDisplayMode}
         />
 
-        <BranchManagementModalButton/>
-
         <Button variant={"default"} component={Link} to={"history"}>
           Branch History
         </Button>
+
+        <DeckManagementModalButton/>
 
         <QuickEditSwitch/>
       </Group>
@@ -128,6 +74,17 @@ export function DeckViewScreen() {
           <GroupedCards/>
         </Box>
       </Flex>
+
+
+      {ui.displayMode === "Text" && (
+        <SimpleGrid cols={4}>
+          <ManaCurvePlot/>
+
+          <DeckPieChart groupingMode={"color"}/>
+          <DeckPieChart groupingMode={"tags"}/>
+          <DeckPieChart groupingMode={"type"}/>
+        </SimpleGrid>)}
+
     </Stack>
   );
 }

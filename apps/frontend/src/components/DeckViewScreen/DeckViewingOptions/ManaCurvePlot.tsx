@@ -96,6 +96,7 @@ export function ManaCurvePlot() {
       <InputLabel size="xs">Mana Curve:</InputLabel>
 
       <BarChart
+        ml={-20}
         h={170}
         data={manaCurveData}
         dataKey="cmc"

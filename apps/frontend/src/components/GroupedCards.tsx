@@ -46,7 +46,10 @@ export function GroupedCards({comparison = false}: GroupedCardsProps) {
     groups = groups.map(section => {
       return {
         name: section.name,
-        groups: section.groups.filter(group => consumedColors.some(color => group.heading.includes(color)))
+        groups: section.groups.filter(group =>
+          consumedColors.some(color => group.heading.includes(color)) ||
+          !group.heading // commander
+        )
       };
     });
   }

@@ -49,20 +49,20 @@ export function DeckViewingOptions({horizontal = false, comparison = false, narr
     </>
   );
 
-  const verticalContent = <Stack align="stretch" gap="xl" h="fit-content">
+  const verticalContent = <>
     {commonContent}
 
     {
-      groupingMode === "manaValue" &&
+      groupingMode === "manaValue" && displayMode === "Images" &&
         <ManaCurvePlot/>
     }
 
     {
-      (groupingMode !== "manaValue" && groupingMode !== "none") &&
+      (groupingMode !== "manaValue" && groupingMode !== "none" && displayMode === "Images") &&
         <DeckPieChart/>
     }
 
-  </Stack>;
+  </>;
 
   if (horizontal) {
     return (
@@ -101,9 +101,9 @@ export function DeckViewingOptions({horizontal = false, comparison = false, narr
     return (
       <Paper pos={"relative"} top={"-0.75rem"} h={"100%"} style={{zIndex: 3}}>
         <Paper
-          pos="sticky"
+          pos="relative"
           top={0}
-          h="100vh"
+          h="100%"
           py={"sm"}
           style={{
             boxShadow: [
@@ -116,10 +116,14 @@ export function DeckViewingOptions({horizontal = false, comparison = false, narr
           }}
           radius={0}
         >
-          <Paper h="100%" px={"sm"} py={"xs"}>
+          <Stack px={"sm"}
+            py={"sm"}
+            pos={"sticky"}
+            top={0}
+            mah={"100vh"}
+            h={displayMode === "Images" ? "100vh" : "fit-content"}>
             {verticalContent}
-          </Paper>
-
+          </Stack>
         </Paper>
       </Paper>
     );

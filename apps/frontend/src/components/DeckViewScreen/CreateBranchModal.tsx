@@ -1,4 +1,4 @@
-import {ActionIcon, Button, Group, Modal, Radio, Stack, TextInput, UnstyledButton} from "@mantine/core";
+import {ActionIcon, Button, Group, Modal, Radio, Stack, TextInput, Tooltip, UnstyledButton} from "@mantine/core";
 import {useState} from "react";
 import {DeckCardCounts, emptyDeckCardCounts} from "@mtgit/shared";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
@@ -31,9 +31,12 @@ export function CreateBranchModal() {
 
   return (
     <>
-      <ActionIcon variant={"subtle"} w={"100%"} onClick={() => setIsOpened(true)}>
-        <IconPlus/>
-      </ActionIcon>
+      <Tooltip label={"Create New Branch"}>
+        <ActionIcon variant={"subtle"} w={"100%"} onClick={() => setIsOpened(true)}>
+          <IconPlus/>
+        </ActionIcon>
+      </Tooltip>
+
       <Modal
         opened={isOpened}
         onClose={() => setIsOpened(false)}
