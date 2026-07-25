@@ -12,7 +12,6 @@ import {
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 
 import DeckExportModalButton from "../../components/DeckViewScreen/DeckExportModalButton.tsx";
-import BranchManagementModalButton from "../../components/DeckViewScreen/BranchManagementModalButton.tsx";
 import {Link} from "react-router-dom";
 import {QuickEditSwitch} from "../../components/DeckViewScreen/QuickEditSwitch.tsx";
 import {useMediaQuery} from "@mantine/hooks";
@@ -46,8 +45,6 @@ export function DeckViewScreen() {
         <Button variant={"default"} component={Link} to={"history"}>
           Branch History
         </Button>
-
-        <BranchManagementModalButton/>
 
         <DeckManagementModalButton/>
 

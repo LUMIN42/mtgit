@@ -4,17 +4,16 @@ import {
   Code,
   Group,
   Modal,
-  Select,
   Stack,
   Text,
   TextInput
 } from "@mantine/core";
 import {IconTrash} from "@tabler/icons-react";
-import {Format, formats} from "@mtgit/shared";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {trpcHooks} from "../../trpcClient.ts";
 import {useNavigate} from "react-router-dom";
 import {notifications} from "@mantine/notifications";
+import BranchManagement from "./BranchManagement.tsx";
 
 export function DeckManagementModalButton() {
   const {updateRepository, repository: deck} = useRepositoryContext();
@@ -23,7 +22,7 @@ export function DeckManagementModalButton() {
   const [deleteOpened, setDeleteOpened] = useState(false);
 
   const [name, setName] = useState(deck.name);
-  const [format, setFormat] = useState<Format>(deck.format);
+  // const [format, setFormat] = useState<Format>(deck.format);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   const utils = trpcHooks.useUtils();
@@ -32,7 +31,6 @@ export function DeckManagementModalButton() {
   useEffect(() => {
     if (opened) {
       setName(deck.name);
-      setFormat(deck.format);
     }
   }, [opened, deck]);
 
@@ -58,8 +56,7 @@ export function DeckManagementModalButton() {
 
   const handleSave = () => {
     updateRepository({
-      name,
-      format
+      name
     });
 
     setOpened(false);
@@ -72,13 +69,13 @@ export function DeckManagementModalButton() {
         loading={deleteMutation.isPending}
         variant="default"
       >
-        Manage Deck
+        Manage Deck & Branches
       </Button>
 
       <Modal
         opened={opened}
         onClose={() => setOpened(false)}
-        title="Manage Deck"
+        title="Manage Deck & Branches"
       >
         <Stack>
           <TextInput
@@ -87,16 +84,18 @@ export function DeckManagementModalButton() {
             onChange={e => setName(e.currentTarget.value)}
           />
 
-          <Select
-            label="Format"
-            placeholder="Choose format"
-            value={format}
-            onChange={formatString => setFormat(formatString as Format)}
-            data={formats.map(format => ({
-              value: format,
-              label: format
-            }))}
-          />
+          {/*<Select*/}
+          {/*  label="Format"*/}
+          {/*  placeholder="Choose format"*/}
+          {/*  value={format}*/}
+          {/*  onChange={formatString => setFormat(formatString as Format)}*/}
+          {/*  data={formats.map(format => ({*/}
+          {/*    value: format,*/}
+          {/*    label: format*/}
+          {/*  }))}*/}
+          {/*/>*/}
+
+          <BranchManagement/>
 
           <Group justify={"space-between"}>
             <Button
@@ -124,7 +123,7 @@ export function DeckManagementModalButton() {
 
               <Button
                 onClick={handleSave}
-                disabled={!name || !format}
+                disabled={!name}
               >
                 Save
               </Button>
