@@ -1,6 +1,6 @@
 import {GroupedCards} from "../../components/GroupedCards.tsx";
 import {DeckViewingOptions} from "../../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
-import {Box, Button, Flex, Group, SimpleGrid, Stack, Title} from "@mantine/core";
+import {Box, Button, Flex, Group, SimpleGrid, Skeleton, Stack, Title} from "@mantine/core";
 
 import style from "@styles/index.module.css";
 import {DeckImportModalButton} from "../../components/DeckViewScreen/DeckImportModalButton.tsx";
@@ -32,7 +32,15 @@ export function DeckViewScreen() {
 
   return (
     <Stack style={{maxWidth: "1400px", margin: "auto"}}>
-      <Title order={1}>{repo.repository?.name}</Title>
+      {
+        repo.repository?.name ? (
+          <Title order={1}>{repo.repository.name}</Title>
+        ) : (
+          <Title order={1}>
+            <Skeleton height="1.1em" width="10em" />
+          </Title>
+        )
+      }
       <Group>
         <DeckImportModalButton/>
         <DeckExportModalButton/>

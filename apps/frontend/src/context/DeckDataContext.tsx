@@ -1,7 +1,7 @@
 import {
   createContext,
   useContext,
-  useEffect
+  useEffect, useState
 } from "react";
 import type {ReactNode} from "react";
 
@@ -101,28 +101,34 @@ export function DeckDataProviderInner({
   sections,
   children
 }: DeckDataProviderProps) {
-  const {fetchMissingDeckCards, usePartiallyReconstructedDeck} = useScryfallCache();
-  const {repository} = useRepositoryContext();
+  const {usePartiallyReconstructedDeck} = useScryfallCache();
+  const {repository, isLoading: isRepoLoading} = useRepositoryContext();
   const ui = useDeckUiContext();
 
-  const deck = usePartiallyReconstructedDeck(sections ?? {}, repository.tags);
+  const [loading, setLoading] = useState(true);
+
+  const {deck, isLoading: isReconstructingDeck} = usePartiallyReconstructedDeck(sections ?? {}, repository.tags);
+
+  useEffect(() => {
+    if (!isReconstructingDeck && !isRepoLoading) {
+      setLoading(false);
+    }
+
+    if (isReconstructingDeck) {
+      setLoading(true);
+    }
+  }, [isReconstructingDeck]);
 
   let filteredDeck = {};
   if (deck !== null) {
     filteredDeck = filterDeckByScryfallQuery(deck, ui.cardFilterQuery);
   }
 
-  useEffect(() => {
-    if (sections) {
-      fetchMissingDeckCards(sections);
-    }
-  }, [sections]);
-
   return (
     <DeckDataContext.Provider
       value={{
         deck: deck ?? {},
-        isLoading: deck !== null,
+        isLoading: loading,
         filteredDeck
       }}
     >

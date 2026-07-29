@@ -3,13 +3,12 @@ import {
   Stack,
   Title,
   Text,
-  Loader,
   Center,
   Group,
   Button,
   Modal,
   TextInput,
-  Select, Paper, Anchor
+  Select, Paper, Anchor, Loader
 } from "@mantine/core";
 import {trpcHooks} from "../trpcClient.ts";
 import {Link, useNavigate} from "react-router-dom";
@@ -30,14 +29,6 @@ function DeckSelectionScreen() {
   const [opened, setOpened] = useState(false);
   const [name, setName] = useState("");
   const [format, setFormat] = useState<Format | null>(null);
-
-  if (decksQuery.isLoading) {
-    return (
-      <Center style={{height: "100%"}}>
-        <Loader/>
-      </Center>
-    );
-  }
 
   if (decksQuery.isError) {
     return (
@@ -75,13 +66,30 @@ function DeckSelectionScreen() {
           Create New Deck
         </Button>
 
+
+        {/*<div style={{*/}
+        {/*  display: "grid",*/}
+        {/*  gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",*/}
+        {/*  gap: "1rem"*/}
+        {/*}}>*/}
+        {/*  {Array.from({length: 10}, (_, index) => (*/}
+        {/*    <Skeleton h={"3.5em"}/>*/}
+        {/*  ))}*/}
+        {/*</div>*/}
+
+        {
+          decksQuery.isLoading && <Center>
+                <Loader/>
+            </Center>
+        }
+
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
           gap: "1rem"
         }}>
-          {
-            decks.map(deck => <Anchor
+          {decks.map(deck => (
+            <Anchor
               component={Link}
               to={`/app/deck/${deck._id}`}
               underline="never"
@@ -96,8 +104,8 @@ function DeckSelectionScreen() {
               >
                 {deck.name}
               </Paper>
-            </Anchor>)
-          }
+            </Anchor>
+          ))}
         </div>
       </Stack>
 

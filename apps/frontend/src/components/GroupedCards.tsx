@@ -1,4 +1,4 @@
-import {Stack, Title} from "@mantine/core";
+import {Center, Skeleton, Stack, Title} from "@mantine/core";
 import {
   getGroupHeadingId,
   performGrouping,
@@ -14,18 +14,14 @@ import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useElementSize, useViewportSize} from "@mantine/hooks";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
-type GroupedCardsProps = {
-  comparison?: boolean;
-};
-
-export function GroupedCards({comparison = false}: GroupedCardsProps) {
+export function GroupedCards() {
   const {groupingMode, sortingMode, setHoveredCardImageUrl, displayMode} = useDeckUiContext();
 
   const {width, ref} = useElementSize();
 
   const {width: viewportWidth} = useViewportSize();
 
-  const {filteredDeck} = useDeckDataContext();
+  const {filteredDeck, isLoading} = useDeckDataContext();
 
   const {preferences} = useRepositoryPreferences();
 
@@ -67,6 +63,12 @@ export function GroupedCards({comparison = false}: GroupedCardsProps) {
     hasNextLeft,
     hasNextRight
   } = useCardSelectionManager();
+
+  if (isLoading) {
+    return <Center>
+      <Skeleton h={"100vh"}/>
+    </Center>;
+  }
 
 
   return (

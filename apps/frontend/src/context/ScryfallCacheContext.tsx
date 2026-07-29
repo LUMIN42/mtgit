@@ -25,11 +25,13 @@ import {
 
 import {z} from "zod";
 
+type PartiallyReconstructedDeckResult = {deck: HydratedDeck, isLoading: boolean};
+
 type ScryfallCacheValue = {
   usePartiallyReconstructedDeck: (
     cardCounts: DeckCardCounts,
     tags: TagsMap
-  ) => HydratedDeck;
+  ) => PartiallyReconstructedDeckResult;
 
   fetchMissingDeckCards: (deckCardCounts: DeckCardCounts) => Promise<void>;
 
@@ -45,6 +47,8 @@ type ScryfallCacheValue = {
   fetchMissingCards: (ids: string[]) => Promise<void>;
 
   partiallyReconstructedCounts: (cardCounts: CardCounts, tags: TagsMap) => HydratedDeckSection;
+
+  isFetching: boolean;
 };
 
 const ScryfallCacheContext =
@@ -59,11 +63,8 @@ export function ScryfallCacheProvider({
     Record<string, OracleCard>
   >({});
 
-  /**
-   * IMPORTANT:
-   * useRef instead of useState for in-flight tracking
-   * (state is too slow + causes race conditions)
-   */
+  const [isFetching, setIsFetching] = useState(false);
+
   const inflight = useRef<Set<string>>(new Set());
 
   const fetchMissingCards = useCallback(async (ids: string[]) => {
@@ -76,6 +77,8 @@ export function ScryfallCacheProvider({
     if (missing.length === 0) {
       return;
     }
+
+    setIsFetching(true);
 
     missing.forEach(id => inflight.current.add(id));
 
@@ -98,6 +101,8 @@ export function ScryfallCacheProvider({
       missing.forEach(id =>
         inflight.current.delete(id)
       );
+
+      setIsFetching(false);
     }
   }, [map]);
 
@@ -159,7 +164,9 @@ export function ScryfallCacheProvider({
   const usePartiallyReconstructedDeck = (
     cardCounts: DeckCardCounts,
     tags: TagsMap
-  ): HydratedDeck => {
+  ): PartiallyReconstructedDeckResult => {
+    const [isFetchingMissing, setIsFetchingMissing] = useState(false);
+
     const missing = useMemo(() => {
       const ids: string[] = [];
 
@@ -175,14 +182,34 @@ export function ScryfallCacheProvider({
     }, [cardCounts, map]);
 
     useEffect(() => {
-      if (missing.length > 0) {
-        void fetchMissingCards(missing);
+      if (missing.length === 0) {
+        setIsFetchingMissing(false);
+        return;
       }
+
+      let cancelled = false;
+
+      setIsFetchingMissing(true);
+
+      fetchMissingCards(missing).finally(() => {
+        if (!cancelled) {
+          setIsFetchingMissing(false);
+        }
+      });
+
+      return () => {
+        cancelled = true;
+      };
     }, [missing]);
 
-    return useMemo(() => {
+    const deck = useMemo(() => {
       return buildPartiallyReconstructedDeck(cardCounts, tags);
     }, [cardCounts, tags, map]);
+
+    return {
+      deck,
+      isLoading: isFetchingMissing
+    };
   };
 
   return (
@@ -194,7 +221,8 @@ export function ScryfallCacheProvider({
         buildPartiallyReconstructedDeck,
         map,
         fetchMissingCards: fetchMissingCards,
-        partiallyReconstructedCounts
+        partiallyReconstructedCounts,
+        isFetching
       }}
     >
       {children}
