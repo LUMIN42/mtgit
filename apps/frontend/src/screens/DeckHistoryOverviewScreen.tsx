@@ -29,13 +29,14 @@ import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 import {Link, useNavigate} from "react-router-dom";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
+import {useDeckUrlParams} from "../hooks/urlParams.tsx";
 
 
 function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
   const {preferences, updatePreferences} = useRepositoryPreferences();
   const {compressedHistory: compressed, legalOnlyHistory: legalOnly} = preferences;
-  const {selectedBranchName} = useDeckUiContext();
 
+  const {editedBranchName: selectedBranchName} = useDeckUrlParams();
 
   return <Stack>
     <Group>
@@ -65,7 +66,6 @@ function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
       />
     </Group>
 
-
     <Title order={1} ta={"center"}>
       History of {selectedBranchName} branch
     </Title>
@@ -94,7 +94,9 @@ function DeckHistoryLoader() {
 
 export function DeckHistoryOverviewScreen() {
   const {repository} = useRepositoryContext();
-  const {selectedBranchName, displayMode, setComparisonContent} = useDeckUiContext();
+  const {displayMode} = useDeckUiContext();
+
+  const {editedBranchName: selectedBranchName} = useDeckUrlParams();
 
   const {preferences} = useRepositoryPreferences();
   const compressed = preferences.compressedHistory;
