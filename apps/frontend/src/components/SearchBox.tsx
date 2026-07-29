@@ -32,7 +32,7 @@ export function SearchBox({
       value={value}
       size={size}
       placeholder={placeholder}
-      label={value.trim().length > 0 ? label : undefined}
+      label={label}
       onChange={event => onChange(event.currentTarget.value)}
       onKeyDown={event => {
         if (event.key === "Enter") {
