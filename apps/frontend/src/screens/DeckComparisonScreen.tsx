@@ -1,10 +1,10 @@
 import React, {useMemo} from "react";
-import {Button, Divider, Grid, Stack, Title} from "@mantine/core";
+import {Button, Divider, Grid, Stack, Title, Text} from "@mantine/core";
 import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {withoutIdenticalParts} from "@mtgit/shared";
+import {deckCardCount, withoutIdenticalParts} from "@mtgit/shared";
 import {compareDecks, DeckComparisonResult} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
@@ -55,6 +55,7 @@ export function DeckComparisonScreen() {
     originalRightCardCounts
   ) : [originalLeftCardCounts, originalRightCardCounts];
 
+  const noDifference = deckCardCount(leftCardCounts) + deckCardCount(rightCardCounts) == 0;
 
   const originalLeftDeck = usePartiallyReconstructedDeck(
     leftCardCounts,
@@ -196,6 +197,14 @@ export function DeckComparisonScreen() {
         <Grid.Col span={5}>
           <Button variant={"outline"} onClick={selectChanged}>Select Comparison Version</Button>
         </Grid.Col>
+
+        {
+          noDifference && (<Grid.Col span={11}>
+            <Text c={"dimmed"} ta={"center"}>
+              Versions are identical. Nothing to show.
+            </Text>
+          </Grid.Col>)
+        }
 
 
         {
