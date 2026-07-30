@@ -37,7 +37,7 @@ export function DeckViewScreen() {
           <Title order={1}>{repo.repository.name}</Title>
         ) : (
           <Title order={1}>
-            <Skeleton height="1.1em" width="10em" />
+            <Skeleton height="1.2em" width="10em" />
           </Title>
         )
       }
