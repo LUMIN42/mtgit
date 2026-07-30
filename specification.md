@@ -2,6 +2,8 @@
 
 Author: Tomáš Jaroň
 
+App is developed at [MTGit Github](https://github.com/LUMIN42/mtgit).
+
 ## Summary
 
 Web application deck editor for the collectable card game Magic, the Gathering. The project is inspired by git branching
