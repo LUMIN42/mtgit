@@ -20,7 +20,8 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@styles/*": ["src/assets/*"]
+      "@styles/*": ["src/assets/*"],
+      "@mtgit/shared": ["../../packages/shared/src"]
     },
 
     /* Linting */

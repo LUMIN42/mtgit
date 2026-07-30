@@ -11,6 +11,9 @@ export const FormatSchema = z.enum(formats);
 
 export type Format = z.infer<typeof FormatSchema>;
 
+/**
+ * The maximum amount of the card a deck of the given format can legally have.
+ */
 export function maximumCardAmount(card: OracleCard, format: Format) {
   if (card.type_line.includes("Basic")) {
     return Infinity;
@@ -27,6 +30,11 @@ export function maximumCardAmount(card: OracleCard, format: Format) {
   return 1;
 }
 
+/**
+ * The maximum amount of a card a deck of the given format can legally have.
+ * Use only for preflight, as it gets cards like basic lands
+ * or cards like Rat colony, which have an uncapped maximum no matter what.
+ */
 export function maximumCardAmountWithoutCard(format: Format) {
   if (format === "Commander") {
     return 1;

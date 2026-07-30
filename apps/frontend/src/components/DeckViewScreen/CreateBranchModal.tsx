@@ -1,6 +1,6 @@
 import {ActionIcon, Button, Group, Modal, Radio, Stack, TextInput, Tooltip, UnstyledButton} from "@mantine/core";
 import {useState} from "react";
-import {DeckCardCounts, emptyDeckCardCounts} from "@mtgit/shared";
+import {DeckCardCounts, createEmptyDeckCardCounts} from "@mtgit/shared";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {IconPlus} from "@tabler/icons-react";
 
@@ -19,7 +19,7 @@ export function CreateBranchModal() {
       return;
     }
 
-    const cardCounts: DeckCardCounts = repo.repository.branches[baseBranchName] ?? emptyDeckCardCounts();
+    const cardCounts: DeckCardCounts = repo.repository.branches[baseBranchName] ?? createEmptyDeckCardCounts();
 
     repo.createBranch(trimmedName, cardCounts);
 

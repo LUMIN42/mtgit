@@ -1,3 +1,11 @@
+/**
+ * Configures Express and attaches the trpc server to it.
+ *
+ * Resolves .env variables.
+ * Handles CORS.
+ * Serves frontend.
+ */
+
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 
@@ -75,12 +83,12 @@ app.use(
   })
 );
 
-
 const frontendDist = path.resolve(
   __dirname,
   "../../frontend/dist"
 );
 
+// frontend serving
 app.use(express.static(frontendDist));
 
 app.get(/.*/, (_, res) => {

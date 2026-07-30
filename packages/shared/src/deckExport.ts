@@ -1,3 +1,7 @@
+/**
+ * {@link deckToExportText} is the only function you should probably be using
+ */
+
 import {DeckCard, HydratedDeck, HydratedDeckSection} from "./deckTypes.js";
 import {DECK_SECTION_NAMES, DeckSectionName} from "./repositoryTypes.js";
 
@@ -5,14 +9,20 @@ export const DECK_EXPORT_MODES = ["Arena", "MTGO"] as const;
 export type DeckExportMode = (typeof DECK_EXPORT_MODES)[number];
 
 const ARENA_DECK_SECTION_TRANSLATOR = {
-  ...Object.fromEntries(DECK_SECTION_NAMES.map((name: DeckSectionName) => [name, name])), 
+  ...Object.fromEntries(DECK_SECTION_NAMES.map((name: DeckSectionName) => [name, name])),
   Main: "Deck"
 } as Record<DeckSectionName, string>;
 
+/**
+ * same for both MTGO and MTGA
+ */
 function serializeCard(card: DeckCard) {
   return `${card.count} ${card.name}`;
 }
 
+/**
+ * same for both MTGO and MTGA
+ */
 function serializeSectionContent(section: HydratedDeckSection) {
   return Object.values(section).map(serializeCard).join("\n");
 }
@@ -61,6 +71,9 @@ ${serializeSectionContent(deck.Commander!)}
   return output;
 }
 
+/**
+ * Serializes a deck into either MTGO or MTGA import/export plaintext format.
+ */
 export function deckToExportText(
   deck: HydratedDeck,
   mode: DeckExportMode,

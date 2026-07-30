@@ -10,7 +10,9 @@ import {TRPCError} from "@trpc/server";
 import {ObjectId} from "mongodb";
 
 export const repositoryPreferencesRouter = router({
-  // Fetch current user's preferences
+  /**
+   * Fetch current user's {@link RepositoryPreferences} for the given deck repository.
+   */
   get: protectedProcedure
     .input(z.object({
       repositoryId: ObjectIdSchema
@@ -49,7 +51,9 @@ export const repositoryPreferencesRouter = router({
       return dbPreferences.preferences;
     }),
 
-  // Update current user's preferences
+  /**
+   * Sets current user's {@link RepositoryPreferences} for the given repository.
+   */
   set: protectedProcedure
     .input(z.object({
       preferences: RepositoryPreferencesSchema,
@@ -91,6 +95,12 @@ export const repositoryPreferencesRouter = router({
       return result;
     }),
 
+  /**
+   * In the current repository's preferences, sets a single branch's property of whether it is hidden or not.
+   * Hidden branches don't show for editing unless they are selected as edited or comparison branch.
+   *
+   * @throws TRPCError NOT_FOUND code if not found
+   */
   setBranchVisibility: protectedProcedure
     .input(
       z.object({
@@ -124,9 +134,20 @@ export const repositoryPreferencesRouter = router({
         update
       );
 
+      if (!result) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repository preferences not found."
+        });
+      }
+
       console.log(result);
     }),
 
+  /**
+   * Returns the visibility of a single branch.
+   * See setBranchVisibility endpoint for more details.
+   */
   getBranchVisibility: protectedProcedure
     .input(
       z.object({

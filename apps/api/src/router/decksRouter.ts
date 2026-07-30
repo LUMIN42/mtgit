@@ -77,6 +77,10 @@ export const decksRouter = router({
       return result.insertedId;
     }),
 
+  /**
+   * Returns the ids and names of all the decks the user owns.
+   * Used in deck selection screen.
+   */
   usersDecks: protectedProcedure.query(async ({ctx}) => {
     const reposCollection = getCollection("repositories");
 
@@ -162,6 +166,10 @@ export const decksRouter = router({
       return updatedRepo;
     }),
 
+  /**
+   * Sets or unsets a single tag of a card in a deck.
+   * Allows for creating new tags as well.
+   */
   setTag: protectedProcedure
     .input(
       z.object({
@@ -212,6 +220,11 @@ export const decksRouter = router({
       return {success: true};
     }),
 
+  /**
+   * Returns all the branch snapshots of the given branch.
+   *
+   * @returns a list of {@link BranchSnapshot} objects
+   */
   branchHistory: protectedProcedure
     .input(z.object({
       repositoryId: ObjectIdSchema,
@@ -263,6 +276,10 @@ export const decksRouter = router({
       return snapshots;
     }),
 
+  /**
+   * Deletes an entire deck repository from the DB.
+   * Returns NOT_FOUND code in place of unauthorized in order to not allow people to check which ids are taken.
+   */
   delete: protectedProcedure
     .input(z.object({deckId: ObjectIdSchema}))
     .mutation(async ({ctx, input: {deckId}}) => {

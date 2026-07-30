@@ -1,3 +1,7 @@
+/**
+ * OracleCardSchema is the only one that gets used elsewhere.
+ */
+
 import {z} from "zod";
 import {OracleIdSchema} from "./repositoryTypes.js";
 
@@ -103,7 +107,12 @@ const AdventureOracleCardSchema = DoubleFacedScryfallOracleCardSchema
     image_uris: ImageUrisSchema
   });
 
-
+/**
+ * Can parse a raw scryfall oracle card from the JSON bulk dump,
+ * but is stored differently and thus is not backwards-compatible.
+ * Normalizes each card to have a list of faces even if it only has a single face in order to unify handling
+ * for all contexts a card may appear in.
+ */
 export const OracleCardSchema =
   z
     .preprocess(

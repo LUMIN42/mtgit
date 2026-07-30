@@ -1,8 +1,8 @@
 import {z} from "zod";
 
 /**
- * Used for allowing frontend to use mongo id without having to convert it manually every time.
- * Frontend cannot import mongo types directly.
+ * Some objects have mongo _id generated as a uuid.
+ * The preprocessing allows for easy reading straight from the db.
  */
 const DbUuidSchema = z.preprocess(
   raw => String(raw),

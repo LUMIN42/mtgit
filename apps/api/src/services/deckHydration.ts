@@ -1,8 +1,11 @@
-import {allDeckOracleIds, DeckCardCounts, OracleCard, OracleCardSchema} from "@mtgit/shared";
+import {allDeckOracleIds, DeckCardCounts, OracleCard, OracleCardSchema, OracleId} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {z} from "zod";
 
-export async function createCardsMap(oracle_ids: string[]) {
+/**
+ * @returns a mapping from OracleId to its corresponding scryfall oracle card
+ */
+export async function createCardsMap(oracle_ids: string[]): Promise<Record<OracleId, OracleCard>> {
   const cardsCollection = getCollection<OracleCard>("scryfall_cards");
 
   const cardsResponse = await cardsCollection.find({
