@@ -89,8 +89,8 @@ export function DeckViewScreen() {
           <ManaCurvePlot/>
 
           <DeckPieChart groupingMode={"color"}/>
-          <DeckPieChart groupingMode={"tags"}/>
           <DeckPieChart groupingMode={"type"}/>
+          <DeckPieChart groupingMode={"tags"}/>
         </SimpleGrid>)}
 
     </Stack>
