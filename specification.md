@@ -1,7 +1,5 @@
 # MTGit software specification
 
-Version 0.1.0
-
 Author: Tomáš Jaroň
 
 ## Summary
@@ -63,9 +61,10 @@ However, their overall UI look is top-tier. I will strive to match it, but I wil
 
 Same issues apply as for moxfield.
 
-I really like their card detail UI upon left-clicking. It will be used in MTGit as well. It also has great EDHRec and
-scryfall tagger integrations, which will likely be added to MTGit as a part of the bachelor's thesis after the semestral
-project. Though the first impression from the UI look is not as good as Moxfield.
+I really like their card detail UI upon left-clicking. It will be used in MTGit as well. It also has
+great [Edhrec](#edhrec) and
+[Scryfall Tagger](#scryfall-tagger) integrations, which will likely be added to MTGit as a part of the bachelor's thesis
+after the semestral project. Though the first impression from the UI look is not as good as Moxfield.
 
 #### TappedOut
 
@@ -155,8 +154,6 @@ the deck.
 
 This will be executed by querying [scryfall API](https://scryfall.com/docs/api) directly.
 
-See [Scryfall](#scryfall) in case of confusion.
-
 #### Search query defaults
 
 User may choose a suffix they add at the end of each query. Can be used for commander color identity enforcement, for
@@ -198,7 +195,7 @@ well.
 
 ### Deck Export
 
-Deck may be exported in MTGO or MTGA format. In both cases, it is copied into clipboard.
+Deck may be exported in MTGO or MTGA text serialization format. In both cases, it is copied into clipboard.
 
 ## Screens
 
