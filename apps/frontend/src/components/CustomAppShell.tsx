@@ -1,7 +1,7 @@
 import type {ReactNode} from "react";
 import {Text, Button, Group, Menu, Paper} from "@mantine/core";
 import {useAuth} from "../hooks/LoginInfo.ts";
-import {useNavigate} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {trpcHooks} from "../trpcClient.ts";
 
 export function CustomAppShell({children}: {children: ReactNode}) {
@@ -37,13 +37,25 @@ export function CustomAppShell({children}: {children: ReactNode}) {
               MTGit
             </Text>
 
-            <Button
-              variant="subtle"
-              size="xs"
-              onClick={() => navigate("/app/decks")}
-            >
-              Decks
-            </Button>
+            <Group gap={0}>
+              <Button
+                component={Link}
+                variant="subtle"
+                size="xs"
+                to={"/app/decks"}
+              >
+                Your Decks
+              </Button>
+
+              <Button
+                component={Link}
+                variant="subtle"
+                size="xs"
+                to={"/app/tutorial"}
+              >
+                Quickstart Guide
+              </Button>
+            </Group>
           </Group>
 
           {/* CENTER / MENU */}
