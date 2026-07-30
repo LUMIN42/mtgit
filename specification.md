@@ -9,119 +9,15 @@ Author: Tomáš Jaroň
 Web application deck editor for the collectable card game Magic, the Gathering. The project is inspired by git branching
 principles. Tracks multiple variants of the same deck and allows for their quick comparison and history tracking.
 
-Contents
-
-1. Basic information
-   ....................................................................................................................1  
-   1.1 Description and scope
-   ...............................................................................................................1  
-   1.2 Technologies used
-   ...................................................................................................................1  
-   1.3 References
-   ...............................................................................................................................1  
-   1.4 Document conventions
-   ..............................................................................................................1
-2. Short description of the software
-   ............................................................................................2  
-   2.1 Motivation, components and goals
-   ..........................................................................................2  
-   2.2 Main features
-   ..........................................................................................................................3  
-   2.3 Motivating usage example
-   ......................................................................................................3  
-   2.4 Target environment
-   ..................................................................................................................3  
-   2.5 Constraints
-   ..............................................................................................................................3  
-   2.6 Documentation deliverables
-   ....................................................................................................3
-3. External interfaces
-   ..................................................................................................................4  
-   3.1 User interface, inputs and outputs
-   ..........................................................................................4  
-   3.2 Hardware interfaces
-   .................................................................................................................4  
-   3.3 Software interfaces
-   ..................................................................................................................4  
-   3.4 Communication interfaces
-   ......................................................................................................4
-4. Detailed functionality description
-   ..........................................................................................5  
-   4.1 Authentication & user management
-   .........................................................................................5  
-   4.2 API (tRPC) endpoints
-   ..............................................................................................................5  
-   4.3 Frontend views and state sync
-   ...............................................................................................6  
-   4.n Additional features
-   .................................................................................................................6
-5. Screens / Views
-   .....................................................................................................................7  
-   5.1 Frontend — Home
-   ....................................................................................................................7  
-   5.2 Frontend — Auth (Login / Register)
-   ........................................................................................7  
-   5.3 Frontend — Dashboard / App main view
-   ..................................................................................7
-6. Non‑functional requirements
-   ...................................................................................................8  
-   6.1 Performance requirements
-   .....................................................................................................8  
-   6.2 Safety and usage risks
-   ............................................................................................................8  
-   6.3 Data security requirements
-   ....................................................................................................8  
-   6.4 Extensibility and integrability requirements
-   ...........................................................................9
-7. Other requirements
-   .................................................................................................................9
-8. Out‑of‑scope (negative specification)
-   .....................................................................................9
-9. Time‑line & Milestones
-   ..........................................................................................................10
-10. Notes
-    ....................................................................................................................................11
-
-## Basic Information
-
-### Description
-
-<Popište krátce specifikovaný software. Krátce zdůvodněte, proč jste se rozhodli ho implementovat, uveďte, co přinese
-nového, na jakou cílovou skupinu je zaměřen. Pokud existují alternativy, uveďte je a zdůvodněte, v čem se vaše řešení
-bude odlišovat>
-
-### Technologies used
-
-#### Shared
-
-- [Typescript](https://www.typescriptlang.org/)
-- [Zod](https://zod.dev/) schema validation
-- [Trpc](https://trpc.io/) frontend-backend communication
-- [EsLint](https://eslint.org/)
-
-#### Frontend
-
-- [React](https://react.dev/)
-- [Vite](https://vite.dev/)
-- [Mantine](https://mantine.dev) UI framework
-- [Tanstack Query](https://tanstack.com)
-
-#### Backend
-
-- [Express](https://expressjs.com/) backend base
-- [Mongo](https://www.mongodb.com/) database
-
-## Short description of the software
-
-### Motivation
+## Motivation & Overview
 
 Industry standard Magic the Gathering (MTG from now on) deck editors make it hard to track multiple versions of the same
 deck concurrently.
 
 ### Motivational use-cases
 
-I am working on a deck and am trying to make experimental updates while rollbacking changes which prove to be
-detrimental.
+I am working on a deck and am trying to make experimental updates while keeping around a stable version for rollbacking
+changes which prove to be detrimental.
 
 I also want to keep a separate pile of cards which have proven themselves to work well, but are not in the current
 version of the deck. They might come in handy later in the deck creation process.
@@ -144,12 +40,73 @@ I don't own all the needed cards yet.
     - estimated deck cost
 - deck import & export
 
-[//]: # (TODO zmínit reliance na scryfallu včetně jejich dumpu karet)
+### Comparison to existing solutions
 
-### Runtime
+Other apps expect you to only have one deck version at a time. Thought they are far better established and offer a very
+large amount of features which I won't have time to match during the single semester.
 
-The frontend & backend will be deployed at render.com and the database will be deployed using mongo atlas. The app
-should work on any reasonably sized device with a reasonably up-to-date browser.
+#### Moxfield
+
+I have the most experience with Moxfield by far. While it does technically allow for deck comparison, it requires you to
+have a whole separate independent deck for each version, and you need to copy-paste their URLs manually, which makes
+workflows proposed in the MTGit app impractical.
+
+I also have some UX issues with the app. While using image view of the deck, the app requires an inordinate amount of
+scrolling to view the mana curve, which is an important piece of information you should have access to almost at all
+times. Same is true for switching the grouping and sorting mode.
+
+Deck card filtering requires about 3 precise clicks to get going, which is very cumbersome.
+
+However, their overall UI look is top-tier. I will strive to match it, but I will most likely fail.
+
+#### Archidekt
+
+Same issues apply as for moxfield.
+
+I really like their card detail UI upon left-clicking. It will be used in MTGit as well. It also has great EDHRec and
+scryfall tagger integrations, which will likely be added to MTGit as a part of the bachelor's thesis after the semestral
+project. Though the first impression from the UI look is not as good as Moxfield.
+
+#### TappedOut
+
+Again, same issues as with the others.
+
+I have heard some people praise the UX of their plots for deck breakdown. I might use that as an inspiration. The UI
+looks definitely the most archaic out of the mentioned.
+
+## Technologies used
+
+### Shared
+
+- [Typescript](https://www.typescriptlang.org/)
+- [Zod](https://zod.dev/) schema validation
+- [Trpc](https://trpc.io/) frontend-backend communication protocol
+- [EsLint](https://eslint.org/)
+
+### Frontend
+
+- [React](https://react.dev/)
+- [Vite](https://vite.dev/)
+- [Mantine](https://mantine.dev) UI framework
+- [Tanstack Query](https://tanstack.com)
+
+### Backend
+
+- [Express](https://expressjs.com/) backend base
+- [Mongo](https://www.mongodb.com/) database
+
+## Deployment
+
+The frontend & backend will be deployed at [Render](https://render.com/) and the database will be deployed
+using [Mongo Atlas](https://www.mongodb.com/products/platform/atlas-database).
+
+The database will need the up to date [scryfall card bulk data](#scryfall-bulk-data) uploaded into it in order for the
+app to work properly. Automatic bulk data refetching will not be a part of the project and will most likely be done in
+the followup bachelor's thesis.
+
+## Runtime
+
+The app should work on any reasonably sized device including phones and with any reasonably up-to-date browser.
 
 ## Functionalities
 
@@ -158,9 +115,11 @@ should work on any reasonably sized device with a reasonably up-to-date browser.
 ### Listing out all of user's repositories & creating new
 
 ### Deck Displaying
+
 The grouping and the ordering inside the group can be toggled using the UI.
 
 #### Grouping
+
 The following grouping modes will be offered:
 
 - mana value
@@ -170,27 +129,35 @@ The following grouping modes will be offered:
 - no grouping
 
 #### Ordering
-Supports sorting by name, price (in USD) and mana value.
+
+Will support sorting the cards in each group by name, price (in USD) and mana value.
 
 #### Text mode & Image mode
-Allows viewing the cards either by text names or by their card image. 
+
+Allows viewing the cards either by text names or by their card image.
 
 ### Basic deck data analysis
 
 - mana curve plot
 - deck card counts checking
 - pie chart for color production & consumption
+- deck's total estimated cost in USD
+- card counts compared to what is expected in the deck format
 
 ### Card tagging
 
-Each card in a repository may possess any amount of user-defined tags. User may
+Each card in a repository may possess any amount of user-defined tags. User may then group their cards based on tags.
 
-## Scryfall card search
+### Scryfall card search
 
-Cards can be searched in the app through the standard scryfall syntax. Searched cards can be added to the deck. This
-will be done by querying [scryfall API](https://scryfall.com/docs/api).
+Cards can be searched in the app through the [Scryfall Query syntax](#scryfall-query). Searched cards can be added to
+the deck.
 
-### Default search query
+This will be executed by querying [scryfall API](https://scryfall.com/docs/api) directly.
+
+See [Scryfall](#scryfall) in case of confusion.
+
+#### Search query defaults
 
 User may choose a suffix they add at the end of each query. Can be used for commander color identity enforcement, for
 budget restrictions, default ordering etc. Mostly there to save a lot of typing of the same query parts over and over
@@ -198,8 +165,8 @@ again.
 
 ### Card filtering
 
-A user may choose to filter the cards in their deck by a scryfall search query. This will be done on the frontend
-without using the scryfall API and thus may not support all the scryfall query features.
+A user may choose to filter the cards in their deck by a [scryfall search query](#scryfall-card-search). This will be
+done on the frontend without using the scryfall API and thus may not support all the scryfall query features.
 
 ### Basic branch management
 
@@ -224,143 +191,74 @@ A user may view the edits history of the currently selected branch.
 
 Any point in time of the history branch may be used to enter comparison screen with the current version of the deck.
 
-
 ### Deck Import
-Will support mtgo and mtga deck formats as well as moxfield bulk edit format, which includes tags as well.
 
-[//]: # (TODO add MTGO and MTGA into terms appendix)
+Will support MTGO and MTGA deck text serialization formats as well as moxfield bulk edit format, which includes tags as
+well.
 
 ### Deck Export
+
 Deck may be exported in MTGO or MTGA format. In both cases, it is copied into clipboard.
 
-3.1 User interface, inputs and outputs Frontend exposes web UI (served by Vite in dev, static build in production).
-Primary inputs:
+## Screens
 
-- User interactions (forms, navigation).
-- Authentication credentials (login/register).  
-  Primary outputs:
-- Rendered pages and JSON from API endpoints.
-- API responses for tRPC endpoints consumed by frontend.
+Login screen, register screen, deck viewing screen, deck comparison screen, deck history screen.
 
-3.2 Hardware interfaces No dedicated hardware interfaces. Standard web hosting and database connectivity are required.
+Their looks will be determined throughout development, since determining it right in the specification could easily lead
+to unforeseen issues. The feel of the app is hard to get right and is quite vital for this project.
 
-3.3 Software interfaces
+## Negative Requirements
 
-- MongoDB: data persistence via connection string (MONGODB_URI).
-- Shared package (s) (@mtgit/shared): types and utilities imported by frontend and API.
-- tRPC: type-safe RPC between frontend and backend.
-- Express: HTTP layer exposing health and API endpoints.  
-  Describe data passed: typical JSON payloads for API, including authentication tokens/cookies for session management.
+High accessibility will not be required, as people with a sight disability would have a very hard time playing MTG
+anyway.
 
-3.4 Communication interfaces
+Public-facing backend API documentation will not be required.
 
-- HTTP (S) for frontend <-> API communication.
-- tRPC protocol over HTTP endpoints for RPC-style calls.
-- Authentication likely via secure cookies (cookie-parser) or tokens (details TBD).
-- Recommended: enforce HTTPS in production, secure cookie flags, and standard CORS policies.
+## Glossary
 
-4. Detailed functionality description This section enumerates the important functions and expected behavior, including
-   error handling.
+### MTG Deck Format
 
-4.1 Authentication & user management Purpose: register, login, authenticate users, and manage sessions.  
-Inputs: registration payload (email, password), login payload (email, password).  
-Processing: password hashing (argon2), session cookie creation/validation, user document storage in MongoDB.  
-Outputs: success/failure responses, auth cookie or token.  
-Error states: invalid credentials (401), duplicate user (409), database unavailable (503). Provide clear messages and
-safe logging practices (no plaintext passwords).
+There are different formats for playing MTG. If you play magic with somebody else, you need to agree on the format you
+are playing first.
 
-4.2 API (tRPC) endpoints
+Each format allows for different cards to be used and may have special rules attached to it.
 
-- Health check: GET /health -> 200 OK when server and DB reachable.
-- tRPC endpoint: POST /trpc/* -> handles RPC calls described in shared router types.  
-  Expected behavior: type-safe request validation via shared types; consistent error shape for client.  
-  Error handling: validation errors (400), auth required (401), unexpected server error (500).
+### Scryfall
 
-4.3 Frontend views and state sync Frontend interacts with tRPC endpoints for data and uses shared types for compile-time
-safety. Synchronization: optimistic UI updates where appropriate, and fallback to server truth on conflicts. Error
-displays for user-facing failures (network, validation).
+Public MTG card database. Industry standard for working with MTG card data.
 
-4.n Additional features
+[scryfall.com](https://scryfall.com/)
 
-- Shared utilities: logging adapter, environment config loader, tests scaffolding (TBD).
-- Static asset handling and build outputs for production deployment.
+#### Scryfall Bulk Data
 
-5. Screens / Views Sketches and brief descriptions for key screens.
+Data for all the cards provided in jsonl format.
 
-5.1 Frontend — Home Description: Landing page showing project name, quick links (login/register), and status indicator
-for API health (reads /health).
+I will be using the Oracle Cards file.
 
-5.2 Frontend — Auth (Login / Register)
-Description: Forms for user registration and login. Basic client-side validation; calls to tRPC or REST endpoints;
-displays success/failure messages.
+Further info can be found on the [official scryfall bulk data documentation](https://scryfall.com/docs/api/bulk-data)
+site.
 
-5.3 Frontend — Dashboard / App main view Description: Primary application view after login, shows user data, navigation
-to app features, and a sign-out action.
+#### Scryfall Query
 
-6. Non‑functional requirements
+Scryfall syntax for searching for cards.
 
-6.1 Performance requirements
+The search results are paginated.
 
-- Dev mode should provide fast hot reloads (sub-2s edits for small components expected).
-- API latency targets: p95 under network overhead should remain acceptable for interactive usage (<200ms on local
-  network) — adjustable based on hosting.
+Example:
 
-6.2 Safety and usage risks
+```scryfall
+usd<2 order:name color:red -color:blue
+```
 
-- No industrial/physical control interactions — low physical risk.
-- Data loss risk if database credentials are mishandled; backups and environment safety measures recommended.
+Searches for all cards which cost less than 2 US dollars while being of red color and not of blue color.
 
-6.3 Data security requirements
+[Full Scryfall Query Documentation](https://scryfall.com/docs/syntax)
 
-- Use secure storage for credentials (e.g., environment variables, secrets manager).
-- Passwords must be hashed with argon2; no plaintext storage.
-- Use secure cookie flags (HttpOnly, Secure, SameSite) for session cookies.
-- Enforce TLS for production traffic.
-- Limit sensitive logs; avoid logging credentials.
+#### Scryfall Tagger
 
-6.4 Extensibility and integrability requirements
+A community built public database for assigning tags to cards, which allows for better filtering based on more abstract
+concepts which are not reflected in the card's text by a specific keyword.
 
-- Shared package pattern must allow adding new packages with minimal friction.
-- API should expose clear extension points (additional routers in tRPC).
-- CI/CD pipelines should support workspace-aware builds and selective publishing for packages.
+### Edhrec
 
-7. Other requirements
-
-- Code style and linting: ESLint + shared configs, enforce with pre-commit or CI.
-- Type checking: enable and run TypeScript checks as part of CI (npm run typecheck).
-- Dependency updates: periodic dependency review to avoid vulnerabilities.
-
-8. Out‑of‑scope (negative specification)
-
-- Production deployment automation (CI/CD scripts are not included by default).
-- Full production-ready monitoring, logging, or autoscaling setups.
-- Advanced payment/subscription features or integrations not indicated in repository.
-
-9. Time‑line & Milestones Suggested milestone plan (examples; adjust to team availability). Typical cadence ~1 month per
-   milestone with buffer.
-
-| Date       | Milestone                                                                                           | Presentation                                                      |
-|------------|-----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| 2026-08-29 | Dev environment & workspace stabilization: npm install, env examples, run dev for frontend/api      | Demo: local dev run + commit with README improvements             |
-| 2026-09-29 | Authentication: register/login, hashed passwords, session cookie support, basic user model          | Demo: login/register flows + commit with tests for auth endpoints |
-| 2026-10-29 | Core API features & frontend integration: implement essential tRPC routes and sample frontend calls | Demo: integrated feature demo + PR with code and docs             |
-| 2026-11-29 | Tests & CI: unit tests, basic integration tests, typecheck in CI                                    | Presentation: CI build status + test report                       |
-| 2026-12-15 | Production readiness: build scripts, environment hardening, deployment checklist                    | Demo: production build and deployment notes in README             |
-
-10. Notes This specification is inspired by standard SRS templates (e.g., Karl E. Wiegers) and SAFE™ Development System
-    Requirements. Specific implementation details and missing decisions are listed below.
-
-Addendum A: Definitions
-
-- tRPC: type-safe remote procedure call layer for TypeScript.
-- Workspace: npm workspaces enabling multiple packages within a repo.
-- Shared package: package used by multiple apps (e.g., @mtgit/shared).
-
-Addendum B: To Be Determined List
-
-- Exact authentication token/session strategy (JWT vs server/session cookie) — decide before full auth implementation.
-- Node engine version to pin in package.json.
-- Complete list of tRPC RPC methods and payload shapes — add after API design session.
-- Tests scope and test frameworks (Jest, Vitest, etc.).
-
-End of document.
+Industry standard for card recommendations for the EDH (aka commander) [format](#mtg-deck-format).
