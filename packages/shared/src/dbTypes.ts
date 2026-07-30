@@ -1,16 +1,13 @@
 import {z} from "zod";
-import {ObjectIdSchema} from "./repositoryTypes.js";
 
+/**
+ * Used for allowing frontend to use mongo id without having to convert it manually every time.
+ * Frontend cannot import mongo types directly.
+ */
 const DbUuidSchema = z.preprocess(
   raw => String(raw),
   z.uuid()
 );
-
-export const DeckOverviewSchema = z.object({
-  name: z.string(),
-  last_updated: z.date(),
-  deck_id: ObjectIdSchema
-});
 
 export const SessionSchema = z.object({
   _id: DbUuidSchema,
@@ -26,5 +23,4 @@ export const FrontendUserDataSchema = z.object({
   username: z.string()
 });
 
-export type DeckOverview = z.infer<typeof DeckOverviewSchema>;
 export type Session = z.infer<typeof SessionSchema>;

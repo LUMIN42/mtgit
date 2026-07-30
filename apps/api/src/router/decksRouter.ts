@@ -20,6 +20,12 @@ import {DbRepository, DbRepositorySchema, DbBranchSnapshot, DbBranchSnapshotSche
 
 
 export const decksRouter = router({
+  /**
+   * Returns the whole repository with a given id.
+   *
+   * @throws TRPCError if deck is not found. If unauthorized, not found is returned as well
+   * in order to hide the information of existence of a deck with a given id for privacy’s sake.
+   */
   get: protectedProcedure
     .input(
       z.object({
@@ -47,6 +53,11 @@ export const decksRouter = router({
       });
     }),
 
+  /**
+   * Writes directly to DB.
+   *
+   * @returns id of the created deck repository.
+   */
   create: protectedProcedure
     .input(
       z.object({

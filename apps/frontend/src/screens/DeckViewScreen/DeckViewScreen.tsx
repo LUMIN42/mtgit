@@ -19,6 +19,9 @@ import {ManaCurvePlot} from "../../components/DeckViewScreen/DeckViewingOptions/
 import {DeckPieChart} from "../../components/DeckViewScreen/CardDetailsModal/DeckPieChart.tsx";
 import {DeckManagementModalButton} from "../../components/DeckViewScreen/DeckManagementModalButton.tsx";
 
+/**
+ * For direct usage, use {@link DeckViewScreenWrapper} instead.
+ */
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
   const repo = useRepositoryContext();

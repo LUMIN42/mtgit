@@ -21,6 +21,9 @@ interface CardDetailsModalProps {
   deckSectionName?: DeckSectionName | undefined;
 }
 
+/**
+ * Use in conjunction with {@link useCardSelectionManager}
+ */
 export function CardDetailsModal({
   oracle_id,
   onClose,
