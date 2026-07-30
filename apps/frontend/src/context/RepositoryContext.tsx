@@ -17,6 +17,8 @@ type RepositoryContextValue = {
   updateRepository: (change: Partial<Repository>) => void;
 
   setRepositoryValue: (repository: Repository) => void;
+
+  isLoading: boolean;
 };
 
 const RepositoryContext = createContext<RepositoryContextValue | undefined>(
@@ -229,7 +231,8 @@ export function RepositoryProvider({
         updateTag,
 
         setRepositoryValue,
-        updateRepository
+        updateRepository,
+        isLoading: deckQuery.isLoading || !deckQuery.data
       }}
     >
       {children}

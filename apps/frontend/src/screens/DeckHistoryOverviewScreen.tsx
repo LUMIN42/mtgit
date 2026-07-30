@@ -1,18 +1,16 @@
-import React, {useEffect} from "react";
+import React, {ReactNode, useEffect} from "react";
 import {trpcHooks} from "../trpcClient.ts";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {
   Grid,
-  Loader,
   Title,
   Text,
   Stack,
   Button,
-  Center,
   Group,
   Divider,
-  Switch
+  Switch, Skeleton
 } from "@mantine/core";
 import {
   allDeckOracleIds, DECK_SECTION_NAMES,
@@ -32,15 +30,82 @@ import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 import {Link, useNavigate} from "react-router-dom";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
+
+function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
+  const {preferences, updatePreferences} = useRepositoryPreferences();
+  const {compressedHistory: compressed, legalOnlyHistory: legalOnly} = preferences;
+  const {selectedBranchName} = useDeckUiContext();
+
+
+  return <Stack>
+    <Group>
+      <Button component={Link} to={".."} w={"fit-content"}>
+        Return to Deck
+      </Button>
+      <Switch
+        size="xs"
+        label="Compressed"
+        checked={compressed}
+        onChange={event =>
+          updatePreferences({
+            compressedHistory: event.currentTarget.checked
+          })
+        }
+      />
+
+      <Switch
+        size="xs"
+        label="Legal Only"
+        checked={legalOnly}
+        onChange={event =>
+          updatePreferences({
+            legalOnlyHistory: event.currentTarget.checked
+          })
+        }
+      />
+    </Group>
+
+
+    <Title order={1} ta={"center"}>
+      History of {selectedBranchName} branch
+    </Title>
+
+    {children}
+  </Stack>;
+}
+
+function DeckHistoryLoader() {
+  return <DeckHistoryOverviewScreenWrapper>
+    <Grid columns={11}>
+      <Grid.Col span={5}>
+        <Skeleton h={"100vh"}/>
+      </Grid.Col>
+
+      <Grid.Col span={1}>
+        <Divider orientation={"vertical"} h={"100%"} mx={"auto"} w={"fit-content"}/>
+      </Grid.Col>
+
+      <Grid.Col span={5}>
+        <Skeleton h={"100vh"}/>
+      </Grid.Col>
+    </Grid>
+  </DeckHistoryOverviewScreenWrapper>;
+}
+
 export function DeckHistoryOverviewScreen() {
   const {repository} = useRepositoryContext();
   const {selectedBranchName, displayMode, setComparisonContent} = useDeckUiContext();
 
-  const {preferences, updatePreferences} = useRepositoryPreferences();
+  const {preferences} = useRepositoryPreferences();
   const compressed = preferences.compressedHistory;
   const legalOnly = preferences.legalOnlyHistory;
 
-  const {fetchMissingCards, partiallyReconstructedCounts, buildPartiallyReconstructedDeck} = useScryfallCache();
+  const {
+    fetchMissingCards,
+    partiallyReconstructedCounts,
+    buildPartiallyReconstructedDeck,
+    isFetching
+  } = useScryfallCache();
 
   const navigate = useNavigate();
 
@@ -68,12 +133,12 @@ export function DeckHistoryOverviewScreen() {
   }, [allIds]);
 
   if (!branchSnapshotsParsing.success || repository === null) {
-    return <Center><Loader/></Center>;
+    return <DeckHistoryLoader/>;
   }
 
   let branchSnapshots = branchSnapshotsParsing.data
-  // .filter(snapshot => isLegalDeck(buildPartiallyReconstructedDeck(snapshot.cards, repository.tags),
-  //   repository.format))
+    .filter(snapshot => isLegalDeck(buildPartiallyReconstructedDeck(snapshot.cards, repository.tags),
+      repository.format))
   ;
 
   if (legalOnly) {
@@ -290,39 +355,11 @@ export function DeckHistoryOverviewScreen() {
     });
   }
 
-  return <Stack>
-    <Group>
-      <Button component={Link} to={".."} w={"fit-content"}>
-        Return to Deck
-      </Button>
-      <Switch
-        size="xs"
-        label="Compressed"
-        checked={compressed}
-        onChange={event =>
-          updatePreferences({
-            compressedHistory: event.currentTarget.checked
-          })
-        }
-      />
+  if (isFetching) {
+    return <DeckHistoryLoader/>;
+  }
 
-      <Switch
-        size="xs"
-        label="Legal Only"
-        checked={legalOnly}
-        onChange={event =>
-          updatePreferences({
-            legalOnlyHistory: event.currentTarget.checked
-          })
-        }
-      />
-    </Group>
-
-
-    <Title order={1} ta={"center"}>
-      History of {selectedBranchName} branch
-    </Title>
-
+  return <DeckHistoryOverviewScreenWrapper>
     <Grid columns={11}>
 
       {diffs.length === 0 && <Text w={"100%"} ta={"center"} c={"dimmed"}>(nothing to show)</Text>}
@@ -411,5 +448,5 @@ export function DeckHistoryOverviewScreen() {
         )
       }
     </Grid>
-  </Stack>;
+  </DeckHistoryOverviewScreenWrapper>;
 }

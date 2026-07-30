@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from "react";
-import {ActionIcon, Button, Center, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
+import {ActionIcon, Button, Center, Group, Loader, Skeleton, Stack, Text, TextInput} from "@mantine/core";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
@@ -66,10 +66,21 @@ export function SearchResultsScreen() {
     }
   }, [scroll.y]);
 
-  const {fetchNextPage, ids: cardIds, setQuery, isFetchingNextPage, isLoading} = useScryfallCardRetriever();
+  const {
+    fetchNextPage,
+    ids: cardIds,
+    setQuery,
+    isFetchingNextPage,
+    isLoading: isLoadingScryfall,
+    query: lockedInQuery
+  } = useScryfallCardRetriever();
 
   const redownloadedCards = cardIds
     .map(tryGetCard).filter(card => card !== undefined);
+
+  const isLoadingRedownloaded = redownloadedCards.length !== cardIds.length;
+
+  const isLoading = isLoadingScryfall || isLoadingRedownloaded;
 
   useEffect(() => {
     fetchMissingCards(cardIds);
@@ -102,7 +113,6 @@ export function SearchResultsScreen() {
         value={searchQuery}
         onChange={text => setSearchQuery(text)}
         onSearch={handleSearchSubmit}
-        placeholder={"Scryfall Search Query"}
         label={"Scryfall Search Query"}
       />
 
@@ -152,8 +162,8 @@ export function SearchResultsScreen() {
 
 
       <Text size="sm" c="dimmed">
-        {searchQuery
-          ? `Showing ${cardIds.length} result(s) for: ${searchQuery}`
+        {lockedInQuery
+          ? `Showing ${cardIds.length} result(s) for: ${lockedInQuery}`
           : "Type a search and press Enter or click the search icon."}
       </Text>
       <CardGroup

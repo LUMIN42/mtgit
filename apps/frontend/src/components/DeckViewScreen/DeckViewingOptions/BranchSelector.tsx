@@ -23,13 +23,13 @@ function BranchSelector() {
     () => {
       const result = branches.filter(b => b !== selectedBranch);
 
-      if (!comparisonContentIsString) {
+      if (!comparisonContentIsString && comparisonContent) {
         result.push("Older Version");
       }
 
       return result;
     },
-    [branches, selectedBranch]
+    [branches, selectedBranch, comparisonContentIsString]
   );
 
   const selectedBranchOptions = useMemo(

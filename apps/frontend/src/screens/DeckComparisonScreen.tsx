@@ -1,10 +1,10 @@
 import React, {useMemo} from "react";
-import {Button, Divider, Grid, Stack, Title} from "@mantine/core";
+import {Button, Divider, Grid, Stack, Title, Text, Skeleton} from "@mantine/core";
 import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {withoutIdenticalParts} from "@mtgit/shared";
+import {deckCardCount, withoutIdenticalParts} from "@mtgit/shared";
 import {compareDecks, DeckComparisonResult} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
@@ -32,7 +32,7 @@ export function DeckComparisonScreen() {
   const comparisonBranchContent = typeof comparisonContent === "string" ? repository!.branches[comparisonContent!] : comparisonContent!;
   // repository!.branches[comparisonContent!];
 
-  const {usePartiallyReconstructedDeck, map} = useScryfallCache();
+  const {usePartiallyReconstructedDeck, map, isFetching} = useScryfallCache();
 
   const {width: viewportWidth} = useViewportSize();
 
@@ -55,11 +55,12 @@ export function DeckComparisonScreen() {
     originalRightCardCounts
   ) : [originalLeftCardCounts, originalRightCardCounts];
 
+  const noDifference = deckCardCount(leftCardCounts) + deckCardCount(rightCardCounts) == 0;
 
   const originalLeftDeck = usePartiallyReconstructedDeck(
     leftCardCounts,
     repository!.tags
-  );
+  ).deck;
   const filteredLeftDeck = filterDeckByScryfallQuery(
     originalLeftDeck,
     cardFilterQuery
@@ -68,7 +69,7 @@ export function DeckComparisonScreen() {
   const originalRightDeck = usePartiallyReconstructedDeck(
     rightCardCounts,
     repository!.tags
-  );
+  ).deck;
   const filteredRightDeck = filterDeckByScryfallQuery(
     originalRightDeck,
     cardFilterQuery
@@ -180,10 +181,19 @@ export function DeckComparisonScreen() {
 
   console.log("comparison:", comparison);
 
+  // if (isFetching) {
+  //   return (<Stack ref={ref}>
+  //     <DeckViewingOptions horizontal={true} comparison={true}/>
+  //     <Center>
+  //       <Loader/>
+  //     </Center>
+  //   </Stack>);
+  // }
 
   return (
     <Stack ref={ref}>
       <DeckViewingOptions horizontal={true} comparison={true}/>
+
       <Grid columns={11}>
         <Grid.Col span={5} style={{display: "flex", justifyContent: "flex-end"}}>
           <Button variant={"outline"} onClick={selectOriginal}>Select Original Version</Button>
@@ -197,9 +207,32 @@ export function DeckComparisonScreen() {
           <Button variant={"outline"} onClick={selectChanged}>Select Comparison Version</Button>
         </Grid.Col>
 
+        {
+          noDifference && (<Grid.Col span={11}>
+            <Text c={"dimmed"} ta={"center"}>
+              Versions are identical. Nothing to show.
+            </Text>
+          </Grid.Col>)
+        }
 
         {
-          widthOfOneHalf &&
+          isFetching && (<>
+            <Grid.Col span={5}>
+              <Skeleton h={"100vh"}/>
+            </Grid.Col>
+
+            <Grid.Col span={1}>
+              <Divider h={"100%"} mx={"auto"} w={"fit-content"} orientation={"vertical"}/>
+            </Grid.Col>
+
+            <Grid.Col span={5}>
+              <Skeleton h={"100vh"}/>
+            </Grid.Col>
+          </>)
+        }
+
+        {
+          widthOfOneHalf && !isFetching &&
           comparison.map(
             section => (
               <React.Fragment key={`${section.sectionName}-fragment`}>

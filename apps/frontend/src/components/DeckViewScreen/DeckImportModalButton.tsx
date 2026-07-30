@@ -19,7 +19,7 @@ export function DeckImportModalButton() {
 
   const utils = trpcHooks.useUtils();
 
-  const {deck} = useDeckDataContext();
+  const {deck, isLoading: isDeckLoading} = useDeckDataContext();
 
   const importDeckMutation = trpcHooks.deckImport.parse.useMutation({
     onSuccess: async () => {
@@ -56,7 +56,7 @@ export function DeckImportModalButton() {
     }
   };
 
-  const empty = isEmpty(deck);
+  const empty = !!selectedBranchName && !isDeckLoading && isEmpty(deck);
 
   return (
     <>
