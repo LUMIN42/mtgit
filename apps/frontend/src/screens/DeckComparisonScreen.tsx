@@ -4,35 +4,51 @@ import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOption
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
-import {deckCardCount, withoutIdenticalParts} from "@mtgit/shared";
-import {compareDecks, DeckComparisonResult} from "../utils/deckComparison.ts";
+import {deckCardCount, type DeckCardCounts, withoutIdenticalParts} from "@mtgit/shared";
+import {compareDecks, type DeckComparisonResult} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
-import {DeckGroupLocation} from "../types/addressedCards.ts";
+import type {DeckGroupLocation} from "../types/addressedCards.ts";
 import {filterDeckByScryfallQuery} from "../utils/scryfallQueryFilter.ts";
 import {useElementSize, useViewportSize} from "@mantine/hooks";
+import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
+import {trpcHooks} from "../trpcClient.ts";
 
 export function DeckComparisonScreen() {
   const {
-    comparisonContent,
     groupingMode,
     sortingMode,
-    selectedBranchName,
     diffsOnly,
     cardFilterQuery,
     displayMode
   } = useDeckUiContext();
   const {repository, selectedBranchContent, setBranchValue} = useRepositoryContext();
 
+  const {editedBranchName, comparisonBranchName, comparisonSnapshotId} = useDeckUrlManager();
 
-  if (comparisonContent === null) {
-    throw new Error("comparison content cannot be null here!");
+  const snapshotQuery = trpcHooks.decks.branchSnapshot.useQuery(
+    {
+      repositoryId: repository._id,
+      snapshotId: comparisonSnapshotId
+    },
+    {enabled: !!comparisonSnapshotId}
+  );
+
+
+  let comparisonContent: DeckCardCounts | undefined;
+  if (comparisonBranchName) {
+    comparisonContent = repository?.branches[comparisonBranchName];
   }
-  const comparisonBranchContent = typeof comparisonContent === "string" ? repository!.branches[comparisonContent!] : comparisonContent!;
-  // repository!.branches[comparisonContent!];
+  else if (snapshotQuery.data) {
+    comparisonContent = snapshotQuery.data.cards;
+  }
+  else {
+    comparisonContent = {}; // placeholder before navigating away
+  }
 
   const {usePartiallyReconstructedDeck, map, isFetching} = useScryfallCache();
+
 
   const {width: viewportWidth} = useViewportSize();
 
@@ -42,12 +58,12 @@ export function DeckComparisonScreen() {
 
   const originalLeftCardCounts = useMemo(
     () => selectedBranchContent!,
-    [map, selectedBranchName, comparisonContent]
+    [map, editedBranchName, comparisonContent]
   );
 
   const originalRightCardCounts = useMemo(
-    () => comparisonBranchContent,
-    [map, selectedBranchName, comparisonContent]
+    () => comparisonContent,
+    [map, editedBranchName, comparisonContent]
   );
 
   const [leftCardCounts, rightCardCounts] = diffsOnly ? withoutIdenticalParts(
@@ -80,14 +96,14 @@ export function DeckComparisonScreen() {
   //   () => {
   //     return leftDeck;
   //   },
-  //   [map, selectedBranchName, comparisonBranchName]
+  //   [map, editedBranchName, comparisonBranchName]
   // );
   //
   // const originalRightDeck: HydratedDeck = useMemo(
   //   () => {
   //     return rightDeck;
   //   },
-  //   [map, selectedBranchName, comparisonBranchName]
+  //   [map, editedBranchName, comparisonBranchName]
   // );
 
   const comparison = useMemo(
@@ -152,11 +168,11 @@ export function DeckComparisonScreen() {
   );
 
   function selectChanged() {
-    setBranchValue(selectedBranchName!, originalRightCardCounts);
+    setBranchValue(editedBranchName!, originalRightCardCounts);
   }
 
   function selectOriginal() {
-    setBranchValue(selectedBranchName!, originalLeftCardCounts);
+    setBranchValue(editedBranchName!, originalLeftCardCounts);
   }
 
   const {

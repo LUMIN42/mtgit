@@ -252,6 +252,48 @@ export const decksRouter = router({
       return snapshots;
     }),
 
+  branchSnapshot: protectedProcedure
+    .input(z.object({
+      repositoryId: ObjectIdSchema,
+      snapshotId: ObjectIdSchema
+    }))
+    .output(BranchSnapshotSchema)
+    .query(async ({ctx, input: {repositoryId, snapshotId}}) => {
+      const reposCollection = getCollection("repositories");
+      const snapshotsCollection = getCollection<DbBranchSnapshot>("branch_snapshots");
+
+      const repoFilter: Partial<DbRepository> = {
+        _id: new ObjectId(repositoryId),
+        owner_id: ctx.user._id
+      };
+
+      const rawRepo = await reposCollection.findOne(repoFilter);
+
+      if (!rawRepo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repo not found."
+        });
+      }
+
+      const rawSnapshot = await snapshotsCollection.findOne({
+        _id: new ObjectId(snapshotId),
+        deckId: repositoryId
+      });
+
+
+      if (!rawSnapshot) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Snapshot not found."
+        });
+      }
+
+      const dbSnapshot = DbBranchSnapshotSchema.parse(rawSnapshot);
+
+      return dbSnapshot.snapshot;
+    }),
+
   delete: protectedProcedure
     .input(z.object({deckId: ObjectIdSchema}))
     .mutation(async ({ctx, input: {deckId}}) => {

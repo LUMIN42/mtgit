@@ -1,6 +1,7 @@
 import {z} from "zod";
 import {Format, FormatSchema, relevantSections} from "./deckFormats.js";
 
+
 export type TagsMap = Record<string, string[]>;
 
 export const OPTIONAL_DECK_SECTION_NAMES = [
@@ -31,6 +32,8 @@ export const ObjectIdSchema = z.preprocess(
   value => String(value),
   z.string().regex(/^[0-9a-fA-F]{24}$/)
 );
+
+export type ObjectId = z.infer<typeof ObjectIdSchema>;
 
 /**
  * Each deck section must contain optional sections,
