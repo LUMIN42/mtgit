@@ -1,3 +1,5 @@
+// mongosh
+
 print("Starting batched normalized_name migration...");
 
 const batchSize = 1000;

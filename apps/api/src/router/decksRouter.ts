@@ -299,6 +299,7 @@ export const decksRouter = router({
     .mutation(async ({ctx, input: {deckId}}) => {
       const reposCollection = getCollection<DbRepository>("repositories");
 
+
       const result = await reposCollection.deleteOne({
         _id: new ObjectId(deckId),
         owner_id: ctx.user._id
@@ -307,5 +308,7 @@ export const decksRouter = router({
       if (result.deletedCount === 0) {
         throw new TRPCError({code: "NOT_FOUND", message: "Could not find a repository owned by you with the given id"});
       }
+
+      await getCollection<DbBranchSnapshot>("branch_snapshots").deleteMany({deckId});
     })
 });

@@ -148,10 +148,7 @@ export function DeckHistoryOverviewScreen() {
     return <DeckHistoryLoader/>;
   }
 
-  let branchSnapshots = branchSnapshotsParsing.data
-    .filter(snapshot => isLegalDeck(buildPartiallyReconstructedDeck(snapshot.cards, repository.tags),
-      repository.format))
-  ;
+  let branchSnapshots = branchSnapshotsParsing.data;
 
   if (legalOnly) {
     branchSnapshots = branchSnapshots.filter(
@@ -431,7 +428,7 @@ export function DeckHistoryOverviewScreen() {
                   {
                     sectionName as DeckSectionName !== "Main" &&
                     (
-                      <Grid.Col span={12}>
+                      <Grid.Col span={11} key={`${diff.beforeId}-${sectionName}`}>
                         <Title ta={"center"} order={3}>
                           {sectionName}
                         </Title>

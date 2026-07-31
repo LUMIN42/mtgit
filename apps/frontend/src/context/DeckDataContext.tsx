@@ -1,7 +1,9 @@
 import {
   createContext,
   useContext,
-  useEffect, useState
+  useEffect,
+  useRef,
+  useState
 } from "react";
 import type {ReactNode} from "react";
 
@@ -105,24 +107,32 @@ export function DeckDataProviderInner({
   const {repository, isLoading: isRepoLoading} = useRepositoryContext();
   const ui = useDeckUiContext();
 
-  const [loading, setLoading] = useState(true);
 
   const {deck, isLoading: isReconstructingDeck} = usePartiallyReconstructedDeck(sections ?? {}, repository.tags);
 
-  useEffect(() => {
-    if (!isReconstructingDeck && !isRepoLoading) {
-      setLoading(false);
-    }
+  const [loading, setLoading] = useState(true);
 
-    if (isReconstructingDeck) {
-      setLoading(true);
-    }
-  }, [isReconstructingDeck]);
 
   let filteredDeck = {};
   if (deck !== null) {
     filteredDeck = filterDeckByScryfallQuery(deck, ui.cardFilterQuery);
   }
+
+  // this overcomplicated mechanism prevents a one-frame gap between repo loading and deck reconstructing
+  const loadingRef = useRef(isRepoLoading || isReconstructingDeck);
+  useEffect(() => {
+    loadingRef.current = isRepoLoading || isReconstructingDeck;
+
+    if (isRepoLoading || isReconstructingDeck) {
+      setLoading(true);
+    }
+
+    setTimeout(
+      () => {
+        setLoading(loadingRef.current);
+      },
+      100);
+  }, [isReconstructingDeck, isRepoLoading]);
 
   return (
     <DeckDataContext.Provider

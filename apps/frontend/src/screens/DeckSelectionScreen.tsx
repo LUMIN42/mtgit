@@ -30,6 +30,12 @@ function DeckSelectionScreen() {
   const [name, setName] = useState("");
   const [format, setFormat] = useState<Format | null>(null);
 
+  const sampleDeckMutation = trpcHooks.deckImport.sampleRepository.useMutation({
+    onSuccess: data => {
+      navigate(`../deck/${data}`);
+    }
+  });
+
   if (decksQuery.isError) {
     return (
       <Center style={{height: "100%"}}>
@@ -62,10 +68,15 @@ function DeckSelectionScreen() {
       <Stack p="md" gap="sm">
         <Title order={2}>Your decks</Title>
 
-        <Button onClick={() => setOpened(true)} w={"fit-content"}>
-          Create New Deck
-        </Button>
 
+        <Group>
+          <Button onClick={() => setOpened(true)} w={"fit-content"}>
+            Create New Deck
+          </Button>
+          <Button variant={"default"} onClick={() => sampleDeckMutation.mutate()} loading={sampleDeckMutation.isPending}>
+            Create Sample Deck
+          </Button>
+        </Group>
 
         {/*<div style={{*/}
         {/*  display: "grid",*/}
@@ -78,9 +89,10 @@ function DeckSelectionScreen() {
         {/*</div>*/}
 
         {
-          decksQuery.isLoading && <Center>
-                <Loader/>
-            </Center>
+          decksQuery.isLoading &&
+          (<Center>
+            <Loader/>
+          </Center>)
         }
 
         <div style={{

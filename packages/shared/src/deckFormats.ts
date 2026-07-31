@@ -5,7 +5,7 @@ import {HydratedDeck, HydratedDeckSection} from "./deckTypes.js";
 // import {cardCount} from "./deckTypes.js";
 
 
-export const formats = ["Standard", "Modern", "Commander", "Pauper"] as const;
+export const formats = ["Standard", "Modern", "Commander", "Pauper", "Legacy"] as const;
 
 export const FormatSchema = z.enum(formats);
 
