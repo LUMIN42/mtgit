@@ -41,21 +41,6 @@ function RepositoryPreferencesBranchSync({
     [isLoading, preferences.openBranchName, repository, selectedBranchName, setSelectedBranchName]
   );
 
-  useEffect(
-    () => {
-      if (!selectedBranchName) {
-        return;
-      }
-
-      if (preferences.openBranchName === selectedBranchName) {
-        return;
-      }
-
-      updatePreferences({openBranchName: selectedBranchName});
-    },
-    [preferences.openBranchName, selectedBranchName, updatePreferences]
-  );
-
   return null;
 }
 
