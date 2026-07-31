@@ -1,4 +1,5 @@
 import {Center, Skeleton, Stack, Title} from "@mantine/core";
+import {memo, useMemo} from "react";
 import {
   getGroupHeadingId,
   performGrouping,
@@ -14,45 +15,57 @@ import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useElementSize, useViewportSize} from "@mantine/hooks";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 
-export function GroupedCards() {
+function GroupedCardsImpl() {
   const {groupingMode, sortingMode, setHoveredCardImageUrl, displayMode} = useDeckUiContext();
-
   const {width, ref} = useElementSize();
-
   const {width: viewportWidth} = useViewportSize();
-
   const {filteredDeck, isLoading} = useDeckDataContext();
-
   const {preferences} = useRepositoryPreferences();
 
-  let groups = performGrouping(
-    filteredDeck,
-    groupingMode,
-    sortingMode
+  const groups = useMemo(
+    () => {
+      let nextGroups = performGrouping(
+        filteredDeck,
+        groupingMode,
+        sortingMode
+      );
+
+      if (groupingMode !== "color") {
+        return nextGroups;
+      }
+
+      const allGroups = nextGroups.flatMap(
+        section => section.groups
+      );
+
+      const consumedColors = allGroups
+        .filter(group => !group.heading.includes("Producer") && group.heading)
+        .map(group => group.heading);
+
+      nextGroups = nextGroups.map(section => {
+        return {
+          name: section.name,
+          groups: section.groups.filter(group =>
+            consumedColors.some(color => group.heading.includes(color)) ||
+            !group.heading // commander
+          )
+        };
+      });
+
+      return nextGroups;
+    },
+    [filteredDeck, groupingMode, sortingMode]
   );
-  if (groupingMode === "color") {
-    const allGroups = groups.flatMap(
-      section => section.groups
-    );
 
-    const consumedColors = allGroups
-      .filter(group => !group.heading.includes("Producer") && group.heading)
-      .map(group => group.heading);
+  const pageCards = useMemo(
+    () => flatten(groups),
+    [groups]
+  );
 
-    groups = groups.map(section => {
-      return {
-        name: section.name,
-        groups: section.groups.filter(group =>
-          consumedColors.some(color => group.heading.includes(color)) ||
-          !group.heading // commander
-        )
-      };
-    });
-  }
-
-  const sections = groups;
-  const pageCards = flatten(groups);
-
+  const widthOverride = useMemo(
+    () => width ?? viewportWidth * 0.8,
+    [width, viewportWidth]
+  );
 
   const {
     oracleId,
@@ -64,95 +77,96 @@ export function GroupedCards() {
     hasNextRight
   } = useCardSelectionManager();
 
+  const renderedSections = useMemo(
+    () => groups.map(section => {
+      return (
+        <Stack key={section.name} gap="xs">
+          <Title
+            order={3}
+            fw={700}
+            id={`deck-section-${section.name.toLowerCase()}`}
+            data-deck-heading
+            data-card-count={cardCount(filteredDeck[section.name]!)}
+            data-heading-text={section.name}
+            style={{
+              borderBottom: "1px solid black"
+            }}
+            ta={"center"}
+          >
+            {section.name} ({cardCount(filteredDeck[section.name]!)})
+          </Title>
+
+          {section.groups.map(group => {
+            const groupCardCount = cardCountSortedGroup(group);
+            const headingText =
+              groupingMode === "manaValue" && group.heading !== "Lands"
+                ? `Mana Value ${group.heading}`
+                : group.heading;
+
+            return (
+              <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
+                {(groupingMode !== "none" && section.name != "Commander") ? (
+                  <Title
+                    fw={600}
+                    order={4}
+                    ta={displayMode === "Text" ? "center" : "left"}
+                    mt={displayMode === "Text" ? "xl" : 0}
+                    id={getGroupHeadingId(groupingMode, section.name, group.heading)}
+                    style={{
+                      scrollMarginTop: groupingMode === "manaValue" ? "1rem" : undefined
+                    }}
+                    data-deck-heading
+                    data-card-count={groupCardCount}
+                    data-heading-text={headingText}
+                  >
+                    {headingText} ({groupCardCount} {groupCardCount === 1 ? "card" : "cards"})
+                  </Title>
+                ) : null}
+
+                <CardGroup
+                  displayMode={displayMode}
+                  cards={group.cards}
+                  groupKey={`${group.heading}`}
+                  onCardSelect={cardLoc => {
+                    openModal(pageCards, cardLoc);
+                  }}
+                  onCardHover={setHoveredCardImageUrl}
+                  sectionName={section.name}
+                  widthOverride={widthOverride}
+                  quicklyAdjustable={preferences.quickEdit}
+                />
+              </Stack>
+            );
+          })}
+        </Stack>
+      );
+    }),
+    [
+      groups,
+      filteredDeck,
+      groupingMode,
+      displayMode,
+      openModal,
+      pageCards,
+      setHoveredCardImageUrl,
+      widthOverride,
+      preferences.quickEdit
+    ]
+  );
+
   if (isLoading) {
     return <Center>
       <Skeleton h={"100vh"}/>
     </Center>;
   }
 
-
   return (
     <>
-      {/* Render all deck sections */}
       <Stack gap="md" ref={ref}>
-        {sections.map(section => {
-          // Skip empty sections
-          // if (section.cards.length === 0) {
-          //   return null;
-          // }
-
-          return (
-            <Stack key={section.name} gap="xs">
-              {/* Section heading with card count */}
-              <Title
-                order={3}
-                fw={700}
-                id={`deck-section-${section.name.toLowerCase()}`}
-                data-deck-heading
-                data-card-count={cardCount(filteredDeck[section.name]!)}
-                data-heading-text={section.name}
-                style={{
-                  borderBottom: "1px solid black"
-                }}
-                ta={"center"}
-              >
-                {section.name} ({cardCount(filteredDeck[section.name]!)})
-              </Title>
-
-              {/* Render groups within the section */}
-              {section.groups.map(group => {
-                const cardCount = cardCountSortedGroup(group);
-                const headingText =
-                  groupingMode === "manaValue" && group.heading !== "Lands"
-                    ? `Mana Value ${group.heading}`
-                    : group.heading;
-
-                return (
-                  <Stack key={`${section.name}-${group.heading || "all"}`} gap="xs">
-                    {/* Group heading if grouping is enabled */}
-                    {(groupingMode !== "none" && section.name != "Commander") ? (
-                      <Title
-                        fw={600}
-                        order={4}
-                        ta={displayMode === "Text" ? "center" : "left"}
-                        mt={displayMode === "Text" ? "xl" : 0}
-                        id={getGroupHeadingId(groupingMode, section.name, group.heading)}
-                        style={{
-                          scrollMarginTop: groupingMode === "manaValue" ? "1rem" : undefined
-                          // borderBottom: "1px solid lightgray"
-                        }}
-                        data-deck-heading
-                        data-card-count={cardCount}
-                        data-heading-text={headingText}
-                      >
-                        {headingText} ({cardCount} {cardCount === 1 ? "card" : "cards"})
-                      </Title>
-                    ) : null}
-
-                    {/* Render cards in the group */}
-                    <CardGroup
-                      displayMode={displayMode}
-                      cards={group.cards}
-                      groupKey={`${group.heading}`}
-                      onCardSelect={cardLoc => {
-                        openModal(pageCards, cardLoc);
-                      }}
-                      onCardHover={setHoveredCardImageUrl}
-                      sectionName={section.name}
-                      widthOverride={width ?? viewportWidth * 0.8}
-                      quicklyAdjustable={preferences.quickEdit}
-                    />
-                  </Stack>
-                );
-              })}
-            </Stack>
-          );
-        })}
+        {renderedSections}
       </Stack>
 
-      {/* Card details modal for selected card, supports navigation */}
-      {oracleId
-        &&
+      {oracleId &&
         (<CardDetailsModal oracle_id={oracleId}
           onClose={() => closeModal()}
           onPrev={moveLeft}
@@ -161,7 +175,8 @@ export function GroupedCards() {
           hasNext={hasNextRight}
         />)
       }
-
     </>
   );
 }
+
+export const GroupedCards = memo(GroupedCardsImpl);

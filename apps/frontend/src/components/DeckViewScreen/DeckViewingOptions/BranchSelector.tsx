@@ -3,7 +3,6 @@ import {Flex, Select, ActionIcon} from "@mantine/core";
 import {IconArrowsLeftRight} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
-import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
 import {
   COMPARISON_BRANCH_NAME_URL_KEY,
   EDITED_BRANCH_NAME_URL_KEY,
@@ -16,7 +15,6 @@ const OLDER_VERSION_OPTION = "Older Version";
 function BranchSelector() {
   const {repository} = useRepositoryContext();
 
-  const {updatePreferences} = useRepositoryPreferences();
   const {
     editedBranchName,
     comparisonBranchName,
@@ -55,7 +53,6 @@ function BranchSelector() {
     nextSearchParams.set(COMPARISON_BRANCH_NAME_URL_KEY, editedBranchName);
 
     setSearchParams(nextSearchParams);
-    updatePreferences({openBranchName: comparisonBranchName});
   };
 
   return (
@@ -69,8 +66,6 @@ function BranchSelector() {
           if (!value) return;
 
           setEditedBranchName(value);
-
-          updatePreferences({openBranchName: value});
 
           if (value === comparisonBranchName) {
             setComparisonBranchName(null);

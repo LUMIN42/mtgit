@@ -16,11 +16,13 @@ const RepositoryPreferencesContext = createContext<RepositoryPreferencesContextV
 );
 
 function RepositoryPreferencesBranchSync({
-  preferences
+  preferences,
+  updatePreferences
 }: {
   preferences: RepositoryPreferences;
+  updatePreferences: (p: Partial<RepositoryPreferences>) => void;
 }) {
-  const {repository} = useRepositoryContext();
+  const {repository, isLoading} = useRepositoryContext();
   const {editedBranchName: selectedBranchName, setEditedBranchName: setSelectedBranchName} = useDeckUrlManager();
 
   useEffect(
@@ -32,11 +34,26 @@ function RepositoryPreferencesBranchSync({
       if (preferences.openBranchName) {
         setSelectedBranchName(preferences.openBranchName);
       }
-      else if (repository && repository.branches) {
+      else if (repository && repository.branches && !isLoading) {
         setSelectedBranchName(Object.keys(repository.branches)[0]);
       }
     },
-    [preferences.openBranchName, repository, selectedBranchName, setSelectedBranchName]
+    [isLoading, preferences.openBranchName, repository, selectedBranchName, setSelectedBranchName]
+  );
+
+  useEffect(
+    () => {
+      if (!selectedBranchName) {
+        return;
+      }
+
+      if (preferences.openBranchName === selectedBranchName) {
+        return;
+      }
+
+      updatePreferences({openBranchName: selectedBranchName});
+    },
+    [preferences.openBranchName, selectedBranchName, updatePreferences]
   );
 
   return null;
@@ -49,13 +66,14 @@ export function RepositoryPreferencesProvider({
   children: ReactNode;
   repositoryId: string;
 }) {
-
   const {repository} = useRepositoryContext();
+  const preferencesQueryKey = useMemo(
+    () => ({repositoryId: repositoryId}),
+    [repositoryId]
+  );
 
   const {data, isFetching} = trpcHooks.repositoryPreferences.get.useQuery(
-    {
-      repositoryId: repositoryId
-    }
+    preferencesQueryKey
   );
 
   const utils = trpcHooks.useUtils();
@@ -74,7 +92,7 @@ export function RepositoryPreferencesProvider({
   useEffect(() => {
     for (const branchName of branchNames) {
       utils.repositoryPreferences.getBranchVisibility.setData(
-        {repositoryId, branchName},
+        {repositoryId: repositoryId, branchName},
         {
           hidden: preferences.hiddenBranches.includes(branchName)
         }
@@ -87,11 +105,11 @@ export function RepositoryPreferencesProvider({
     (newData: Partial<RepositoryPreferences>) => {
       const newPreferences = {...preferences, ...newData};
 
-      utils.repositoryPreferences.get.setData({repositoryId}, newPreferences);
+      utils.repositoryPreferences.get.setData({repositoryId: repositoryId}, newPreferences);
 
       trpcRaw.repositoryPreferences.set.mutate(
         {
-          repositoryId,
+          repositoryId: repositoryId,
           preferences: newPreferences
         }
       );
@@ -110,9 +128,14 @@ export function RepositoryPreferencesProvider({
 
   return (
     <RepositoryPreferencesContext.Provider value={value}>
-      <RepositoryPreferencesBranchSync
-        preferences={preferences}
-      />
+      {
+        !isFetching &&
+        (<RepositoryPreferencesBranchSync
+          preferences={preferences}
+          updatePreferences={updatePreferences}
+        />)
+      }
+
       {children}
     </RepositoryPreferencesContext.Provider>
   );
