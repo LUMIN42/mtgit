@@ -9,7 +9,7 @@ export function TutorialScreen() {
         Introduction
       </Title>
       <Text>
-        Unlike in most other MTG deck editors, MTGit deals not in decks, but in&nbsp;
+        Unlike most other MTG deck editors, MTGit deals not in decks, but in&nbsp;
         <Text component={"b"}>deck repositories</Text>.
         Each deck repository consists of multiple <Text component={"b"}>branches</Text>.
         Each branch contains a single version of your deck.
@@ -40,12 +40,11 @@ export function TutorialScreen() {
         There is also plenty of&nbsp;
         <Anchor href={"https://youtu.be/U7TdliHHR7g?t=60"}>video tutorials</Anchor> that can help you get started.
 
-        After searching for the first time in the MTGit app, I would also recommend editing the search query defaults
-        on
-        the search result screen.
+        After searching for the first time in the MTGit app, it is also recommended to edit the search query defaults
+        on the search result screen.
 
         <Text>
-          A starter commander template would be something like:
+          Starter commander query defaults would be something like:
         </Text>
 
         <Paper withBorder p={"xs"}>
