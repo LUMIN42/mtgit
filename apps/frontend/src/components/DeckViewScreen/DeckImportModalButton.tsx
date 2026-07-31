@@ -4,11 +4,12 @@ import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {trpcHooks} from "../../trpcClient.ts";
 import {useDeckDataContext} from "../../context/DeckDataContext.tsx";
 import {isEmpty} from "@mtgit/shared";
-import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
+import {useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
 
 export function DeckImportModalButton() {
   const {repository} = useRepositoryContext();
-  const {selectedBranchName} = useDeckUiContext();
+  const {editedBranchName} = useDeckUrlManager();
+
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -39,7 +40,7 @@ export function DeckImportModalButton() {
     try {
       await importDeckMutation.mutateAsync({
         deckId: repository!._id,
-        branchName: selectedBranchName ?? "main",
+        branchName: editedBranchName ?? "main",
         mode,
         text: importDeckText
       });
@@ -56,7 +57,7 @@ export function DeckImportModalButton() {
     }
   };
 
-  const empty = !!selectedBranchName && !isDeckLoading && isEmpty(deck);
+  const empty = !!editedBranchName && !isDeckLoading && isEmpty(deck);
 
   return (
     <>

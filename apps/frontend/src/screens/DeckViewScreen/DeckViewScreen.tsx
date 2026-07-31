@@ -18,10 +18,15 @@ import {useMediaQuery} from "@mantine/hooks";
 import {ManaCurvePlot} from "../../components/DeckViewScreen/DeckViewingOptions/ManaCurvePlot.tsx";
 import {DeckPieChart} from "../../components/DeckViewScreen/CardDetailsModal/DeckPieChart.tsx";
 import {DeckManagementModalButton} from "../../components/DeckViewScreen/DeckManagementModalButton.tsx";
+import {useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
   const repo = useRepositoryContext();
+  const {editedBranchName} = useDeckUrlManager();
+  const historySearch = editedBranchName
+    ? `?${new URLSearchParams({selectedBranchName: editedBranchName})}`
+    : "";
 
   const toggleDisplayMode = () => {
     ui.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
@@ -50,7 +55,11 @@ export function DeckViewScreen() {
           onToggle={toggleDisplayMode}
         />
 
-        <Button variant={"default"} component={Link} to={"history"}>
+        <Button
+          variant={"default"}
+          component={Link}
+          to={{pathname: "history", search: historySearch}}
+        >
           Branch History
         </Button>
 

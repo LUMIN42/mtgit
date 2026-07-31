@@ -2,8 +2,8 @@ import {createContext, useContext} from "react";
 import type {ReactNode} from "react";
 import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
 import {trpcHooks} from "../trpcClient.ts";
-import {useDeckUiContext} from "./DeckUiContext.tsx";
 import {notifications} from "@mantine/notifications";
+import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
 
 type RepositoryContextValue = {
   repository: Repository;
@@ -34,7 +34,7 @@ export function RepositoryProvider({
 }) {
   const utils = trpcHooks.useUtils();
 
-  const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
+  const {editedBranchName, setEditedBranchName} = useDeckUrlManager();
 
   const deckQuery = trpcHooks.decks.get.useQuery(
     {deckId: repositoryId}
@@ -153,8 +153,8 @@ export function RepositoryProvider({
 
 
   const selectedBranchContent =
-    repository && selectedBranchName
-      ? repository.branches[selectedBranchName] ?? {}
+    repository && editedBranchName
+      ? repository.branches[editedBranchName] ?? {}
       : {};
 
   const setBranchValue = (
@@ -188,7 +188,7 @@ export function RepositoryProvider({
     newRepo.branches[branchName] = branchContent;
 
     await setRepositoryValue(newRepo);
-    setSelectedBranchName(branchName);
+    setEditedBranchName(branchName);
   };
 
   const setCardAmount = async (

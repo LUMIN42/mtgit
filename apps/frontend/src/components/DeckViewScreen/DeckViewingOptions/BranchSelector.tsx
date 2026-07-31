@@ -1,58 +1,62 @@
-import React, {useMemo} from "react";
+import {useMemo} from "react";
 import {Flex, Select, ActionIcon} from "@mantine/core";
 import {IconArrowsLeftRight} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
-import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
 import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
+import {
+  COMPARISON_BRANCH_NAME_URL_KEY,
+  EDITED_BRANCH_NAME_URL_KEY,
+  useDeckUrlManager
+} from "../../../hooks/DeckUrlManager.tsx";
+import {useSearchParams} from "react-router-dom";
+
+const OLDER_VERSION_OPTION = "Older Version";
 
 function BranchSelector() {
-  const repo = useRepositoryContext();
-  const uiState = useDeckUiContext();
-
-  const branches = Object.keys(repo.repository?.branches ?? {});
+  const {repository} = useRepositoryContext();
 
   const {updatePreferences} = useRepositoryPreferences();
+  const {
+    editedBranchName,
+    comparisonBranchName,
+    comparisonSnapshotId,
+    setEditedBranchName,
+    setComparisonBranchName
+  } = useDeckUrlManager();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const selectedBranch = uiState.selectedBranchName;
-  const comparisonContent = uiState.comparisonContent;
+  const branches = Object.keys(repository.branches ?? {});
 
-  const comparisonContentIsString = typeof comparisonContent === "string";
-
-  const comparisonBranchOptions = React.useMemo(
+  const comparisonBranchOptions = useMemo(
     () => {
-      const result = branches.filter(b => b !== selectedBranch);
+      const options = branches.filter(branchName => branchName !== editedBranchName);
 
-      if (!comparisonContentIsString && comparisonContent) {
-        result.push("Older Version");
+      if (comparisonSnapshotId) {
+        options.unshift(OLDER_VERSION_OPTION);
       }
 
-      return result;
+      return options;
     },
-    [branches, selectedBranch, comparisonContentIsString]
+    [branches, editedBranchName, comparisonSnapshotId]
   );
 
   const selectedBranchOptions = useMemo(
-    () => branches.filter(b => b !== comparisonContent),
-    [branches, comparisonContent]
+    () => branches.filter(branchName => branchName !== comparisonBranchName),
+    [branches, comparisonBranchName]
   );
 
   const swapBranches = () => {
-    if (!selectedBranch || !comparisonContentIsString) return;
+    if (!editedBranchName || !comparisonBranchName) return;
 
-    uiState.setSelectedBranchName(comparisonContent);
-    uiState.setComparisonContent(selectedBranch);
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    nextSearchParams.set(EDITED_BRANCH_NAME_URL_KEY, comparisonBranchName);
+    nextSearchParams.set(COMPARISON_BRANCH_NAME_URL_KEY, editedBranchName);
+
+    setSearchParams(nextSearchParams);
+    updatePreferences({openBranchName: comparisonBranchName});
   };
-
-  React.useEffect(() => {
-    if (
-      selectedBranch &&
-      comparisonContentIsString &&
-      selectedBranch === comparisonContent
-    ) {
-      uiState.setComparisonContent(null);
-    }
-  }, [selectedBranch, comparisonContent, uiState]);
 
   return (
     <Flex wrap="nowrap" align="center" gap="sm">
@@ -60,16 +64,16 @@ function BranchSelector() {
         size="xs"
         label="Editing Branch"
         data={selectedBranchOptions}
-        value={selectedBranch}
+        value={editedBranchName ?? null}
         onChange={value => {
           if (!value) return;
 
-          uiState.setSelectedBranchName(value);
+          setEditedBranchName(value);
 
           updatePreferences({openBranchName: value});
 
-          if (value === comparisonContent) {
-            uiState.setComparisonContent(null);
+          if (value === comparisonBranchName) {
+            setComparisonBranchName(null);
           }
         }}
         searchable
@@ -79,7 +83,7 @@ function BranchSelector() {
         variant="light"
         size="sm"
         onClick={swapBranches}
-        disabled={!selectedBranch || !comparisonContent}
+        disabled={!editedBranchName || !comparisonBranchName}
       >
         <IconArrowsLeftRight size={16}/>
       </ActionIcon>
@@ -88,9 +92,13 @@ function BranchSelector() {
         size="xs"
         label="Comparison Branch"
         data={comparisonBranchOptions}
-        value={typeof comparisonContent === "string" ? comparisonContent : comparisonContent && "Older Version"}
+        value={comparisonSnapshotId ? OLDER_VERSION_OPTION : comparisonBranchName ?? null}
         onChange={value => {
-          uiState.setComparisonContent(value);
+          if (value === OLDER_VERSION_OPTION) {
+            return;
+          }
+
+          setComparisonBranchName(value);
         }}
         searchable
         clearable={true}
