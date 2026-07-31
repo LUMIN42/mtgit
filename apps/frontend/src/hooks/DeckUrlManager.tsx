@@ -1,8 +1,8 @@
 import {useNavigate, useParams, useSearchParams} from "react-router-dom";
 
-export const EDITED_BRANCH_NAME_URL_KEY = "selectedBranchName";
-export const COMPARISON_BRANCH_NAME_URL_KEY = "comparisonBranchName";
-export const COMPARISON_SNAPSHOT_ID_URL_KEY = "comparisonSnapshotId";
+export const EDITED_BRANCH_NAME_URL_KEY = "SelectedBranchName";
+export const COMPARISON_BRANCH_NAME_URL_KEY = "ComparisonBranchName";
+export const COMPARISON_SNAPSHOT_ID_URL_KEY = "ComparisonSnapshotId";
 
 
 /**

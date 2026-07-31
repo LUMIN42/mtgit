@@ -1,4 +1,4 @@
-import {useMemo} from "react";
+import {useEffect, useMemo, useState, useTransition} from "react";
 import {Flex, Select, ActionIcon} from "@mantine/core";
 import {IconArrowsLeftRight} from "@tabler/icons-react";
 
@@ -23,12 +23,30 @@ function BranchSelector() {
     setComparisonBranchName
   } = useDeckUrlManager();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [, startTransition] = useTransition();
+
+  const [localEditedBranchName, setLocalEditedBranchName] = useState<string | null>(editedBranchName ?? null);
+  const [localComparisonBranchName, setLocalComparisonBranchName] = useState<string | null>(comparisonBranchName ?? null);
 
   const branches = Object.keys(repository.branches ?? {});
 
+  useEffect(
+    () => {
+      setLocalEditedBranchName(editedBranchName ?? null);
+    },
+    [editedBranchName]
+  );
+
+  useEffect(
+    () => {
+      setLocalComparisonBranchName(comparisonBranchName ?? null);
+    },
+    [comparisonBranchName]
+  );
+
   const comparisonBranchOptions = useMemo(
     () => {
-      const options = branches.filter(branchName => branchName !== editedBranchName);
+      const options = branches.filter(branchName => branchName !== localEditedBranchName);
 
       if (comparisonSnapshotId) {
         options.unshift(OLDER_VERSION_OPTION);
@@ -36,23 +54,28 @@ function BranchSelector() {
 
       return options;
     },
-    [branches, editedBranchName, comparisonSnapshotId]
+    [branches, localEditedBranchName, comparisonSnapshotId]
   );
 
   const selectedBranchOptions = useMemo(
-    () => branches.filter(branchName => branchName !== comparisonBranchName),
-    [branches, comparisonBranchName]
+    () => branches.filter(branchName => branchName !== localComparisonBranchName),
+    [branches, localComparisonBranchName]
   );
 
   const swapBranches = () => {
-    if (!editedBranchName || !comparisonBranchName) return;
+    if (!localEditedBranchName || !localComparisonBranchName) return;
+
+    setLocalEditedBranchName(localComparisonBranchName);
+    setLocalComparisonBranchName(localEditedBranchName);
 
     const nextSearchParams = new URLSearchParams(searchParams);
 
-    nextSearchParams.set(EDITED_BRANCH_NAME_URL_KEY, comparisonBranchName);
-    nextSearchParams.set(COMPARISON_BRANCH_NAME_URL_KEY, editedBranchName);
+    nextSearchParams.set(EDITED_BRANCH_NAME_URL_KEY, localComparisonBranchName);
+    nextSearchParams.set(COMPARISON_BRANCH_NAME_URL_KEY, localEditedBranchName);
 
-    setSearchParams(nextSearchParams);
+    startTransition(() => {
+      setSearchParams(nextSearchParams);
+    });
   };
 
   return (
@@ -61,15 +84,23 @@ function BranchSelector() {
         size="xs"
         label="Editing Branch"
         data={selectedBranchOptions}
-        value={editedBranchName ?? null}
+        value={localEditedBranchName}
         onChange={value => {
           if (!value) return;
 
-          setEditedBranchName(value);
+          setLocalEditedBranchName(value);
 
-          if (value === comparisonBranchName) {
-            setComparisonBranchName(null);
+          if (value === localComparisonBranchName) {
+            setLocalComparisonBranchName(null);
           }
+
+          startTransition(() => {
+            setEditedBranchName(value);
+
+            if (value === localComparisonBranchName) {
+              setComparisonBranchName(null);
+            }
+          });
         }}
         searchable
       />
@@ -78,7 +109,7 @@ function BranchSelector() {
         variant="light"
         size="sm"
         onClick={swapBranches}
-        disabled={!editedBranchName || !comparisonBranchName}
+        disabled={!localEditedBranchName || !localComparisonBranchName}
       >
         <IconArrowsLeftRight size={16}/>
       </ActionIcon>
@@ -87,13 +118,17 @@ function BranchSelector() {
         size="xs"
         label="Comparison Branch"
         data={comparisonBranchOptions}
-        value={comparisonSnapshotId ? OLDER_VERSION_OPTION : comparisonBranchName ?? null}
+        value={comparisonSnapshotId && !localComparisonBranchName ? OLDER_VERSION_OPTION : localComparisonBranchName}
         onChange={value => {
           if (value === OLDER_VERSION_OPTION) {
             return;
           }
 
-          setComparisonBranchName(value);
+          setLocalComparisonBranchName(value ?? null);
+
+          startTransition(() => {
+            setComparisonBranchName(value);
+          });
         }}
         searchable
         clearable={true}
