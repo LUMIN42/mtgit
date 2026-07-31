@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
   Stack,
   Title,
@@ -25,6 +25,11 @@ function DeckSelectionScreen() {
   const createDeck = trpcHooks.decks.create.useMutation({
     onSuccess: () => utils.decks.usersDecks.invalidate()
   });
+
+
+  useEffect(() => {
+    document.title = `MTGit Deck Selection`;
+  }, []);
 
   const [opened, setOpened] = useState(false);
   const [name, setName] = useState("");
@@ -73,7 +78,9 @@ function DeckSelectionScreen() {
           <Button onClick={() => setOpened(true)} w={"fit-content"}>
             Create New Deck
           </Button>
-          <Button variant={"default"} onClick={() => sampleDeckMutation.mutate()} loading={sampleDeckMutation.isPending}>
+          <Button variant={"default"}
+            onClick={() => sampleDeckMutation.mutate()}
+            loading={sampleDeckMutation.isPending}>
             Create Sample Deck
           </Button>
         </Group>

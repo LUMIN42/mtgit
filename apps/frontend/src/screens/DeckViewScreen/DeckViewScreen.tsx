@@ -18,15 +18,29 @@ import {useMediaQuery} from "@mantine/hooks";
 import {ManaCurvePlot} from "../../components/DeckViewScreen/DeckViewingOptions/ManaCurvePlot.tsx";
 import {DeckPieChart} from "../../components/DeckViewScreen/CardDetailsModal/DeckPieChart.tsx";
 import {DeckManagementModalButton} from "../../components/DeckViewScreen/DeckManagementModalButton.tsx";
-import {useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
+import {EDITED_BRANCH_NAME_URL_KEY, useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
+import {useEffect} from "react";
 
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
   const repo = useRepositoryContext();
   const {editedBranchName} = useDeckUrlManager();
   const historySearch = editedBranchName
-    ? `?${new URLSearchParams({selectedBranchName: editedBranchName})}`
+    ? `?${new URLSearchParams({[EDITED_BRANCH_NAME_URL_KEY]: editedBranchName})}`
     : "";
+
+  useEffect(
+    () => {
+      let title = `${repo.repository.name} - ${editedBranchName} branch`;
+
+      if (!repo.repository.name || !editedBranchName) {
+        title = "MTGit Deck Editor";
+      }
+
+      document.title = title;
+    },
+    [editedBranchName, repo]
+  );
 
   const toggleDisplayMode = () => {
     ui.setDisplayMode(m => (m === "Images" ? "Text" : "Images"));
@@ -42,7 +56,7 @@ export function DeckViewScreen() {
           <Title order={1}>{repo.repository.name}</Title>
         ) : (
           <Title order={1}>
-            <Skeleton height="1.2em" width="10em" />
+            <Skeleton height="1.2em" width="10em"/>
           </Title>
         )
       }

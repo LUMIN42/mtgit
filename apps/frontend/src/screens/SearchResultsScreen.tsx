@@ -75,6 +75,10 @@ export function SearchResultsScreen() {
     query: lockedInQuery
   } = useScryfallCardRetriever();
 
+  useEffect(() => {
+    document.title = `MTGit Card Search Results`;
+  }, [lockedInQuery]);
+
   const redownloadedCards = cardIds
     .map(tryGetCard).filter(card => card !== undefined);
 

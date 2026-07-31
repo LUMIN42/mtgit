@@ -1,4 +1,4 @@
-import React, {useMemo} from "react";
+import React, {useEffect, useMemo} from "react";
 import {Button, Divider, Grid, Stack, Title, Text, Skeleton} from "@mantine/core";
 import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
@@ -26,6 +26,10 @@ export function DeckComparisonScreen() {
   const {repository, selectedBranchContent, setBranchValue} = useRepositoryContext();
 
   const {editedBranchName, comparisonBranchName, comparisonSnapshotId} = useDeckUrlManager();
+
+  useEffect(() => {
+    document.title = `Branch Comparison - ${editedBranchName} x ${comparisonBranchName ?? "Older Version"}`;
+  }, [editedBranchName, comparisonBranchName]);
 
   const snapshotQuery = trpcHooks.decks.branchSnapshot.useQuery(
     {

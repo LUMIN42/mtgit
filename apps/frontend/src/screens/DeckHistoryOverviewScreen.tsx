@@ -38,6 +38,13 @@ function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
   const {compressedHistory: compressed, legalOnlyHistory: legalOnly} = preferences;
   const {editedBranchName} = useDeckUrlManager();
 
+  useEffect(
+    () => {
+      document.title = `History of ${editedBranchName} branch`;
+    },
+    [editedBranchName]
+  );
+
   return <Stack>
     <Group>
       <Button component={Link} to={".."} w={"fit-content"}>
