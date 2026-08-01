@@ -1,3 +1,7 @@
+/**
+ * Exposes the hydrated (with card details) version of the edited branch.
+ */
+
 import {
   createContext,
   useContext,
@@ -12,7 +16,7 @@ import type {
   DeckCardCounts
 } from "@mtgit/shared";
 
-import {useScryfallCache} from "./ScryfallCacheContext";
+import {useCardCache} from "./CardCacheContext.tsx";
 import {useRepositoryContext} from "./RepositoryContext.tsx";
 import {useDeckUiContext} from "./DeckUiContext.tsx";
 
@@ -38,72 +42,13 @@ const DeckDataContext = createContext<DeckDataContextValue>(
 );
 
 /**
- * -----------------------------
- * Helpers (kept OUTSIDE component)
- * -----------------------------
- */
-// async function buildCardsAsync(
-//   counts: CardCounts,
-//   getCards: (ids: string[]) => Promise<(ScryfallOracleCard | undefined)[]>
-// ): Promise<DeckCard[]> {
-//   const ids = Object.keys(counts);
-//   const cards = await getCards(ids);
-//
-//   const out: DeckCard[] = [];
-//
-//   for (let i = 0; i < ids.length; i++) {
-//     const card = cards[i];
-//     const count = counts[ids[i]];
-//
-//     if (card) {
-//       out.push({
-//         ...card,
-//         count
-//       });
-//     }
-//   }
-//
-//   return out;
-// }
-
-// async function buildSectionsAsync(
-//   sections: DeckCardCounts,
-//   getCards: (ids: string[]) => Promise<(ScryfallOracleCard | undefined)[]>,
-//   tags: Record<string, string[]>
-// ): Promise<DeckSections> {
-//   const built: Partial<Record<DeckSectionName, DeckSection>> = {};
-//
-//   for (const [sectionName, counts] of Object.entries(sections)) {
-//     const cards = await buildCardsAsync(counts as CardCounts, getCards);
-//
-//     const enriched = cards.map(card => ({
-//       ...card,
-//       tags: tags?.[card.oracle_id] ?? []
-//     }));
-//
-//     built[sectionName as DeckSectionName] = new DeckSection(
-//       sectionName as DeckSectionName,
-//       enriched
-//     );
-//   }
-//
-//   if (!built.Main) {
-//     built.Main = new DeckSection("Main", []);
-//   }
-//
-//   return built as DeckSections;
-// }
-
-/**
- * -----------------------------
- * Context
- * -----------------------------
+ * Should be used as a part of {@link DeckDataProviderWrapper}.
  */
 export function DeckDataProviderInner({
   sections,
   children
 }: DeckDataProviderProps) {
-  const {usePartiallyReconstructedDeck} = useScryfallCache();
+  const {usePartiallyReconstructedDeck} = useCardCache();
   const {repository, isLoading: isRepoLoading} = useRepositoryContext();
   const ui = useDeckUiContext();
 
@@ -148,9 +93,7 @@ export function DeckDataProviderInner({
 }
 
 /**
- * -----------------------------
- * Hook
- * -----------------------------
+ * Exposes the hydrated (with card details) version of the edited branch.
  */
 export function useDeckDataContext(): DeckDataContextValue {
   const context = useContext(DeckDataContext);

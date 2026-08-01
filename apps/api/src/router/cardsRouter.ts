@@ -1,7 +1,7 @@
 import {z} from "zod";
 import {router, publicProcedure} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
-import {OracleCard, OracleCardSchema} from "@mtgit/shared";
+import {OracleCard, OracleCardSchema, OracleIdSchema} from "@mtgit/shared";
 import {TRPCError} from "@trpc/server";
 
 const CardIdSchema = z.string();
@@ -41,7 +41,7 @@ export const cardRouter = router({
   getMany: publicProcedure
     .input(
       z.object({
-        oracleIds: z.array(OracleCardSchema).min(1).max(10000)
+        oracleIds: z.array(OracleIdSchema).min(1).max(10000)
       })
     )
     .query(async ({input}) => {

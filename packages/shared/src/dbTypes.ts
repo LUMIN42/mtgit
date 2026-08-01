@@ -3,7 +3,10 @@ import {z} from "zod";
 /**
  * Some objects have mongo _id generated as a uuid.
  * The preprocessing allows for easy reading straight from the db.
+ *
+ * The rest of the dbTypes can be found in /apps/api/src/dbTypes.ts
  */
+
 const DbUuidSchema = z.preprocess(
   raw => String(raw),
   z.uuid()

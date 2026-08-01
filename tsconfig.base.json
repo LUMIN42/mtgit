@@ -6,6 +6,7 @@
     "noUncheckedSideEffectImports": true,
     "strictNullChecks": true,
     "target": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "baseUrl": ".",
     "paths": {

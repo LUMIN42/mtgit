@@ -1,9 +1,9 @@
 /**
  * This file has the hydrated counterparts to types in repositoryTypes.ts.
- * Hydrated means that the cards contain all if the card's information instead of just the oracle id.
+ * Hydrated means that the cards contain all the card's information instead of just the oracle id.
  */
 
-import type {OracleCard} from "./scryfall.js";
+import type {OracleCard} from "./cards.js";
 import {DECK_SECTION_NAMES} from "./repositoryTypes.js";
 import type {OracleId, DeckSectionName} from "./repositoryTypes.js";
 

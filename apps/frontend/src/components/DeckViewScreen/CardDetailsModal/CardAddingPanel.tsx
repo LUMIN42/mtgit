@@ -3,7 +3,7 @@ import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {relevantSections} from "@mtgit/shared";
 import {Paper, Table} from "@mantine/core";
 import CardAmountEditor from "../CardAmountEditor.tsx";
-import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
+import {useCardCache} from "../../../context/CardCacheContext.tsx";
 import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
 import {useDeckUrlManager} from "../../../hooks/DeckUrlManager.tsx";
 
@@ -15,7 +15,7 @@ type CardAddingPanelProps =
 
 function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
   const {repository} = useRepositoryContext();
-  const {tryGetCard} = useScryfallCache();
+  const {tryGetCard} = useCardCache();
 
   const {preferences} = useRepositoryPreferences();
 

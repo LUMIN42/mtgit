@@ -3,7 +3,7 @@ import {Button, Divider, Grid, Stack, Title, Text, Skeleton} from "@mantine/core
 import {DeckViewingOptions} from "../components/DeckViewScreen/DeckViewingOptions/DeckViewingOptions.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
-import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {useCardCache} from "../context/CardCacheContext.tsx";
 import {deckCardCount, type DeckCardCounts, withoutIdenticalParts} from "@mtgit/shared";
 import {compareDecks, type DeckComparisonResult} from "../utils/deckComparison.ts";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
@@ -51,7 +51,7 @@ export function DeckComparisonScreen() {
     comparisonContent = {}; // placeholder before navigating away
   }
 
-  const {usePartiallyReconstructedDeck, map, isFetching} = useScryfallCache();
+  const {usePartiallyReconstructedDeck, map, isFetching} = useCardCache();
 
 
   const {width: viewportWidth} = useViewportSize();

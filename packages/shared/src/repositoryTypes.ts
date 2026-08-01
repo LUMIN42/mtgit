@@ -1,6 +1,11 @@
+/**
+ * This file contains data structure definitions for repositories.
+ * These only identify cards by their OracleId and omit further card details like their name, CMC etc.
+ * If you need those details, use types defined in deckTypes.ts.
+ */
+
 import {z} from "zod";
 import {Format, FormatSchema, relevantSections} from "./deckFormats.js";
-
 
 export type TagsMap = Record<string, string[]>;
 
