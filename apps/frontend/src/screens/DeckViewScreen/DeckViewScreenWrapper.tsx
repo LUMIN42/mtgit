@@ -8,6 +8,9 @@ import {DeckUiProvider} from "../../context/DeckUiContext.tsx";
 import {DeckDataProviderWrapper} from "../../context/DeckDataProviderWrapper.tsx";
 import {RepositoryPreferencesProvider} from "../../context/RepositoryPreferencesContext.tsx";
 
+/**
+ * Context wrapper for {@link DeckViewScreenRouter}
+ */
 export function DeckViewScreenWrapper() {
   const {deckId: rawDeckId} = useParams<{deckId: string}>();
   const deckId = useMemo(

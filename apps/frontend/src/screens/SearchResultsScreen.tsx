@@ -1,30 +1,16 @@
 import {useEffect, useMemo, useState} from "react";
-import {ActionIcon, Button, Center, Group, Loader, Skeleton, Stack, Text, TextInput} from "@mantine/core";
+import {ActionIcon, Button, Center, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
 import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
-import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {useCardCache} from "../context/CardCacheContext.tsx";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {Link} from "react-router-dom";
 import {useWindowScroll} from "@mantine/hooks";
 import {useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
-
-// todo make sure to handle tags properly here
-function hasScryfallOrderClause(query: string): boolean {
-  return query
-    .trim()
-    .toLowerCase()
-    .split(/\s+/)
-    .some(token =>
-      token.startsWith("order:")
-      || token.startsWith("order=")
-      || token.startsWith("sort:")
-      || token.startsWith("sort=")
-    );
-}
 
 export function SearchResultsScreen() {
 
@@ -40,7 +26,7 @@ export function SearchResultsScreen() {
     handleSearchSubmit();
   }, []);
 
-  const {fetchMissingCards, tryGetCard} = useScryfallCache();
+  const {fetchMissingCards, tryGetCard} = useCardCache();
 
   const {
     oracleId,

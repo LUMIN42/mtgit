@@ -1,3 +1,9 @@
+/**
+ * Handles all the information concerning the selected repository.
+ * No card details (card name, mana value etc.) are present here.
+ * Use {@link useCardCache} or {@link useDeckDataContext} to obtain those.
+ */
+
 import {createContext, useContext} from "react";
 import type {ReactNode} from "react";
 import {DeckCardCounts, DeckSectionName, Repository} from "@mtgit/shared";
@@ -240,6 +246,11 @@ export function RepositoryProvider({
   );
 }
 
+/**
+ * Handles all the information concerning the selected repository.
+ * No card details (card name, mana value etc.) are present here.
+ * Use {@link useCardCache} or {@link useDeckDataContext} to obtain those.
+ */
 export function useRepositoryContext() {
   const ctx = useContext(RepositoryContext);
   if (!ctx) {

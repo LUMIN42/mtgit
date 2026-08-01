@@ -1,5 +1,9 @@
 import {DeckSectionName} from "@mtgit/shared";
 
+/**
+ * Used to identify which card was clicked for {@link useCardSelectionManager}
+ */
+
 export type Location = Record<string, string | null>;
 
 

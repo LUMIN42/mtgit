@@ -1,26 +1,26 @@
 import {z} from "zod";
 import {router, publicProcedure} from "../trpc.js";
 import {getCollection} from "../db/mongo.js";
-import {OracleCardSchema} from "@mtgit/shared";
+import {OracleCard, OracleCardSchema, OracleIdSchema} from "@mtgit/shared";
 import {TRPCError} from "@trpc/server";
 
 const CardIdSchema = z.string();
 
 export const cardRouter = router({
   /**
-   * 🧩 Fetch a single card by oracle_id
+   * hydrates an OracleId into an {@link OracleCard}.
    */
   get: publicProcedure
     .input(
       z.object({
-        cardId: CardIdSchema // <- oracle_id
+        oracleId: CardIdSchema
       })
     )
     .query(async ({input}) => {
       const cards = getCollection("scryfall_cards");
 
       const raw = await cards.findOne({
-        oracle_id: input.cardId
+        oracle_id: input.oracleId
       });
 
       if (!raw) {
@@ -30,22 +30,24 @@ export const cardRouter = router({
         });
       }
 
-      return OracleCardSchema.parse(raw);
+      return OracleCardSchema.parse(raw) as OracleCard;
     }),
 
   /**
-   * 📦 Fetch many cards by oracle_id
+   * Hydrate many cards from oracle ids to {@link OracleCard}s.
+   *
+   * @returns a record mapping oracle ids to {@link OracleCard}s
    */
   getMany: publicProcedure
     .input(
       z.object({
-        cardIds: z.array(CardIdSchema).min(1).max(10000)
+        oracleIds: z.array(OracleIdSchema).min(1).max(10000)
       })
     )
     .query(async ({input}) => {
       const cardsCollection = getCollection("scryfall_cards");
 
-      const cardIds = [...new Set(input.cardIds)];
+      const cardIds = [...new Set(input.oracleIds)];
 
       console.log(cardIds);
 

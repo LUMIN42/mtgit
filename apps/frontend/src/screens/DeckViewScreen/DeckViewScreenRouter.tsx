@@ -6,6 +6,10 @@ import {Routes, Route, Navigate} from "react-router-dom";
 import {DeckHistoryOverviewScreen} from "../DeckHistoryOverviewScreen.tsx";
 import {EDITED_BRANCH_NAME_URL_KEY} from "../../hooks/DeckUrlManager.tsx";
 
+/**
+ * Dispatches between scryfall search screen, history screen deck view screen and deck comparison screen.
+ * Must be used as a part of {@link DeckViewScreenWrapper}
+ */
 export function DeckViewScreenRouter() {
   return (
     <Routes>

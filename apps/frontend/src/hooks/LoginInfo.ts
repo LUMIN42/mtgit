@@ -1,5 +1,8 @@
 import {trpcHooks} from "../trpcClient.ts";
 
+/**
+ * Contains basic information of the currently logged-in user.
+ */
 export function useAuth() {
   const meQuery = trpcHooks.auth.me.useQuery(undefined, {
     retry: false
@@ -22,6 +25,9 @@ export function useAuth() {
   };
 }
 
+/**
+ * Login mutation.
+ */
 export function useLogin() {
   const utils = trpcHooks.useUtils();
 

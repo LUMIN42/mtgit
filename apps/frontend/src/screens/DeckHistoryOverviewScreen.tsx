@@ -26,7 +26,7 @@ import {
 } from "@mtgit/shared";
 import {z} from "zod";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
-import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
+import {useCardCache} from "../context/CardCacheContext.tsx";
 import {Link, useNavigate} from "react-router-dom";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 import type {ObjectId} from "@mtgit/shared";
@@ -114,7 +114,7 @@ export function DeckHistoryOverviewScreen() {
     partiallyReconstructedCounts,
     buildPartiallyReconstructedDeck,
     isFetching
-  } = useScryfallCache();
+  } = useCardCache();
 
   const navigate = useNavigate();
 

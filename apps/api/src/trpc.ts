@@ -1,3 +1,8 @@
+/**
+ * Declares the basic TRPC contexts and route types with corresponding middlewares.
+ * See {@link appRouter} for the routes' logic.
+ */
+
 import {TRPCError, initTRPC} from "@trpc/server";
 import type {Request, Response} from "express";
 

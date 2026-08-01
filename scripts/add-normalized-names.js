@@ -1,5 +1,10 @@
 // mongosh
 
+/**
+ * Run this file after importing a fresh scryfall cards bulk dump in order to add normalized names for deck importing.
+ */
+
+
 print("Starting batched normalized_name migration...");
 
 const batchSize = 1000;

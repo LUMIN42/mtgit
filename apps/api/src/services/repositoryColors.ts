@@ -1,7 +1,10 @@
 import {allRepositoryOracleIds, Repository} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 
-
+/**
+ * Returns the color identity of the entire repository for the case of checking commander legality.
+ * Currently unused.
+ */
 export async function repositoryColors(repository: Repository) {
   const scryfallCardsCollection = getCollection("scryfall_cards");
 

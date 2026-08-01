@@ -1,3 +1,8 @@
+/**
+ * Branch selection is handled through {@link useDeckUrlManager} instead.
+ * Handles shared UI state in {@link DeckViewScreenRouter}.
+ */
+
 import {Dispatch, ReactNode, SetStateAction, createContext, useContext, useState} from "react";
 import type {DeckExportMode, DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
@@ -56,7 +61,6 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  // const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
   const [diffsOnly, setDiffsOnly] = useState<boolean>(true);
 
   const [deckExportModalOpen, setDeckExportModalOpen] = useState<boolean>(false);
@@ -97,6 +101,10 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;
 }
 
+/**
+ * Branch selection is handled through {@link useDeckUrlManager} instead.
+ * Handles shared UI state in {@link DeckViewScreenRouter}.
+ */
 export function useDeckUiContext(): DeckUIContextValue {
   const context = useContext(DeckUIContext);
 

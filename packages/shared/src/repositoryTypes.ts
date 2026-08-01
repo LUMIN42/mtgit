@@ -1,6 +1,11 @@
+/**
+ * This file contains data structure definitions for repositories.
+ * These only identify cards by their OracleId and omit further card details like their name, CMC etc.
+ * If you need those details, use types defined in deckTypes.ts.
+ */
+
 import {z} from "zod";
 import {Format, FormatSchema, relevantSections} from "./deckFormats.js";
-
 
 export type TagsMap = Record<string, string[]>;
 
@@ -28,6 +33,9 @@ export const OracleIdSchema = z.string();
 
 export const CardCountsSchema = z.record(OracleIdSchema, z.number().int().positive());
 
+/**
+ * Corresponds to MongoDb object id, except it is frontend-safe, since it does not import anything from mongo.
+ */
 export const ObjectIdSchema = z.preprocess(
   value => String(value),
   z.string().regex(/^[0-9a-fA-F]{24}$/)
@@ -45,7 +53,7 @@ export const DeckCardCountsSchema = z
     CardCountsSchema
   );
 
-export function emptyDeckCardCounts(format?: Format): DeckCardCounts {
+export function createEmptyDeckCardCounts(format?: Format): DeckCardCounts {
   if (format === undefined) {
     return {Main: {}};
   }
@@ -85,12 +93,15 @@ export function createEmptyRepositoryTemplate(name: string, owner_id: string, fo
     owner_id,
     tags: {},
     branches: {
-      main: emptyDeckCardCounts(format)
+      main: createEmptyDeckCardCounts(format)
     },
     format
   };
 }
 
+/**
+ * Used especially for fetching cards from a deck into frontend cache.
+ */
 export function allDeckOracleIds(cardCounts: DeckCardCounts) {
   const result = new Set<string>();
 
@@ -126,6 +137,9 @@ export function mergeCardCounts(a: CardCounts, b: CardCounts): CardCounts {
   return result;
 }
 
+/**
+ * Leaves only card counts which are not identical in the other deck.
+ */
 export function withoutIdenticalParts(
   deck1: DeckCardCounts,
   deck2: DeckCardCounts
@@ -178,6 +192,9 @@ export function withoutIdenticalParts(
   return [result1, result2];
 }
 
+/**
+ * Used especially for fetching cards from a deck into frontend cache.
+ */
 export function allRepositoryOracleIds(repository: Repository) {
   return new Set(
     Object.values(repository.branches)

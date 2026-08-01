@@ -21,6 +21,9 @@ import {DeckManagementModalButton} from "../../components/DeckViewScreen/DeckMan
 import {EDITED_BRANCH_NAME_URL_KEY, useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
 import {useEffect} from "react";
 
+/**
+ * For direct usage, use {@link DeckViewScreenWrapper} instead.
+ */
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
   const repo = useRepositoryContext();

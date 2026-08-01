@@ -1,4 +1,4 @@
-import {DeckCardCounts, DeckSectionName} from "@mtgit/shared";
+import {DeckCardCounts, DeckSectionName, TagsMap} from "@mtgit/shared";
 import {SECTION_BY_LABEL} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {OracleCardSchema} from "@mtgit/shared";
@@ -12,6 +12,11 @@ type ParsedDeckEntry = {
   cardName: string;
   tags: string[];
   deckSection: DeckSectionName;
+};
+
+type ParseDeckImportTextResult = {
+  resultingDeck: DeckCardCounts;
+  oracleTagsMap: TagsMap;
 };
 
 /**
@@ -65,29 +70,27 @@ function parseDeckEntry(rawLine: string, deckSection: DeckSectionName): ParsedDe
 }
 
 /**
- * Lookup oracle card ID by name
- */
-async function lookupOracleId(name: string): Promise<string | null> {
-  const cards = await getCollection("scryfall_cards")
-    .find({normalized_name: name})
-    .toArray();
-
-  for (const raw of cards) {
-    const parsed = OracleCardSchema.safeParse(raw);
-    if (parsed.success) {
-      return parsed.data.oracle_id ?? parsed.data.id;
-    }
-  }
-
-  return null;
-}
-
-/**
- * TEXT → DeckCardCounts (oracle ID based)
+ * Parses pasted deck text into oracle-ID card counts and tag mappings.
+ *
+ * Supports plain list formats and optional section headers like `Commander`,
+ * `Main`, `Sideboard`, and `Considering`.
+ *
+ * Lines may include tags after `#`, for example:
+ * `1 Sol Ring # ramp # artifact`
+ *
+ * Examples:
+ * ```txt
+ * Commander
+ * 1 Atraxa, Praetors' Voice
+ *
+ * Main
+ * 2 Sol Ring # ramp
+ * 1 Arcane Signet
+ * ```
  */
 export async function parseDeckImportText(
   importText: string
-) {
+): Promise<ParseDeckImportTextResult> {
   const lines = importText.split(/\r?\n/);
 
   const sectionHeaderPattern =

@@ -17,6 +17,19 @@ import sampleSnapshots from "../../resources/sampleDeckHistory.json" with {type:
 import {DbBranchSnapshot, DbBranchSnapshotSchema, DbRepository} from "../dbTypes.js";
 
 export const deckImportRouter = router({
+  /**
+   * Updates the card amounts in a deck's branch based on a string serialization of a deck.
+   * Saves directly to DB.
+   * Currently supports MTGO, MTGA and moxfield bulk edit formats.
+   * Moxfield bulk edit also imports tags, merging them with the repository's tags map.
+   *
+   * @param text the deck's text serialization.
+   *
+   * @returns the updated branch content
+   *
+   * @throws TRPCError if deck is not found or user does not have permissions for deck editing.
+   * Read the exact type for which errors may get thrown.
+   */
   parse: protectedProcedure
     .input(
       z.object({
@@ -55,7 +68,6 @@ export const deckImportRouter = router({
         nextBranchContent = resultingDeck;
       }
       else {
-        // 🔥 USE shared mergeDecks here
         nextBranchContent = {...existingBranch};
 
         for (const [section, cards] of Object.entries(resultingDeck)) {

@@ -1,3 +1,8 @@
+/**
+ * Caches the cards' details such as name, mana value etc.
+ * Handles bulk fetching.
+ */
+
 import {
   createContext,
   useContext,
@@ -27,7 +32,7 @@ import {z} from "zod";
 
 type PartiallyReconstructedDeckResult = {deck: HydratedDeck, isLoading: boolean};
 
-type ScryfallCacheValue = {
+type CardCacheValue = {
   usePartiallyReconstructedDeck: (
     cardCounts: DeckCardCounts,
     tags: TagsMap
@@ -51,8 +56,8 @@ type ScryfallCacheValue = {
   isFetching: boolean;
 };
 
-const ScryfallCacheContext =
-  createContext<ScryfallCacheValue | undefined>(undefined);
+const CardCacheContext =
+  createContext<CardCacheValue | undefined>(undefined);
 
 export function ScryfallCacheProvider({
   children
@@ -84,7 +89,7 @@ export function ScryfallCacheProvider({
 
     try {
       const result = await trpcRaw.cards.getMany.query({
-        cardIds: missing
+        oracleIds: missing
       });
 
       const CardsMapSchema = z.record(
@@ -213,7 +218,7 @@ export function ScryfallCacheProvider({
   };
 
   return (
-    <ScryfallCacheContext.Provider
+    <CardCacheContext.Provider
       value={{
         usePartiallyReconstructedDeck,
         fetchMissingDeckCards,
@@ -226,15 +231,19 @@ export function ScryfallCacheProvider({
       }}
     >
       {children}
-    </ScryfallCacheContext.Provider>
+    </CardCacheContext.Provider>
   );
 }
 
-export function useScryfallCache() {
-  const ctx = useContext(ScryfallCacheContext);
+/**
+ * Caches the cards' details such as name, mana value etc.
+ * Handles bulk fetching.
+ */
+export function useCardCache() {
+  const ctx = useContext(CardCacheContext);
   if (!ctx) {
     throw new Error(
-      "useScryfallCache must be used within ScryfallCacheProvider"
+      "useCardCache must be used within ScryfallCacheProvider"
     );
   }
   return ctx;

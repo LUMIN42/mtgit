@@ -18,6 +18,12 @@
       "types": "./dist/scryfall.d.ts"
     }
   },
+  "typesVersions": {
+    "*": {
+      "*": ["src/*"],
+      "scryfall": ["src/scryfall.ts"]
+    }
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {

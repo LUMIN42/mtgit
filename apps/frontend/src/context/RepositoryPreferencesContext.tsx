@@ -16,11 +16,9 @@ const RepositoryPreferencesContext = createContext<RepositoryPreferencesContextV
 );
 
 function RepositoryPreferencesBranchSync({
-  preferences,
-  updatePreferences
+  preferences
 }: {
   preferences: RepositoryPreferences;
-  updatePreferences: (p: Partial<RepositoryPreferences>) => void;
 }) {
   const {repository, isLoading} = useRepositoryContext();
   const {editedBranchName: selectedBranchName, setEditedBranchName: setSelectedBranchName} = useDeckUrlManager();
@@ -117,7 +115,6 @@ export function RepositoryPreferencesProvider({
         !isFetching &&
         (<RepositoryPreferencesBranchSync
           preferences={preferences}
-          updatePreferences={updatePreferences}
         />)
       }
 

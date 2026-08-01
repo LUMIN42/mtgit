@@ -4,7 +4,9 @@ import {MongoClient as MongoClientImpl} from "mongodb";
 const DEFAULT_DATABASE_NAME = "mtgit";
 
 /**
- * Valid collection names in the mtgit database.
+ * Valid collection names in the mtgit mongo database.
+ * Mainly used to prevent typos.
+ * Add the names of any newly created collections here.
  */
 export type CollectionName =
   "scryfall_cards"
@@ -38,7 +40,7 @@ function resolveMongoUri(mongoUri?: string): string {
 /**
  * Connects to MongoDB once and caches the resulting database handle.
  * Call this during application startup.
- * @param mongoUri - Optional connection string override.
+ * @param mongoUri - Optional connection string override. Otherwise injected from env variables.
  * @param databaseName - The database name to use.
  * @returns The connected database handle.
  */
@@ -62,8 +64,7 @@ export async function initMongo(mongoUri?: string, databaseName = DEFAULT_DATABA
 }
 
 /**
- * Returns the initialized MongoDB database handle.
- * @returns The connected database handle.
+ * @returns the initialized MongoDB database handle.
  */
 export function getMongoDb(): Db {
   if (!cachedMongoDb) {

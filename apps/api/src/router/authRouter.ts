@@ -10,6 +10,9 @@ import {User} from "../dbTypes.js";
 export const SESSION_COOKIE_NAME = "mtgit_session";
 
 export const authRouter = router({
+  /**
+   * Only sets cookies. Use /me endpoint for user info.
+   */
   login: publicProcedure
     .input(
       z.object({
@@ -34,6 +37,10 @@ export const authRouter = router({
       return session;
     }),
 
+  /**
+   * Registers a new User.
+   * Also sets cookies as per login.
+   */
   register: publicProcedure
     .input(
       z.object({
@@ -58,6 +65,10 @@ export const authRouter = router({
       return session;
     }),
 
+  /**
+   * @returns the current session info in {@link FrontendUserDataSchema} based on the cookies sent.
+   * @throws TRPCError if session is invalid or expired.
+   */
   me: publicProcedure.query(async ({ctx}) => {
     const sessionId = ctx.req.cookies?.[SESSION_COOKIE_NAME];
 
@@ -87,6 +98,9 @@ export const authRouter = router({
     return FrontendUserDataSchema.parse(userRaw);
   }),
 
+  /**
+   * Only clears cookies. Use /me endpoint for session info.
+   */
   logout: protectedProcedure
     .mutation(async ({ctx}) => {
       await invalidateSession(ctx.session._id);

@@ -13,9 +13,11 @@ export async function performCleanup() {
   });
 }
 
-// this assumes that you know you do want to save this (it's not a duplicate)
+/**
+ * Saves a single {@link BranchSnapshot}.
+ * This assumes that you know you do want to save this (it's not a duplicate).
+ */
 export async function saveBranchSnapshot(repositoryId: string, branchName: string, branchContent: DeckCardCounts) {
-
   // const hydrated = await hydrateDeck(branchContent);
 
   // if (!isLegalDeck(hydrated, format)) {
