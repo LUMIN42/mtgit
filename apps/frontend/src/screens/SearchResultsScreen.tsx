@@ -118,7 +118,7 @@ export function SearchResultsScreen() {
 
       <Group w="100%" gap={"xs"} align="center" c={editingDefaultQuery ? "inherit" : "dimmed"}>
         <Text size={editingDefaultQuery ? "md" : "xs"} fw={500}>
-          Default Query:
+          Query Defaults:
         </Text>
 
         {editingDefaultQuery ? (

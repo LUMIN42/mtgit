@@ -42,14 +42,31 @@ export function TutorialScreen() {
 
         After searching for the first time in the MTGit app, it is also recommended to edit the search query defaults
         on the search result screen.
+      </Text>
 
-        <Text>
-          Starter commander query defaults would be something like:
-        </Text>
+      <Text>
+        Starter commander query defaults would be something like:
+      </Text>
 
-        <Paper withBorder p={"xs"}>
-          format:commander id&lt;=(your commander's color identity) order:edhrec
-        </Paper>
+      <Paper withBorder p={"xs"}>
+        format:commander id&lt;=(your commander's color identity) order:edhrec
+      </Paper>
+
+      <Text>
+        E.g. if your commander is in blue-black color identity, you would write id&lt;=ub.
+        U stands for blue. B stands for black. All other colors are named after their first letter.
+      </Text>
+
+      <Text>
+        For other formats, this should suffice:
+      </Text>
+
+      <Paper withBorder p={"xs"}>
+        format:(your-format-name)
+      </Paper>
+
+      <Text>
+        In both cases, do not copy the parentheses and replace anything in them with the relevant text.
       </Text>
     </Stack>
   );
