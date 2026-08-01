@@ -1,3 +1,4 @@
+import {useMemo} from "react";
 import {useParams} from "react-router-dom";
 
 import {RepositoryProvider} from "../../context/RepositoryContext.tsx";
@@ -12,7 +13,10 @@ import {RepositoryPreferencesProvider} from "../../context/RepositoryPreferences
  */
 export function DeckViewScreenWrapper() {
   const {deckId: rawDeckId} = useParams<{deckId: string}>();
-  const deckId: string = rawDeckId!;
+  const deckId = useMemo(
+    () => rawDeckId ?? "",
+    [rawDeckId]
+  );
 
   return (
     <DeckUiProvider>

@@ -12,6 +12,11 @@ function LoginScreen() {
     }
   });
 
+
+  useEffect(() => {
+    document.title = "MTGit Login";
+  }, []);
+
   const [loginError, setLoginError] = useState("");
   const loginMutation = useLogin();
 

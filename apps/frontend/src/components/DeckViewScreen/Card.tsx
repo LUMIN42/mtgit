@@ -1,11 +1,11 @@
 import {Box, Text, Image, Overlay, Paper, ActionIcon, Tooltip, Stack, Loader, Group} from "@mantine/core";
 import {type DeckCard, DeckSectionName, getCardImageUrls, isDeckCard} from "@mtgit/shared";
 import type {OracleCard} from "@mtgit/shared/scryfall";
-import {CardDisplayMode, useDeckUiContext} from "../../context/DeckUiContext.tsx";
+import {CardDisplayMode} from "../../context/DeckUiContext.tsx";
 import React, {useEffect, useState} from "react";
-import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import CardAmountEditor from "./CardAmountEditor.tsx";
 import {IconRefresh} from "@tabler/icons-react";
+import {useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
 
 
 type CardProps = {
@@ -35,8 +35,7 @@ export function Card({
   comparison = false
 }: CardProps) {
   const imageUrls = getCardImageUrls(card);
-  const {selectedBranchContent} = useRepositoryContext();
-  const {selectedBranchName} = useDeckUiContext();
+  const {editedBranchName} = useDeckUrlManager();
 
   const [currentFaceImageUrl, setCurrentFaceImageUrl] = useState<string>(imageUrls[0]);
 
@@ -84,10 +83,11 @@ export function Card({
         </Text>
         {
           quicklyAdjustable &&
-            <CardAmountEditor originalCardAmount={originalCardAmount}
-                branchName={selectedBranchName!}
-                oracleId={card.oracle_id}
-                deckSection={deckSection}/>
+          (<CardAmountEditor originalCardAmount={originalCardAmount}
+            branchName={editedBranchName!}
+            oracleId={card.oracle_id}
+            deckSection={deckSection}
+          />)
         }
       </Group>
 
@@ -195,7 +195,7 @@ export function Card({
           top="11%"
         >
           <CardAmountEditor originalCardAmount={originalCardAmount}
-            branchName={selectedBranchName!}
+            branchName={editedBranchName!}
             oracleId={card.oracle_id}
             deckSection={deckSection}/>
         </Paper>

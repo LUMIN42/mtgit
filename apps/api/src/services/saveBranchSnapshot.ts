@@ -1,6 +1,7 @@
 import {DeckCardCounts} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {DbBranchSnapshot} from "../dbTypes.js";
+import {ObjectId} from "mongodb";
 
 export async function performCleanup() {
   const snapshotsCollection = getCollection("branch_snapshots");
@@ -45,12 +46,16 @@ export async function saveBranchSnapshot(repositoryId: string, branchName: strin
     }
   );
 
+  const id = new ObjectId();
+
   const snapshotToAdd: DbBranchSnapshot = {
+    _id: id,
     branchName,
     day,
     deckId: repositoryId,
     isDailySnapshot: true,
     snapshot: {
+      _id: id.toString(),
       timestamp: now,
       cards: branchContent
     }

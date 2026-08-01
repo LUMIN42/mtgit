@@ -29,13 +29,21 @@ import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useScryfallCache} from "../context/ScryfallCacheContext.tsx";
 import {Link, useNavigate} from "react-router-dom";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
+import type {ObjectId} from "@mtgit/shared";
+import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
 
 
 function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
   const {preferences, updatePreferences} = useRepositoryPreferences();
   const {compressedHistory: compressed, legalOnlyHistory: legalOnly} = preferences;
-  const {selectedBranchName} = useDeckUiContext();
+  const {editedBranchName} = useDeckUrlManager();
 
+  useEffect(
+    () => {
+      document.title = `History of ${editedBranchName} branch`;
+    },
+    [editedBranchName]
+  );
 
   return <Stack>
     <Group>
@@ -65,9 +73,8 @@ function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
       />
     </Group>
 
-
     <Title order={1} ta={"center"}>
-      History of {selectedBranchName} branch
+      History of {editedBranchName} branch
     </Title>
 
     {children}
@@ -94,7 +101,9 @@ function DeckHistoryLoader() {
 
 export function DeckHistoryOverviewScreen() {
   const {repository} = useRepositoryContext();
-  const {selectedBranchName, displayMode, setComparisonContent} = useDeckUiContext();
+  const {displayMode} = useDeckUiContext();
+
+  const {editedBranchName: selectedBranchName, setComparisonSnapshotId} = useDeckUrlManager();
 
   const {preferences} = useRepositoryPreferences();
   const compressed = preferences.compressedHistory;
@@ -109,7 +118,6 @@ export function DeckHistoryOverviewScreen() {
 
   const navigate = useNavigate();
 
-
   const historyQuery = trpcHooks.decks.branchHistory.useQuery(
     {
       repositoryId: repository!._id,
@@ -118,8 +126,19 @@ export function DeckHistoryOverviewScreen() {
     {enabled: !!repository && !!selectedBranchName}
   );
 
+  const utils = trpcHooks.useUtils();
+
   useEffect(() => {
-    console.log(historyQuery.data);
+    if (!historyQuery.data) {
+      return;
+    }
+
+    for (const snapshot of historyQuery.data) {
+      utils.decks.branchSnapshot.setData(
+        {repositoryId: repository._id, snapshotId: snapshot._id},
+        snapshot
+      );
+    }
   }, [historyQuery.data]);
 
 
@@ -136,10 +155,7 @@ export function DeckHistoryOverviewScreen() {
     return <DeckHistoryLoader/>;
   }
 
-  let branchSnapshots = branchSnapshotsParsing.data
-    .filter(snapshot => isLegalDeck(buildPartiallyReconstructedDeck(snapshot.cards, repository.tags),
-      repository.format))
-  ;
+  let branchSnapshots = branchSnapshotsParsing.data;
 
   if (legalOnly) {
     branchSnapshots = branchSnapshots.filter(
@@ -161,6 +177,9 @@ export function DeckHistoryOverviewScreen() {
     afterFull: DeckCardCounts;
     beforeTimestamp: Date;
     afterTimestamp: Date;
+
+    beforeId: ObjectId;
+    afterId: ObjectId;
   };
 
   function toDiffs(branchSnapshots: BranchSnapshot[]) {
@@ -183,7 +202,9 @@ export function DeckHistoryOverviewScreen() {
         beforeTimestamp: beforeSnapshot.timestamp,
         afterTimestamp: afterSnapshot.timestamp,
         beforeFull,
-        afterFull
+        afterFull,
+        beforeId: beforeSnapshot._id,
+        afterId: afterSnapshot._id
       });
     }
 
@@ -204,7 +225,8 @@ export function DeckHistoryOverviewScreen() {
 
     let groupStart: BranchSnapshot = {
       cards: diffs[diffs.length - 1].beforeFull,
-      timestamp: diffs[diffs.length - 1].beforeTimestamp
+      timestamp: diffs[diffs.length - 1].beforeTimestamp,
+      _id: diffs[diffs.length - 1].beforeId
     };
 
     function hasConflict(diff: Diff, deltas: DeltaMap): boolean {
@@ -253,7 +275,9 @@ export function DeckHistoryOverviewScreen() {
         beforeFull: groupStart.cards,
         afterFull: end.cards,
         beforeTimestamp: groupStart.timestamp,
-        afterTimestamp: end.timestamp
+        afterTimestamp: end.timestamp,
+        beforeId: groupStart._id,
+        afterId: end._id
       });
 
       groupStart = end;
@@ -268,7 +292,8 @@ export function DeckHistoryOverviewScreen() {
       if (hadConflict) {
         flush({
           cards: diff.beforeFull,
-          timestamp: diff.beforeTimestamp
+          timestamp: diff.beforeTimestamp,
+          _id: diff.beforeId
         });
       }
 
@@ -306,7 +331,8 @@ export function DeckHistoryOverviewScreen() {
 
     flush({
       cards: diffs[0].afterFull,
-      timestamp: diffs[0].afterTimestamp
+      timestamp: diffs[0].afterTimestamp,
+      _id: diffs[0].beforeId
     });
 
     return result.reverse();
@@ -377,8 +403,7 @@ export function DeckHistoryOverviewScreen() {
             <Grid.Col span={5}>
               <Group justify={"right"}>
                 <Button variant={"subtle"} onClick={() => {
-                  setComparisonContent(diff.beforeFull);
-                  navigate("..");
+                  setComparisonSnapshotId(diff.beforeId);
                 }}>
                   Compare to Current
                 </Button>
@@ -396,8 +421,7 @@ export function DeckHistoryOverviewScreen() {
                   After:
                 </Text>
                 <Button variant={"subtle"} onClick={() => {
-                  setComparisonContent(diff.afterFull);
-                  navigate("..");
+                  setComparisonSnapshotId(diff.afterId);
                 }}>
                   Compare to Current
                 </Button>
@@ -411,7 +435,7 @@ export function DeckHistoryOverviewScreen() {
                   {
                     sectionName as DeckSectionName !== "Main" &&
                     (
-                      <Grid.Col span={12}>
+                      <Grid.Col span={11} key={`${diff.beforeId}-${sectionName}`}>
                         <Title ta={"center"} order={3}>
                           {sectionName}
                         </Title>

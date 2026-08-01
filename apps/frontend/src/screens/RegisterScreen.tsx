@@ -16,6 +16,10 @@ function RegisterScreen() {
     }
   });
 
+  useEffect(() => {
+    document.title = "MTGit Register";
+  }, []);
+
   const utils = trpcHooks.useUtils();
   const registerMutation = trpcHooks.auth.register.useMutation({
     onSuccess: async () => {

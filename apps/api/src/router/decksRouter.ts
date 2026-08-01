@@ -277,13 +277,59 @@ export const decksRouter = router({
     }),
 
   /**
-   * Deletes an entire deck repository from the DB.
-   * Returns NOT_FOUND code in place of unauthorized in order to not allow people to check which ids are taken.
-   */
+  * Returns a single branch snapshot based on its id if the user has rights for that.
+  */ 
+  branchSnapshot: protectedProcedure
+    .input(z.object({
+      repositoryId: ObjectIdSchema,
+      snapshotId: ObjectIdSchema
+    }))
+    .output(BranchSnapshotSchema)
+    .query(async ({ctx, input: {repositoryId, snapshotId}}) => {
+      const reposCollection = getCollection("repositories");
+      const snapshotsCollection = getCollection<DbBranchSnapshot>("branch_snapshots");
+
+      const repoFilter: Partial<DbRepository> = {
+        _id: new ObjectId(repositoryId),
+        owner_id: ctx.user._id
+      };
+
+      const rawRepo = await reposCollection.findOne(repoFilter);
+
+      if (!rawRepo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repo not found."
+        });
+      }
+
+      const rawSnapshot = await snapshotsCollection.findOne({
+        _id: new ObjectId(snapshotId),
+        deckId: repositoryId
+      });
+
+
+      if (!rawSnapshot) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Snapshot not found."
+        });
+      }
+
+      const dbSnapshot = DbBranchSnapshotSchema.parse(rawSnapshot);
+
+      return dbSnapshot.snapshot;
+    }),
+
+  /**
+  * Deletes an entire deck repository from the DB.
+  * Returns NOT_FOUND code in place of unauthorized in order to not allow people to check which ids are taken.
+  */
   delete: protectedProcedure
     .input(z.object({deckId: ObjectIdSchema}))
     .mutation(async ({ctx, input: {deckId}}) => {
       const reposCollection = getCollection<DbRepository>("repositories");
+
 
       const result = await reposCollection.deleteOne({
         _id: new ObjectId(deckId),
@@ -293,5 +339,7 @@ export const decksRouter = router({
       if (result.deletedCount === 0) {
         throw new TRPCError({code: "NOT_FOUND", message: "Could not find a repository owned by you with the given id"});
       }
+
+      await getCollection<DbBranchSnapshot>("branch_snapshots").deleteMany({deckId});
     })
 });

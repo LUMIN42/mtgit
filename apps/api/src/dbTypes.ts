@@ -58,6 +58,7 @@ export type DbRepository = z.infer<typeof DbRepositorySchema>;
  * use {@link BranchSnapshotSchema} for frontend usage
  */
 export const DbBranchSnapshotSchema = z.object({
+  _id: MongoObjectIdSchema,
   deckId: ObjectIdSchema,
   branchName: z.string(),
   snapshot: BranchSnapshotSchema,

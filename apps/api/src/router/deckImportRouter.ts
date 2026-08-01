@@ -4,9 +4,17 @@ import {protectedProcedure} from "../trpc.js";
 import {parseDeckImportText} from "../services/deckImport.js";
 import {getCollection} from "../db/mongo.js";
 import {ObjectId} from "mongodb";
-import {mergeCardCounts, mergeTagsMaps, RepositorySchema} from "@mtgit/shared";
+import {
+  createEmptyRepositoryTemplate,
+  mergeCardCounts,
+  mergeTagsMaps,
+  RepositorySchema
+} from "@mtgit/shared";
 import {saveBranchSnapshot} from "../services/saveBranchSnapshot.js";
 import {TRPCError} from "@trpc/server";
+
+import sampleSnapshots from "../../resources/sampleDeckHistory.json" with {type: "json"};
+import {DbBranchSnapshot, DbBranchSnapshotSchema, DbRepository} from "../dbTypes.js";
 
 export const deckImportRouter = router({
   /**
@@ -89,5 +97,49 @@ export const deckImportRouter = router({
       await saveBranchSnapshot(deckId, branchName, nextBranchContent);
 
       return nextBranchContent;
-    })
+    }),
+
+  sampleRepository: protectedProcedure.mutation(async ({input, ctx}) => {
+    const _id = new ObjectId();
+
+    const repo: DbRepository = {
+      ...createEmptyRepositoryTemplate("Sandbox Deck", ctx.user._id, "Legacy"
+      ),
+      _id
+    };
+
+    const snapshots = z.array(DbBranchSnapshotSchema.extend({"_id": z.string()}))
+      .parse(sampleSnapshots);
+    repo.branches.main = snapshots[0].snapshot.cards;
+
+    repo.branches.experimental = snapshots[10].snapshot.cards;
+
+    const repoCreationPromise = getCollection<DbRepository>("repositories").insertOne(repo);
+
+    const snapshotPromises = snapshots.map(
+      async snapshot => {
+
+        const snapshotId = new ObjectId();
+
+        const dbSnapshot: DbBranchSnapshot = {
+          ...snapshot,
+          deckId: _id.toString(),
+          _id: snapshotId,
+          isDailySnapshot: true,
+          snapshot: {
+            ...snapshot.snapshot,
+            _id: snapshotId.toString()
+          }
+        };
+
+        await getCollection<DbBranchSnapshot>("branch_snapshots")
+          .insertOne(dbSnapshot);
+      }
+    );
+
+    await repoCreationPromise;
+    await Promise.all(snapshotPromises);
+
+    return _id;
+  })
 });
