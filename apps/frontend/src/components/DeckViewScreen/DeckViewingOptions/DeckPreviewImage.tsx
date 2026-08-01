@@ -1,4 +1,4 @@
-import {AspectRatio} from "@mantine/core";
+import {AspectRatio, Center, Paper, Text} from "@mantine/core";
 
 interface DeckPreviewImageProps {
   visible: boolean;
@@ -12,7 +12,18 @@ export function DeckPreviewImage({visible, imageUrl}: DeckPreviewImageProps) {
 
   return (
     <AspectRatio ratio={63 / 88} w={"70%"} mx={"auto"}>
-      <img src={imageUrl ?? "1.jpg"} alt="card preview" style={{objectFit: "cover"}}/>
+      {
+        imageUrl ?
+          <img src={imageUrl} alt="card preview" style={{objectFit: "cover"}}/> :
+          <Paper withBorder w={"100%"} h={"100%"}>
+            <Center h={"100%"}>
+              <Text>
+                Hover a Card for Preview
+              </Text>
+            </Center>
+          </Paper>
+      }
+
     </AspectRatio>
   );
 }

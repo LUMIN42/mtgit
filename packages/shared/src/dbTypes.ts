@@ -1,16 +1,16 @@
 import {z} from "zod";
-import {ObjectIdSchema} from "./repositoryTypes.js";
+
+/**
+ * Some objects have mongo _id generated as a uuid.
+ * The preprocessing allows for easy reading straight from the db.
+ *
+ * The rest of the dbTypes can be found in /apps/api/src/dbTypes.ts
+ */
 
 const DbUuidSchema = z.preprocess(
   raw => String(raw),
   z.uuid()
 );
-
-export const DeckOverviewSchema = z.object({
-  name: z.string(),
-  last_updated: z.date(),
-  deck_id: ObjectIdSchema
-});
 
 export const SessionSchema = z.object({
   _id: DbUuidSchema,
@@ -26,5 +26,4 @@ export const FrontendUserDataSchema = z.object({
   username: z.string()
 });
 
-export type DeckOverview = z.infer<typeof DeckOverviewSchema>;
 export type Session = z.infer<typeof SessionSchema>;

@@ -1,3 +1,4 @@
+import {useMemo} from "react";
 import {useParams} from "react-router-dom";
 
 import {RepositoryProvider} from "../../context/RepositoryContext.tsx";
@@ -7,9 +8,15 @@ import {DeckUiProvider} from "../../context/DeckUiContext.tsx";
 import {DeckDataProviderWrapper} from "../../context/DeckDataProviderWrapper.tsx";
 import {RepositoryPreferencesProvider} from "../../context/RepositoryPreferencesContext.tsx";
 
+/**
+ * Context wrapper for {@link DeckViewScreenRouter}
+ */
 export function DeckViewScreenWrapper() {
   const {deckId: rawDeckId} = useParams<{deckId: string}>();
-  const deckId: string = rawDeckId!;
+  const deckId = useMemo(
+    () => rawDeckId ?? "",
+    [rawDeckId]
+  );
 
   return (
     <DeckUiProvider>

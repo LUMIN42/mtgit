@@ -20,6 +20,12 @@ import {DbRepository, DbRepositorySchema, DbBranchSnapshot, DbBranchSnapshotSche
 
 
 export const decksRouter = router({
+  /**
+   * Returns the whole repository with a given id.
+   *
+   * @throws TRPCError if deck is not found. If unauthorized, not found is returned as well
+   * in order to hide the information of existence of a deck with a given id for privacy’s sake.
+   */
   get: protectedProcedure
     .input(
       z.object({
@@ -47,6 +53,11 @@ export const decksRouter = router({
       });
     }),
 
+  /**
+   * Writes directly to DB.
+   *
+   * @returns id of the created deck repository.
+   */
   create: protectedProcedure
     .input(
       z.object({
@@ -66,6 +77,10 @@ export const decksRouter = router({
       return result.insertedId;
     }),
 
+  /**
+   * Returns the ids and names of all the decks the user owns.
+   * Used in deck selection screen.
+   */
   usersDecks: protectedProcedure.query(async ({ctx}) => {
     const reposCollection = getCollection("repositories");
 
@@ -151,6 +166,10 @@ export const decksRouter = router({
       return updatedRepo;
     }),
 
+  /**
+   * Sets or unsets a single tag of a card in a deck.
+   * Allows for creating new tags as well.
+   */
   setTag: protectedProcedure
     .input(
       z.object({
@@ -201,6 +220,11 @@ export const decksRouter = router({
       return {success: true};
     }),
 
+  /**
+   * Returns all the branch snapshots of the given branch.
+   *
+   * @returns a list of {@link BranchSnapshot} objects
+   */
   branchHistory: protectedProcedure
     .input(z.object({
       repositoryId: ObjectIdSchema,
@@ -252,10 +276,60 @@ export const decksRouter = router({
       return snapshots;
     }),
 
+  /**
+  * Returns a single branch snapshot based on its id if the user has rights for that.
+  */ 
+  branchSnapshot: protectedProcedure
+    .input(z.object({
+      repositoryId: ObjectIdSchema,
+      snapshotId: ObjectIdSchema
+    }))
+    .output(BranchSnapshotSchema)
+    .query(async ({ctx, input: {repositoryId, snapshotId}}) => {
+      const reposCollection = getCollection("repositories");
+      const snapshotsCollection = getCollection<DbBranchSnapshot>("branch_snapshots");
+
+      const repoFilter: Partial<DbRepository> = {
+        _id: new ObjectId(repositoryId),
+        owner_id: ctx.user._id
+      };
+
+      const rawRepo = await reposCollection.findOne(repoFilter);
+
+      if (!rawRepo) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Repo not found."
+        });
+      }
+
+      const rawSnapshot = await snapshotsCollection.findOne({
+        _id: new ObjectId(snapshotId),
+        deckId: repositoryId
+      });
+
+
+      if (!rawSnapshot) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Snapshot not found."
+        });
+      }
+
+      const dbSnapshot = DbBranchSnapshotSchema.parse(rawSnapshot);
+
+      return dbSnapshot.snapshot;
+    }),
+
+  /**
+  * Deletes an entire deck repository from the DB.
+  * Returns NOT_FOUND code in place of unauthorized in order to not allow people to check which ids are taken.
+  */
   delete: protectedProcedure
     .input(z.object({deckId: ObjectIdSchema}))
     .mutation(async ({ctx, input: {deckId}}) => {
       const reposCollection = getCollection<DbRepository>("repositories");
+
 
       const result = await reposCollection.deleteOne({
         _id: new ObjectId(deckId),
@@ -265,5 +339,7 @@ export const decksRouter = router({
       if (result.deletedCount === 0) {
         throw new TRPCError({code: "NOT_FOUND", message: "Could not find a repository owned by you with the given id"});
       }
+
+      await getCollection<DbBranchSnapshot>("branch_snapshots").deleteMany({deckId});
     })
 });

@@ -1,7 +1,7 @@
 import React from "react";
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
 import {DeckSectionName, maximumCardAmount, maximumCardAmountWithoutCard} from "@mtgit/shared";
-import {useScryfallCache} from "../../context/ScryfallCacheContext.tsx";
+import {useCardCache} from "../../context/CardCacheContext.tsx";
 import {ActionIcon, Checkbox, Group, Text} from "@mantine/core";
 import {IconMinus, IconPlus} from "@tabler/icons-react";
 
@@ -31,7 +31,7 @@ function CardAmountEditor({
   );
 
 
-  const {tryGetCard} = useScryfallCache();
+  const {tryGetCard} = useCardCache();
 
   const card = tryGetCard(oracleId);
   const maxCount = card ? maximumCardAmount(card, repository.format) : maximumCardAmountWithoutCard(repository.format);

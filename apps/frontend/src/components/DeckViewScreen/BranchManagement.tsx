@@ -3,9 +3,9 @@ import {ActionIcon, Button, Group, Modal, Stack, Text, TextInput, Title} from "@
 import {IconCheck, IconEye, IconEyeClosed, IconPencil, IconTrash, IconX} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../context/RepositoryContext.tsx";
-import {useDeckUiContext} from "../../context/DeckUiContext.tsx";
 import {CreateBranchModal} from "./CreateBranchModal.tsx";
 import {useRepositoryPreferences} from "../../context/RepositoryPreferencesContext.tsx";
+import {useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
 
 function VisibilityEye({branchName}: {branchName: string}) {
   const {preferences, updatePreferences} = useRepositoryPreferences();
@@ -45,18 +45,17 @@ function BranchManagement() {
   const [branchRenames, setBranchRenames] = useState<Record<string, string>>({});
 
   const {setRepositoryValue} = useRepositoryContext();
-
-  const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
+  const {editedBranchName, setEditedBranchName} = useDeckUrlManager();
 
   const handleDeleteBranch = (branchName: string) => {
     const repoCopy = structuredClone(repository);
     delete repoCopy.branches[branchName];
     setRepositoryValue(repoCopy);
 
-    if (branchName === selectedBranchName) {
+    if (branchName === editedBranchName) {
       const remainingBranches = branches.filter(b => b !== branchName);
       if (remainingBranches.length > 0) {
-        setSelectedBranchName(remainingBranches[0]);
+        setEditedBranchName(remainingBranches[0]);
       }
     }
 
@@ -119,8 +118,8 @@ function BranchManagement() {
 
                           setRepositoryValue(repoCopy);
 
-                          if (branchName === selectedBranchName) {
-                            setSelectedBranchName(newName);
+                          if (branchName === editedBranchName) {
+                            setEditedBranchName(newName);
                           }
 
                           setBranchRenames(renames => {

@@ -12,7 +12,9 @@ export const hashPassword = (password: string) =>
 export const verifyPassword = (password: string, hash: string) =>
   argon2.verify(hash, password);
 
-// 🟢 extracted session creation
+/**
+ * You need to check whether the user is real before calling this.
+ */
 async function createSession(userId: string) {
   const sessionsCollection = getCollection<Session>("sessions");
 
@@ -69,6 +71,12 @@ export async function authService(username: string, password: string) {
   };
 }
 
+/**
+ * Fires after registration form submit.
+ * Edits DB directly.
+ *
+ * @returns session info
+ */
 export async function register(username: string, password: string) {
   const userCollection = getCollection<User>("users");
 
@@ -101,6 +109,9 @@ export async function register(username: string, password: string) {
   };
 }
 
+/**
+ * Invalidates one DB entry. Does not unset cookies.
+ */
 export async function invalidateSession(sessionId: string) {
   const sessionsCollection = getCollection<Session>("sessions");
   await sessionsCollection.deleteOne({_id: sessionId});

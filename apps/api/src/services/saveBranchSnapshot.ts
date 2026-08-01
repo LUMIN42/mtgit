@@ -1,6 +1,7 @@
-import {DeckCardCounts, Format} from "@mtgit/shared";
+import {DeckCardCounts} from "@mtgit/shared";
 import {getCollection} from "../db/mongo.js";
 import {DbBranchSnapshot} from "../dbTypes.js";
+import {ObjectId} from "mongodb";
 
 export async function performCleanup() {
   const snapshotsCollection = getCollection("branch_snapshots");
@@ -12,9 +13,11 @@ export async function performCleanup() {
   });
 }
 
-// this assumes that you know you do want to save this (it's not a duplicate)
+/**
+ * Saves a single {@link BranchSnapshot}.
+ * This assumes that you know you do want to save this (it's not a duplicate).
+ */
 export async function saveBranchSnapshot(repositoryId: string, branchName: string, branchContent: DeckCardCounts) {
-
   // const hydrated = await hydrateDeck(branchContent);
 
   // if (!isLegalDeck(hydrated, format)) {
@@ -43,12 +46,16 @@ export async function saveBranchSnapshot(repositoryId: string, branchName: strin
     }
   );
 
+  const id = new ObjectId();
+
   const snapshotToAdd: DbBranchSnapshot = {
+    _id: id,
     branchName,
     day,
     deckId: repositoryId,
     isDailySnapshot: true,
     snapshot: {
+      _id: id.toString(),
       timestamp: now,
       cards: branchContent
     }

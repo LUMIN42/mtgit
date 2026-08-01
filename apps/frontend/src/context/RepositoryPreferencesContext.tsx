@@ -1,9 +1,9 @@
-﻿import {createContext, useContext, useEffect, useMemo} from "react";
+﻿import {createContext, useCallback, useContext, useEffect, useMemo} from "react";
 import type {ReactNode} from "react";
 import {RepositoryPreferences, RepositoryPreferencesSchema} from "@mtgit/shared";
 import {trpcHooks, trpcRaw} from "../trpcClient.ts";
 import {useRepositoryContext} from "./RepositoryContext.tsx";
-import {useDeckUiContext} from "./DeckUiContext.tsx";
+import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
 
 type RepositoryPreferencesContextValue = {
   preferences: RepositoryPreferences;
@@ -15,6 +15,33 @@ const RepositoryPreferencesContext = createContext<RepositoryPreferencesContextV
   undefined
 );
 
+function RepositoryPreferencesBranchSync({
+  preferences
+}: {
+  preferences: RepositoryPreferences;
+}) {
+  const {repository, isLoading} = useRepositoryContext();
+  const {editedBranchName: selectedBranchName, setEditedBranchName: setSelectedBranchName} = useDeckUrlManager();
+
+  useEffect(
+    () => {
+      if (selectedBranchName) {
+        return;
+      }
+
+      if (preferences.openBranchName) {
+        setSelectedBranchName(preferences.openBranchName);
+      }
+      else if (repository && repository.branches && !isLoading) {
+        setSelectedBranchName(Object.keys(repository.branches)[0]);
+      }
+    },
+    [isLoading, preferences.openBranchName, repository, selectedBranchName, setSelectedBranchName]
+  );
+
+  return null;
+}
+
 export function RepositoryPreferencesProvider({
   children,
   repositoryId
@@ -22,21 +49,23 @@ export function RepositoryPreferencesProvider({
   children: ReactNode;
   repositoryId: string;
 }) {
-
   const {repository} = useRepositoryContext();
-  const {selectedBranchName, setSelectedBranchName} = useDeckUiContext();
-
+  const preferencesQueryKey = useMemo(
+    () => ({repositoryId: repositoryId}),
+    [repositoryId]
+  );
 
   const {data, isFetching} = trpcHooks.repositoryPreferences.get.useQuery(
-    {
-      repositoryId: repositoryId
-    }
+    preferencesQueryKey
   );
 
   const utils = trpcHooks.useUtils();
 
 
-  const preferences = RepositoryPreferencesSchema.parse(data ?? {});
+  const preferences = useMemo(
+    () => RepositoryPreferencesSchema.parse(data ?? {}),
+    [data]
+  );
 
   const branchNames = useMemo(
     () => Object.keys(repository.branches),
@@ -46,50 +75,49 @@ export function RepositoryPreferencesProvider({
   useEffect(() => {
     for (const branchName of branchNames) {
       utils.repositoryPreferences.getBranchVisibility.setData(
-        {repositoryId, branchName},
+        {repositoryId: repositoryId, branchName},
         {
           hidden: preferences.hiddenBranches.includes(branchName)
         }
       );
     }
-  }, [preferences.hiddenBranches, branchNames]);
+  }, [preferences.hiddenBranches, branchNames, repositoryId, utils.repositoryPreferences.getBranchVisibility]);
 
 
-  useEffect(
-    () => {
-      if (selectedBranchName) {
-        return;
-      }
+  const updatePreferences = useCallback(
+    (newData: Partial<RepositoryPreferences>) => {
+      const newPreferences = {...preferences, ...newData};
 
-      if (data) {
-        if (preferences.openBranchName) {
-          setSelectedBranchName(preferences.openBranchName);
+      utils.repositoryPreferences.get.setData({repositoryId: repositoryId}, newPreferences);
+
+      trpcRaw.repositoryPreferences.set.mutate(
+        {
+          repositoryId: repositoryId,
+          preferences: newPreferences
         }
-        else if (repository && repository.branches) {
-          setSelectedBranchName(Object.keys(repository.branches)[0]);
-        }
-      }
-
+      );
     },
-    [preferences, repository]
+    [preferences, repositoryId, utils]
   );
 
-
-  function updatePreferences(newData: Partial<RepositoryPreferences>) {
-    const newPreferences = {...preferences, ...newData};
-
-    utils.repositoryPreferences.get.setData({repositoryId}, newPreferences);
-
-    trpcRaw.repositoryPreferences.set.mutate(
-      {
-        repositoryId,
-        preferences: newPreferences
-      }
-    );
-  }
+  const value = useMemo(
+    () => ({
+      preferences,
+      updatePreferences,
+      isFetching
+    }),
+    [preferences, updatePreferences, isFetching]
+  );
 
   return (
-    <RepositoryPreferencesContext.Provider value={{preferences, updatePreferences, isFetching}}>
+    <RepositoryPreferencesContext.Provider value={value}>
+      {
+        !isFetching &&
+        (<RepositoryPreferencesBranchSync
+          preferences={preferences}
+        />)
+      }
+
       {children}
     </RepositoryPreferencesContext.Provider>
   );

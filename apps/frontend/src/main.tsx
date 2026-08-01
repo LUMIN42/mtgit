@@ -10,7 +10,7 @@ import "./assets/index.module.css";
 import App from "./App.tsx";
 
 import {createTheme, MantineProvider} from "@mantine/core";
-import {ScryfallCacheProvider} from "./context/ScryfallCacheContext.tsx";
+import {ScryfallCacheProvider} from "./context/CardCacheContext.tsx";
 
 import {trpcHooks, trpcLinks} from "./trpcClient";
 import {Notifications} from "@mantine/notifications";

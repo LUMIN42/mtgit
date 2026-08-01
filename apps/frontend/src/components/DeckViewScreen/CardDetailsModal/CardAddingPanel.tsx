@@ -3,9 +3,9 @@ import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {relevantSections} from "@mtgit/shared";
 import {Paper, Table} from "@mantine/core";
 import CardAmountEditor from "../CardAmountEditor.tsx";
-import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
+import {useCardCache} from "../../../context/CardCacheContext.tsx";
 import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
-import {useDeckUiContext} from "../../../context/DeckUiContext.tsx";
+import {useDeckUrlManager} from "../../../hooks/DeckUrlManager.tsx";
 
 
 type CardAddingPanelProps =
@@ -15,11 +15,11 @@ type CardAddingPanelProps =
 
 function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
   const {repository} = useRepositoryContext();
-  const {tryGetCard} = useScryfallCache();
+  const {tryGetCard} = useCardCache();
 
   const {preferences} = useRepositoryPreferences();
 
-  const {selectedBranchName} = useDeckUiContext();
+  const {editedBranchName} = useDeckUrlManager();
 
   const hydratedCard = tryGetCard(oracle_id);
 
@@ -58,7 +58,7 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
 
         <Table.Tbody>
           {Object.keys(repository.branches)
-            .filter(branchName => !preferences.hiddenBranches.includes(branchName) || branchName === selectedBranchName)
+            .filter(branchName => !preferences.hiddenBranches.includes(branchName) || branchName === editedBranchName)
             .map(branchName => {
               return (
                 <Table.Tr key={branchName}>

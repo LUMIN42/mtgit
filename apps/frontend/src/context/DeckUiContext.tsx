@@ -1,5 +1,10 @@
+/**
+ * Branch selection is handled through {@link useDeckUrlManager} instead.
+ * Handles shared UI state in {@link DeckViewScreenRouter}.
+ */
+
 import {Dispatch, ReactNode, SetStateAction, createContext, useContext, useState} from "react";
-import type {DeckExportMode, DeckSectionName, DeckCardCounts} from "@mtgit/shared";
+import type {DeckExportMode, DeckSectionName} from "@mtgit/shared";
 import type {CardGroupingMode, CardSortMode} from "../types/grouping.ts";
 
 export type CardDisplayMode = "Images" | "Text";
@@ -32,14 +37,6 @@ interface DeckUIContextValue {
   searchQuery: string;
   setSearchQuery: Dispatch<SetStateAction<string>>;
 
-  // comparisonBranchName: string | null;
-  // setComparisonBranchName: Dispatch<SetStateAction<string | null>>;
-  comparisonContent: string | null | DeckCardCounts;
-  setComparisonContent: Dispatch<SetStateAction<string | null | DeckCardCounts>>;
-
-  selectedBranchName: string;
-  setSelectedBranchName: (n: string) => void;
-
   diffsOnly: boolean;
   setDiffsOnly: (value: boolean) => void;
 
@@ -64,9 +61,6 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   const [hoveredCardImageUrl, setHoveredCardImageUrl] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  // const [comparisonBranchName, setComparisonBranchName] = useState<string | null>(null);
-  const [comparisonContent, setComparisonContent] = useState<string | null | DeckCardCounts>(null);
-  const [selectedBranchName, setSelectedBranchName] = useState<string>(null!);
   const [diffsOnly, setDiffsOnly] = useState<boolean>(true);
 
   const [deckExportModalOpen, setDeckExportModalOpen] = useState<boolean>(false);
@@ -94,12 +88,6 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
     setSearchQuery,
     // comparisonBranchName,
     // setComparisonBranchName,
-    comparisonContent,
-    setComparisonContent,
-
-    selectedBranchName,
-    setSelectedBranchName,
-
     diffsOnly,
     setDiffsOnly,
 
@@ -113,6 +101,10 @@ export function DeckUiProvider({children}: {children: ReactNode}) {
   return <DeckUIContext.Provider value={value}>{children}</DeckUIContext.Provider>;
 }
 
+/**
+ * Branch selection is handled through {@link useDeckUrlManager} instead.
+ * Handles shared UI state in {@link DeckViewScreenRouter}.
+ */
 export function useDeckUiContext(): DeckUIContextValue {
   const context = useContext(DeckUIContext);
 

@@ -5,7 +5,7 @@ import {useEffect, useRef} from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
 import {CardDetailsTagsPanel} from "./CardDetailsTagsPanel.tsx";
 import CardAddingPanel from "./CardAddingPanel.tsx";
-import {useScryfallCache} from "../../../context/ScryfallCacheContext.tsx";
+import {useCardCache} from "../../../context/CardCacheContext.tsx";
 import {Card} from "../Card.tsx";
 
 interface CardDetailsModalProps {
@@ -21,6 +21,9 @@ interface CardDetailsModalProps {
   deckSectionName?: DeckSectionName | undefined;
 }
 
+/**
+ * Use in conjunction with {@link useCardSelectionManager}
+ */
 export function CardDetailsModal({
   oracle_id,
   onClose,
@@ -30,7 +33,7 @@ export function CardDetailsModal({
   hasNext
 }: CardDetailsModalProps) {
 
-  const cache = useScryfallCache();
+  const cache = useCardCache();
 
   const card: OracleCard | undefined = cache.tryGetCard(oracle_id);
 

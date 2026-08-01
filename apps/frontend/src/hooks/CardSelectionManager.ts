@@ -11,6 +11,9 @@ function equalRecords(
   return true;
 }
 
+/**
+ * Handles the card switching logic for {@link CardDetailsModal}
+ */
 export function useCardSelectionManager() {
   const [locations, setLocations] = useState<CardLocation[]>([]);
 
@@ -66,51 +69,4 @@ export function useCardSelectionManager() {
     hasNextLeft,
     hasNextRight
   };
-
-
-  //
-  //
-  // const [selectedId, setSelectedId] = useState<string | null>(null);
-  // const [leftLocation, setLeftLocation] = useState<CardLocation | null>(null);
-  // const [rightLocation, setRightLocation] = useState<CardLocation | null>(null);
-  //
-
-  //
-  // function setIndex(idx: number) {
-  //   setLeftLocation(
-  //     cards[idx - 1] ?? null
-  //   );
-  //   setRightLocation(
-  //     cards[idx + 1] ?? null
-  //   );
-  //
-  //   setSelectedId(
-  //     cards[idx].oracle_id
-  //   );
-  // }
-  //
-  // function navigateLeft() {
-  //   setSelectedLocation(leftLocation);
-  // }
-  //
-  // function navigateRight() {
-  //   setSelectedLocation(rightLocation);
-  // }
-  //
-  // function setSelectedLocation(location: CardLocation) {
-  //   setIndex(index(location));
-  // }
-  //
-  // const hasNextLeft = leftLocation !== null;
-  // const hasNextRight = rightLocation !== null;
-  //
-  // return {
-  //   selectedId,
-  //   setSelectedLocation,
-  //   hasNextLeft,
-  //   hasNextRight,
-  //   navigateLeft,
-  //   navigateRight,
-  //   setSelectedId
-  // };
 }
