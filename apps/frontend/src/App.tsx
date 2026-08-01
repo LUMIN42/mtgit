@@ -10,6 +10,7 @@ import {JSX} from "react";
 import React from "react";
 import {DeckViewScreenWrapper} from "./screens/DeckViewScreen/DeckViewScreenWrapper.tsx";
 import {ScrollToTopButton} from "./components/ScrollToTopButton.tsx";
+import {TutorialScreen} from "./screens/TutorialScreen.tsx";
 
 /**
  * 🧠 Auth gate
@@ -89,7 +90,8 @@ function App() {
                 <Routes>
                   <Route path="decks" element={<DeckSelectionScreen/>}/>
                   <Route path="deck/:deckId/*" element={<DeckViewScreenWrapper/>}/>
-                  <Route path="*" element={<Navigate to="decks" replace/>}/>
+                  <Route path="tutorial" element={<TutorialScreen/>}/>
+                  <Route path="*" element={<Navigate to="/app/decks" replace/>}/>
                 </Routes>
               </AppLayout>
             </RequireAuth>
