@@ -9,6 +9,7 @@ import {
   useDeckUrlManager
 } from "../../../hooks/DeckUrlManager.tsx";
 import {useSearchParams} from "react-router-dom";
+import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
 
 const OLDER_VERSION_OPTION = "Older Version";
 
@@ -24,6 +25,8 @@ function BranchSelector() {
   } = useDeckUrlManager();
   const [searchParams, setSearchParams] = useSearchParams();
   const [, startTransition] = useTransition();
+
+  const {updatePreferences} = useRepositoryPreferences();
 
   const [localEditedBranchName, setLocalEditedBranchName] = useState<string | null>(editedBranchName ?? null);
   const [localComparisonBranchName, setLocalComparisonBranchName] = useState<string | null>(comparisonBranchName ?? null);
@@ -96,6 +99,8 @@ function BranchSelector() {
 
           startTransition(() => {
             setEditedBranchName(value);
+
+            updatePreferences({openBranchName: value});
 
             if (value === localComparisonBranchName) {
               setComparisonBranchName(null);
