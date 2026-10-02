@@ -24,3 +24,7 @@ package-lock.json
 .idea/workspace.xml~
 
 packages/shared/src/*.js
+secrets.txt
+
+.vercel
+.env*

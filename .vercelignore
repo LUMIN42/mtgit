@@ -1,0 +1,9 @@
+node_modules
+dist
+secrets.txt
+.env
+.env.*
+!.env.example
+.idea
+*.tsbuildinfo
+package-lock.json
