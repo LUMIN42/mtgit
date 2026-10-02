@@ -44,21 +44,30 @@ const allowedOrigins = [
   defaultBackendUrl
 ];
 
+/**
+ * @returns whether the Origin header points at the host serving this request (frontend and API on one domain, e.g. Vercel).
+ */
+function isSameOrigin(req: express.Request, origin: string): boolean {
+  const host = req.get("x-forwarded-host") ?? req.get("host");
+
+  try {
+    return host !== undefined && new URL(origin).host === host;
+  }
+  catch {
+    return false;
+  }
+}
+
 app.use(
-  cors({
-    origin: (origin, callback) => {
-      // allow requests with no origin (like curl or mobile apps)
-      if (!origin) {
-        return callback(null, true);
-      }
+  cors<express.Request>((req, callback) => {
+    const origin = req.get("origin");
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    // allow requests with no origin (like curl or mobile apps)
+    if (!origin || allowedOrigins.includes(origin) || isSameOrigin(req, origin)) {
+      return callback(null, {origin: true, credentials: true});
+    }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true
+    return callback(new Error("Not allowed by CORS"));
   })
 );
 
