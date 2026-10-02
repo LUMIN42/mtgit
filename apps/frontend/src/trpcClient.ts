@@ -6,7 +6,7 @@ import type {AppRouter} from "../../api/src/router/routerDispatcher";
  * 🔵 Base URL of your tRPC API
  */
 const trpcApiUrl =
-  import.meta.env.VITE_API_URL ?? "http://localhost:3001/trpc";
+  import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:3001/trpc" : "/trpc");
 
 /**
  * 🔵 React tRPC instance (hooks)
