@@ -1,8 +1,7 @@
 /**
  * Client for the card recommendation API (the dockerized Flask EASE service, see `mtgit recsys/api`).
  *
- * The recommendation API returns every recommendable card at once,
- * so the full ranking is cached here and served in pages.
+ * The recommendation API returns every recommendable card at once, best first.
  */
 
 import {z} from "zod";
@@ -12,8 +11,6 @@ import type {DeckCardCounts, OracleId} from "@mtgit/shared";
 const RECSYS_API_URL = (process.env.RECSYS_API_URL ?? "http://127.0.0.1:5000").replace(/\/+$/, "");
 
 const REQUEST_TIMEOUT_MS = 60_000;
-const CACHE_TTL_MS = 10 * 60_000;
-const CACHE_MAX_ENTRIES = 50;
 
 const RecommendResponseSchema = z.object({
   commander: z.object({
@@ -36,17 +33,6 @@ export interface Recommendations {
   cards: OracleId[];
   commanderName?: string;
   message?: string;
-}
-
-type CacheEntry = {
-  expiresAt: number;
-  value: Promise<Recommendations>;
-};
-
-const cache = new Map<string, CacheEntry>();
-
-function cacheKey(commanders: OracleId[], deck: Record<OracleId, number>): string {
-  return JSON.stringify([commanders, Object.keys(deck).sort()]);
 }
 
 async function readRecsysError(response: Response): Promise<string> {
@@ -146,16 +132,16 @@ async function computeRecommendations(
 }
 
 /**
- * @returns the full recommendation ranking for a deck, cached for a few minutes.
+ * @returns the full recommendation ranking for a deck.
  */
-export function getRecommendations(deckCounts: DeckCardCounts): Promise<Recommendations> {
+export async function getRecommendations(deckCounts: DeckCardCounts): Promise<Recommendations> {
   const commanders = Object.keys(deckCounts.Commander ?? {});
 
   if (commanders.length === 0) {
-    return Promise.resolve({
+    return {
       cards: [],
       message: "Recommendations need a commander. Add one to the deck's Commander section."
-    });
+    };
   }
 
   const deck: Record<OracleId, number> = {
@@ -163,29 +149,5 @@ export function getRecommendations(deckCounts: DeckCardCounts): Promise<Recommen
     ...deckCounts.Commander
   };
 
-  const key = cacheKey(commanders, deck);
-  const now = Date.now();
-
-  for (const [entryKey, entry] of cache) {
-    if (entry.expiresAt <= now) {
-      cache.delete(entryKey);
-    }
-  }
-
-  const cached = cache.get(key);
-  if (cached) {
-    return cached.value;
-  }
-
-  const value = computeRecommendations(commanders, deck);
-  // failed requests are not cached, so retrying works once the service is back
-  value.catch(() => cache.delete(key));
-
-  cache.set(key, {expiresAt: now + CACHE_TTL_MS, value});
-
-  while (cache.size > CACHE_MAX_ENTRIES) {
-    cache.delete(cache.keys().next().value!);
-  }
-
-  return value;
+  return computeRecommendations(commanders, deck);
 }

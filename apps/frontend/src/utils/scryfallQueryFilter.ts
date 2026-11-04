@@ -1,363 +1,120 @@
-import {
-  CardFace,
-  COLOR_NAME_TO_CODE,
-  ColorCombination,
-  ColorNameSchema,
+/**
+ * Filters cards in memory by a scryfall-like query, e.g. the deck view's filter field.
+ * Parsing is shared with the API (see `@mtgit/shared` cardQuery), this file only evaluates the parsed query.
+ * The API's counterpart is `apps/api/src/services/cardQuery/mongoCardQuery.ts`, keep their meaning in sync.
+ */
+
+import type {
+  CardPredicate,
+  CardPredicateField,
+  CardQuery,
+  ColorTarget,
+  Comparison,
   HydratedDeck,
-  isMainCardType,
   TaggedCard
 } from "@mtgit/shared";
-import type {OracleCard} from "@mtgit/shared";
+import {compareNumbers, isQueryColor, parseCardQuery, raritiesMatching} from "@mtgit/shared";
 
-// todo move file to shared code
+type PredicateMatchers = {
+  [F in CardPredicateField]: (card: TaggedCard, predicate: Extract<CardPredicate, {field: F}>) => boolean;
+};
 
-// todo handle invalid syntax with a warning
-
-type ComparisonOperator = "=" | "!=" | ">" | ">=" | "<" | "<=" | ":";
-
-interface ParsedClause {
-  negated: boolean;
-  field: string | null;
-  operator: ComparisonOperator;
-  value: string;
-}
-
-const COLOR_SYMBOLS = new Set(["w", "u", "b", "r", "g", "c"]);
-
-// todo add to global type declarations and unify
-
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function asString(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function asStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-}
-
-// todo handle or clauses
-/**
- * Splits the string s. t. each item is a string containing a single clause.
- * a clause is E.g. '-oracle:"foo \"bar\"' without the outer ''
- */
-function splitClauses(query: string): string[] {
-  const tokens: string[] = [];
-
-  let buffer = "";
-
-  // whether we are inside quotes, where spaces are preserved
-  let inQuotes = false;
-
-  // whether previous character was an escape character "\"
-  let escaped = false;
-
-  for (const char of query.trim()) {
-    // if previous character was escape, take this character literally
-    if (escaped) {
-      buffer += char;
-      escaped = false;
-      continue;
-    }
-
-    if (char === "\\") {
-      escaped = true;
-      continue;
-    }
-
-    if (char === "\"") {
-      inQuotes = !inQuotes;
-      continue;
-    }
-
-    if (/\s/.test(char) && !inQuotes) {
-      if (buffer.length > 0) {
-        tokens.push(buffer);
-        buffer = "";
-      }
-      continue;
-    }
-
-    buffer += char;
-  }
-
-  // final flush
-  if (buffer.length > 0) {
-    tokens.push(buffer);
-  }
-
-  return tokens;
-}
-
-function parseClause(clauseString: string): ParsedClause {
-  const negated = clauseString.startsWith("-");
-  const trimmedToken = negated ? clauseString.slice(1) : clauseString;
-  const match = trimmedToken.match(/^([a-z][a-z0-9_]*)(:|!=|>=|<=|=|>|<)(.+)$/i);
-
-  if (!match) {
-    return {
-      negated,
-      field: null,
-      operator: ":",
-      value: trimmedToken
-    };
-  }
-
-  return {
-    negated,
-    field: match[1].toLowerCase(),
-    operator: match[2] as ComparisonOperator,
-    value: match[3].trim()
-  };
-}
-
-function getFaceSearchText(card: OracleCard): string {
-  return card.card_faces
-    ?.map(face => [face.name, face.type_line, face.oracle_text ?? ""].join(" "))
-    .join(" ") ?? "";
-}
-
-function matchesText(haystack: string, needle: string): boolean {
-  return normalize(haystack).includes(normalize(needle));
+function containsText(haystack: string | undefined, needle: string): boolean {
+  return (haystack ?? "").toLowerCase().includes(needle.toLowerCase());
 }
 
 /**
- * @param rangeExpression e.g. "2..3" ~ match number from 2 to 3 inclusive
- * @param value value, for which we are checking, whether it falls within range
+ * Prices, power and toughness are strings, missing or non-numeric ones (e.g. `*`) never match.
  */
-function matchesRange(value: number, rangeExpression: string): boolean {
-  const [lowerRaw, upperRaw] = rangeExpression.split("..", 2);
-  const lower = Number.parseFloat(lowerRaw);
-  const upper = Number.parseFloat(upperRaw);
-
-  if (!Number.isFinite(lower) || !Number.isFinite(upper)) {
-    return false;
-  }
-
-  return value >= lower && value <= upper;
+function matchesNumberString(raw: string | null | undefined, comparison: Comparison, value: number): boolean {
+  const number = raw === null || raw === undefined || raw.trim() === "" ? NaN : Number(raw);
+  return Number.isFinite(number) && compareNumbers(number, comparison, value);
 }
 
 /**
- * Evaluates whether a numeric (or numeric-like) value matches a query using
- * either comparison operators or range syntax.
- *
- * The function supports:
- * - Direct numeric comparisons using operators (`=`, `!=`, `>`, `>=`, `<`, `<=`)
- * - Range expressions using `"min..max"` syntax
- * - Fallback substring matching when numeric parsing fails and operator is `:`
- *
- * Behavior:
- * - If `value` is `undefined`, the match always fails.
- * - If `rawQuery` contains `".."`, it is treated as a numeric range.
- * - Otherwise, both `value` and `rawQuery` are parsed as numbers and compared
- *   using the provided operator.
- * - If numeric parsing fails, only `:` operator allows fallback string matching.
- *
- * @param value - The value to test. Can be a number, numeric string, or undefined.
- * @param operator - Comparison operator (`:`, `=`, `!=`, `>`, `>=`, `<`, `<=`).
- * @param rawQuery - The query string, either a number or a range expression like `"2..5"`.
- * @returns `true` if the value matches the query according to the operator/range rules, otherwise `false`.
+ * Set semantics on colors, e.g. `>=` means "has at least these colors".
  */
-function matchesNumeric(value: number | string | undefined, operator: ComparisonOperator, rawQuery: string): boolean {
-  if (value === undefined) {
-    return false;
+function matchesColors(cardColors: string[], comparison: Comparison, target: ColorTarget): boolean {
+  // colorless is the empty set, ignore any "C" entries
+  const colors = new Set(cardColors.filter(isQueryColor));
+
+  if (target.kind === "count") {
+    return compareNumbers(colors.size, comparison, target.count);
   }
 
-  const normalizedQuery = normalize(rawQuery);
-  if (normalizedQuery.includes("..")) {
-    const numericValue = typeof value === "number" ? value : Number.parseFloat(value);
-    return Number.isFinite(numericValue) && matchesRange(numericValue, normalizedQuery);
-  }
+  const subset = [...colors].every(color => target.colors.includes(color));
+  const superset = target.colors.every(color => colors.has(color));
 
-  const numericValue = typeof value === "number" ? value : Number.parseFloat(value);
-  const numericQuery = Number.parseFloat(normalizedQuery);
-
-  if (!Number.isFinite(numericQuery) || !Number.isFinite(numericValue)) {
-    return operator === ":"
-      ? String(value).toLowerCase().includes(normalizedQuery)
-      : false;
-  }
-
-  switch (operator) {
-    case ":":
+  switch (comparison) {
     case "=":
-      return numericValue === numericQuery;
+      return subset && superset;
     case "!=":
-      return numericValue !== numericQuery;
-    case ">":
-      return numericValue > numericQuery;
+      return !(subset && superset);
     case ">=":
-      return numericValue >= numericQuery;
-    case "<":
-      return numericValue < numericQuery;
+      return superset;
     case "<=":
-      return numericValue <= numericQuery;
+      return subset;
+    case ">":
+      return superset && colors.size > target.colors.length;
+    case "<":
+      return subset && colors.size < target.colors.length;
   }
 }
 
-function anyFaceMatchesNumeric(faces: CardFace[],
-  criterion: (face: CardFace) => number,
-  operator: ComparisonOperator,
-  value: string) {
-  return faces.some(face => matchesNumeric(criterion(face), operator, value));
+const PREDICATE_MATCHERS: PredicateMatchers = {
+  name: (card, {value}) => containsText(card.name, value),
+  type: (card, {value}) => containsText(card.type_line, value),
+  oracle: (card, {value}) => card.card_faces.some(face => containsText(face.oracle_text, value)),
+  manaValue: (card, {comparison, value}) => compareNumbers(card.cmc, comparison, value),
+  usd: (card, {comparison, value}) => matchesNumberString(card.prices?.usd, comparison, value),
+  power: (card, {comparison, value}) =>
+    card.card_faces.some(face => matchesNumberString(face.power, comparison, value)),
+  toughness: (card, {comparison, value}) =>
+    card.card_faces.some(face => matchesNumberString(face.toughness, comparison, value)),
+  color: (card, {comparison, target}) => matchesColors(card.colors, comparison, target),
+  identity: (card, {comparison, target}) => matchesColors(card.color_identity, comparison, target),
+  rarity: (card, {comparison, rarity}) =>
+    (raritiesMatching(comparison, rarity) as string[]).includes(card.rarity),
+  format: (card, {format}) => ["legal", "restricted"].includes(card.legalities[format] ?? ""),
+  tag: (card, {value}) => card.tags.some(tag => containsText(tag, value))
+};
+
+function matchesPredicate(card: TaggedCard, predicate: CardPredicate): boolean {
+  const matcher = PREDICATE_MATCHERS[predicate.field] as (card: TaggedCard, predicate: CardPredicate) => boolean;
+  return matcher(card, predicate);
 }
 
-// todo properly implement <, <=, ... operators
-function matchesColorClause(colors: ColorCombination, rawQuery: string): boolean {
-  const query = normalize(rawQuery);
-
-  const colorNameParsing = ColorNameSchema.safeParse(query);
-  if (colorNameParsing.success) {
-    const colorName = colorNameParsing.data;
-    return colors.includes(COLOR_NAME_TO_CODE[colorName]);
-  }
-
-  if (query === "colorless") {
-    return colors.length === 0;
-  }
-
-  if (query === "multicolor") {
-    return colors.length > 1;
-  }
-
-  if (query === "monocolor" || query === "mono") {
-    return colors.length === 1;
-  }
-
-  const symbols = query.replace(/[^wubrgc]/g, "");
-
-  const colorSet = new Set([...colors].map(normalize));
-  return Array.from(symbols).every(symbol => COLOR_SYMBOLS.has(symbol) && colorSet.has(symbol));
-}
-
-function matchesIsClause(card: OracleCard, rawQuery: string): boolean {
-  const query = normalize(rawQuery);
-
-  if (query === "legendary") {
-    return asString(card.type_line).toLowerCase().includes("legendary");
-  }
-
-  if (isMainCardType(query)) {
-    return asString(card.type_line).toLowerCase().includes(query);
-  }
-
-  const colorIdentity = asStringArray(card.color_identity);
-
-  if (query === "multicolor") {
-    return colorIdentity.length > 1;
-  }
-
-  if (query === "monocolor" || query === "mono") {
-    return colorIdentity.length === 1;
-  }
-
-  if (query === "colorless") {
-    return colorIdentity.length === 0;
-  }
-
-  return true;
-}
-
-function matchesTagClause(card: TaggedCard, tagQuery: string) {
-  return card.tags.some(tag => tag.includes(tagQuery));
-}
-
-// todo refactor using oop-like modular design
-function matchesClause(card: TaggedCard, clause: ParsedClause): boolean {
-  const field = clause.field;
-
-  if (!field) {
-    return matchesText(card.name, clause.value);
-  }
-
-  switch (field) {
-    case "name":
-    case "n":
-      return matchesText(asString(card.name).toLowerCase(), clause.value);
-    case "type":
-    case "t":
-      return matchesText(asString(card.type_line).toLowerCase(), clause.value);
-    case "oracle":
-    case "o":
-      return card.card_faces.some(
-        face => matchesText(face.oracle_text, clause.value)
-      );
-    case "set":
-    case "rarity":
-    case "r":
-      return matchesText(asString(card.rarity).toLowerCase(), clause.value);
-    case "cmc":
-    case "mv":
-    case "mana":
-    case "manavalue":
-      return matchesNumeric(card.cmc, clause.operator, clause.value);
-    case "power":
-      return card.card_faces.some(
-        face => matchesNumeric(face.power, clause.operator, clause.value)
-      );
-    case "toughness":
-      return card.card_faces.some(
-        face => matchesNumeric(face.toughness, clause.operator, clause.value)
-      );
-    case "color":
-    case "c":
-      return matchesColorClause(card.colors, clause.value);
-    case "identity":
-    case "id":
-      return matchesColorClause(card.color_identity, clause.value);
-    case "kw":
-    case "is":
-      return matchesIsClause(card, clause.value);
-    case "tag":
-    case "tags":
-      return matchesTagClause(card, clause.value);
-    default:
-      return true; // make incorrect clauses less punishing
+export function matchesCardQuery(card: TaggedCard, query: CardQuery): boolean {
+  switch (query.kind) {
+    case "predicate":
+      return matchesPredicate(card, query.predicate);
+    case "not":
+      return !matchesCardQuery(card, query.child);
+    case "and":
+      return query.children.every(child => matchesCardQuery(card, child));
+    case "or":
+      return query.children.some(child => matchesCardQuery(card, child));
   }
 }
 
-export function createScryfallCardMatcher(query: string): (card: TaggedCard) => boolean {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
-    return () => true;
-  }
-
-  const clauses = splitClauses(trimmedQuery).map(parseClause);
-
-  return card => clauses.every(clause => {
-    const matched = matchesClause(card, clause);
-    return clause.negated ? !matched : matched;
-  });
-}
-
-export function filterCardsByScryfallQuery(cards: TaggedCard[], query: string): OracleCard[] {
-  const matcher = createScryfallCardMatcher(query);
-  return cards.filter(matcher);
-}
-
+/**
+ * Unsupported parts of the query are ignored, the parser's warnings are not shown here.
+ */
 export function filterDeckByScryfallQuery(deck: HydratedDeck, query: string): HydratedDeck {
-  const trimmedQuery = query.trim();
-  if (!trimmedQuery) {
+  const {filter} = parseCardQuery(query);
+
+  if (filter === null) {
     return deck;
   }
 
-  const matcher = createScryfallCardMatcher(trimmedQuery);
-
-  const sectionEntries = Object.entries(deck)
-    .map(([sectionName, section]) =>
-      [
-        sectionName,
-        Object.fromEntries(
-          Object.values(section)
-            .filter(matcher)
-            .map(card => [card.oracle_id, card])
-        )
-      ]
-    );
-
-  return Object.fromEntries(sectionEntries);
+  return Object.fromEntries(
+    Object.entries(deck).map(([sectionName, section]) => [
+      sectionName,
+      Object.fromEntries(
+        Object.values(section)
+          .filter(card => matchesCardQuery(card, filter))
+          .map(card => [card.oracle_id, card])
+      )
+    ])
+  );
 }
-
-

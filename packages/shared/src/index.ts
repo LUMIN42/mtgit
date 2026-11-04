@@ -8,3 +8,4 @@ export * from "./deckFormats.js";
 export * from "./deckExport.js";
 export * from "./preferencesTypes.js";
 export * from "./snapshotTypes.js";
+export * from "./cardQuery/index.js";

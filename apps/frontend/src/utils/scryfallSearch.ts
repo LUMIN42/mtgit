@@ -1,4 +1,5 @@
 import {
+  parseCardQuery,
   ScryfallSearchResponseSchema,
   type DeckCardCounts,
   type ScryfallApiOracleCard
@@ -8,12 +9,11 @@ import {InfiniteData, useInfiniteQuery} from "@tanstack/react-query";
 import {trpcRaw} from "../trpcClient.ts";
 
 /**
- * Typing this into the search makes it list recommendations for the deck instead of querying scryfall.
+ * `order:rec` makes the search list recommendations for the deck instead of querying scryfall,
+ * the rest of the query then filters the recommendations.
  */
-const RECOMMENDATION_KEYWORD = /(^|\s)order:rec(\s|$)/i;
-
 export function isRecommendationQuery(query: string): boolean {
-  return RECOMMENDATION_KEYWORD.test(query);
+  return parseCardQuery(query).directives.order === "rec";
 }
 
 const SCRYFALL_API_BASE_URL = "https://api.scryfall.com";
@@ -96,18 +96,28 @@ async function fetchScryfallSearchPage(url: string): Promise<ScryfallSearchPageR
   }
 }
 
-async function fetchRecommendationPage(deck: DeckCardCounts, page: number): Promise<ScryfallSearchPageResult> {
+async function fetchRecommendationPage(
+  deck: DeckCardCounts,
+  query: string,
+  page: number
+): Promise<ScryfallSearchPageResult> {
   try {
-    const result = await trpcRaw.recommendations.search.query({deck, page});
+    const result = await trpcRaw.recommendations.search.query({deck, query, page});
+
+    // every page repeats the same notes, show them only once
+    const notes = page === 1
+      ? [
+        result.message ?? (result.commanderName ? `Recommendations for ${result.commanderName}.` : undefined),
+        ...result.warnings
+      ]
+      : [];
 
     return {
       ok: true,
       cards: result.cards,
       totalCards: result.totalCards,
       hasMore: result.hasMore,
-      message: result.message ?? (result.commanderName && page === 1
-        ? `Recommendations for ${result.commanderName}.`
-        : undefined),
+      message: notes.filter(note => note !== undefined).join(" ") || undefined,
       nextPage: result.nextPage
     };
   }
@@ -142,12 +152,16 @@ export function useScryfallCardRetriever() {
     string | number | null
   >({
     queryKey: isRecommendation
-      ? ["card-recommendations", submitted.deck]
+      ? ["card-recommendations", queryString, submitted.deck]
       : ["scryfall-cards", queryString],
 
     queryFn: async ({pageParam}) => {
       if (isRecommendation) {
-        return await fetchRecommendationPage(submitted.deck, typeof pageParam === "number" ? pageParam : 1);
+        return await fetchRecommendationPage(
+          submitted.deck,
+          queryString,
+          typeof pageParam === "number" ? pageParam : 1
+        );
       }
 
       return await fetchScryfallSearchPage(typeof pageParam === "string" ? pageParam : buildSearchUrl(queryString, 1));
