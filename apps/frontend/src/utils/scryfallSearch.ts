@@ -1,9 +1,20 @@
 import {
   ScryfallSearchResponseSchema,
+  type DeckCardCounts,
   type ScryfallApiOracleCard
 } from "@mtgit/shared";
 import {useState} from "react";
 import {InfiniteData, useInfiniteQuery} from "@tanstack/react-query";
+import {trpcRaw} from "../trpcClient.ts";
+
+/**
+ * Typing this into the search makes it list recommendations for the deck instead of querying scryfall.
+ */
+const RECOMMENDATION_KEYWORD = /(^|\s)order:rec(\s|$)/i;
+
+export function isRecommendationQuery(query: string): boolean {
+  return RECOMMENDATION_KEYWORD.test(query);
+}
 
 const SCRYFALL_API_BASE_URL = "https://api.scryfall.com";
 
@@ -13,7 +24,8 @@ interface ScryfallSearchSuccess {
   totalCards: number;
   hasMore: boolean;
   message?: string;
-  nextPageUrl?: string;
+  /** scryfall url of the next page, or the next page number for recommendations */
+  nextPage?: string | number;
 }
 
 interface ScryfallSearchFailure {
@@ -73,7 +85,7 @@ async function fetchScryfallSearchPage(url: string): Promise<ScryfallSearchPageR
       totalCards: parsed.data.total_cards,
       hasMore: parsed.data.has_more,
       message: parsed.data.warnings?.join(" "),
-      nextPageUrl: parsed.data.next_page
+      nextPage: parsed.data.next_page
     };
   }
   catch {
@@ -84,28 +96,68 @@ async function fetchScryfallSearchPage(url: string): Promise<ScryfallSearchPageR
   }
 }
 
-export function useScryfallCardRetriever() {
-  const [queryString, setQueryString] = useState("");
+async function fetchRecommendationPage(deck: DeckCardCounts, page: number): Promise<ScryfallSearchPageResult> {
+  try {
+    const result = await trpcRaw.recommendations.search.query({deck, page});
 
+    return {
+      ok: true,
+      cards: result.cards,
+      totalCards: result.totalCards,
+      hasMore: result.hasMore,
+      message: result.message ?? (result.commanderName && page === 1
+        ? `Recommendations for ${result.commanderName}.`
+        : undefined),
+      nextPage: result.nextPage
+    };
+  }
+  catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Failed to fetch recommendations."
+    };
+  }
+}
+
+interface SubmittedSearch {
+  query: string;
+  /** deck the recommendations are computed for, frozen at submission so adding a card does not reshuffle the results */
+  deck: DeckCardCounts;
+}
+
+/**
+ * Infinite scryfall search. Queries containing `order:rec` are served by the recommendation backend instead.
+ */
+export function useScryfallCardRetriever() {
+  const [submitted, setSubmitted] = useState<SubmittedSearch>({query: "", deck: {}});
+
+  const queryString = submitted.query;
+  const isRecommendation = isRecommendationQuery(queryString);
 
   const query = useInfiniteQuery<
     ScryfallSearchPageResult,
     Error,
     InfiniteData<ScryfallSearchPageResult>,
-    [string, string],
-    string | null
+    unknown[],
+    string | number | null
   >({
-    queryKey: ["scryfall-cards", queryString],
+    queryKey: isRecommendation
+      ? ["card-recommendations", submitted.deck]
+      : ["scryfall-cards", queryString],
 
     queryFn: async ({pageParam}) => {
-      return await fetchScryfallSearchPage(pageParam ?? buildSearchUrl(queryString, 1));
+      if (isRecommendation) {
+        return await fetchRecommendationPage(submitted.deck, typeof pageParam === "number" ? pageParam : 1);
+      }
+
+      return await fetchScryfallSearchPage(typeof pageParam === "string" ? pageParam : buildSearchUrl(queryString, 1));
     },
 
     initialPageParam: null,
 
     getNextPageParam: (lastPage) => {
       if (lastPage.ok) {
-        return lastPage.nextPageUrl;
+        return lastPage.nextPage;
       }
       else {
         return undefined;
@@ -119,7 +171,12 @@ export function useScryfallCardRetriever() {
     ids: query.data?.pages.flatMap(page => page.ok ? page.cards : []) ?? [],
 
     query: queryString,
-    setQuery: setQueryString,
+    /**
+     * @param deck needed only for `order:rec` queries
+     */
+    setQuery: (query: string, deck: DeckCardCounts = {}) => setSubmitted({query, deck}),
+    isRecommendation,
+    messages: query.data?.pages.flatMap(page => page.message ? [page.message] : []) ?? [],
 
     ...query
   };

@@ -5,6 +5,7 @@ import {router} from "../trpc.js";
 import {decksRouter} from "./decksRouter.js";
 import {cardRouter} from "./cardsRouter.js";
 import {repositoryPreferencesRouter} from "./preferencesRouter.js";
+import {recommendationsRouter} from "./recommendationsRouter.js";
 
 export const appRouter = router({
   health: healthRouter,
@@ -12,7 +13,8 @@ export const appRouter = router({
   auth: authRouter,
   decks: decksRouter,
   cards: cardRouter,
-  repositoryPreferences: repositoryPreferencesRouter
+  repositoryPreferences: repositoryPreferencesRouter,
+  recommendations: recommendationsRouter
 });
 
 export type AppRouter = typeof appRouter;

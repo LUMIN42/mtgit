@@ -11,7 +11,8 @@ import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {Link} from "react-router-dom";
 import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
 import {useWindowScroll} from "@mantine/hooks";
-import {useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
+import {isRecommendationQuery, useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
+import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 
 export function SearchResultsScreen() {
 
@@ -23,11 +24,16 @@ export function SearchResultsScreen() {
 
   const [editingDefaultQuery, setEditingDefaultQuery] = useState<boolean>(false);
 
+  const {selectedBranchContent, isLoading: isRepositoryLoading} = useRepositoryContext();
+
   const {buildDeckViewPath} = useDeckUrlManager();
 
+  // recommendations are computed from the deck, so wait for it to load (relevant after a page reload)
   useEffect(() => {
-    handleSearchSubmit();
-  }, []);
+    if (!isRepositoryLoading || !isRecommendationQuery(searchQuery)) {
+      handleSearchSubmit();
+    }
+  }, [isRepositoryLoading]);
 
   const {fetchMissingCards, tryGetCard} = useCardCache();
 
@@ -61,7 +67,9 @@ export function SearchResultsScreen() {
     setQuery,
     isFetchingNextPage,
     isLoading: isLoadingScryfall,
-    query: lockedInQuery
+    query: lockedInQuery,
+    messages,
+    isRecommendation
   } = useScryfallCardRetriever();
 
   useEffect(() => {
@@ -87,7 +95,7 @@ export function SearchResultsScreen() {
 
 
   const handleSearchSubmit = () => {
-    setQuery(`${defaultQueryField} ${searchQuery}`);
+    setQuery(`${defaultQueryField} ${searchQuery}`, selectedBranchContent);
 
     if (defaultQueryField) {
       updatePreferences({
@@ -157,8 +165,15 @@ export function SearchResultsScreen() {
       <Text size="sm" c="dimmed">
         {lockedInQuery
           ? `Showing ${cardIds.length} result(s) for: ${lockedInQuery}`
-          : "Type a search and press Enter or click the search icon."}
+          : "Type a search and press Enter or click the search icon. Use order:rec for deck recommendations."}
       </Text>
+      {
+        messages.map(message => (
+          <Text key={message} size="sm" c={isRecommendation && cardIds.length === 0 ? "red" : "dimmed"}>
+            {message}
+          </Text>
+        ))
+      }
       <CardGroup
         cards={cardsWithTags}
         sectionName="Main"
