@@ -3,12 +3,7 @@ import {Flex, Select, ActionIcon} from "@mantine/core";
 import {IconArrowsLeftRight} from "@tabler/icons-react";
 
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
-import {
-  COMPARISON_BRANCH_NAME_URL_KEY,
-  EDITED_BRANCH_NAME_URL_KEY,
-  useDeckUrlManager
-} from "../../../hooks/DeckUrlManager.tsx";
-import {useSearchParams} from "react-router-dom";
+import {useDeckUrlManager} from "../../../hooks/DeckUrlManager.tsx";
 import {useRepositoryPreferences} from "../../../context/RepositoryPreferencesContext.tsx";
 
 const OLDER_VERSION_OPTION = "Older Version";
@@ -21,9 +16,9 @@ function BranchSelector() {
     comparisonBranchName,
     comparisonSnapshotId,
     setEditedBranchName,
-    setComparisonBranchName
+    setComparisonBranchName,
+    swapBranches: swapBranchesInUrl
   } = useDeckUrlManager();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [, startTransition] = useTransition();
 
   const {updatePreferences} = useRepositoryPreferences();
@@ -71,13 +66,8 @@ function BranchSelector() {
     setLocalEditedBranchName(localComparisonBranchName);
     setLocalComparisonBranchName(localEditedBranchName);
 
-    const nextSearchParams = new URLSearchParams(searchParams);
-
-    nextSearchParams.set(EDITED_BRANCH_NAME_URL_KEY, localComparisonBranchName);
-    nextSearchParams.set(COMPARISON_BRANCH_NAME_URL_KEY, localEditedBranchName);
-
     startTransition(() => {
-      setSearchParams(nextSearchParams);
+      swapBranchesInUrl(localEditedBranchName, localComparisonBranchName);
     });
   };
 

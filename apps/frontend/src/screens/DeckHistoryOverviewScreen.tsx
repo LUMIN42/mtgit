@@ -27,7 +27,7 @@ import {
 import {z} from "zod";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {useCardCache} from "../context/CardCacheContext.tsx";
-import {Link, useNavigate} from "react-router-dom";
+import {Link} from "react-router-dom";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 import type {ObjectId} from "@mtgit/shared";
 import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
@@ -36,7 +36,7 @@ import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
 function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
   const {preferences, updatePreferences} = useRepositoryPreferences();
   const {compressedHistory: compressed, legalOnlyHistory: legalOnly} = preferences;
-  const {editedBranchName} = useDeckUrlManager();
+  const {editedBranchName, buildDeckViewPath} = useDeckUrlManager();
 
   useEffect(
     () => {
@@ -47,7 +47,7 @@ function DeckHistoryOverviewScreenWrapper({children}: {children: ReactNode}) {
 
   return <Stack>
     <Group>
-      <Button component={Link} to={".."} w={"fit-content"}>
+      <Button component={Link} to={buildDeckViewPath()} w={"fit-content"}>
         Return to Deck
       </Button>
       <Switch
@@ -115,8 +115,6 @@ export function DeckHistoryOverviewScreen() {
     buildPartiallyReconstructedDeck,
     isFetching
   } = useCardCache();
-
-  const navigate = useNavigate();
 
   const historyQuery = trpcHooks.decks.branchHistory.useQuery(
     {

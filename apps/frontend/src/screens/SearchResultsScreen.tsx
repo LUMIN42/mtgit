@@ -9,6 +9,7 @@ import {useCardCache} from "../context/CardCacheContext.tsx";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {Link} from "react-router-dom";
+import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
 import {useWindowScroll} from "@mantine/hooks";
 import {useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
 
@@ -21,6 +22,8 @@ export function SearchResultsScreen() {
   const [defaultQueryField, setDefaultQueryField] = useState(defaultQuery);
 
   const [editingDefaultQuery, setEditingDefaultQuery] = useState<boolean>(false);
+
+  const {buildDeckViewPath} = useDeckUrlManager();
 
   useEffect(() => {
     handleSearchSubmit();
@@ -95,7 +98,7 @@ export function SearchResultsScreen() {
 
   return (
     <Stack gap={"md"} maw={1200} mx={"auto"} w={"100%"}>
-      <Button component={Link} to={".."} w={"fit-content"}>
+      <Button component={Link} to={buildDeckViewPath()} w={"fit-content"}>
         Return to Deck View
         {/*  todo rewrite as a chevron */}
       </Button>

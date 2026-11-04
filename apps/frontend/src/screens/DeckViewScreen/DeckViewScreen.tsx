@@ -18,7 +18,7 @@ import {useMediaQuery} from "@mantine/hooks";
 import {ManaCurvePlot} from "../../components/DeckViewScreen/DeckViewingOptions/ManaCurvePlot.tsx";
 import {DeckPieChart} from "../../components/DeckViewScreen/CardDetailsModal/DeckPieChart.tsx";
 import {DeckManagementModalButton} from "../../components/DeckViewScreen/DeckManagementModalButton.tsx";
-import {EDITED_BRANCH_NAME_URL_KEY, useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
+import {useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
 import {useEffect} from "react";
 
 /**
@@ -27,10 +27,7 @@ import {useEffect} from "react";
 export function DeckViewScreen() {
   const ui = useDeckUiContext();
   const repo = useRepositoryContext();
-  const {editedBranchName} = useDeckUrlManager();
-  const historySearch = editedBranchName
-    ? `?${new URLSearchParams({[EDITED_BRANCH_NAME_URL_KEY]: editedBranchName})}`
-    : "";
+  const {editedBranchName, buildHistoryPath} = useDeckUrlManager();
 
   useEffect(
     () => {
@@ -75,7 +72,7 @@ export function DeckViewScreen() {
         <Button
           variant={"default"}
           component={Link}
-          to={{pathname: "history", search: historySearch}}
+          to={buildHistoryPath()}
         >
           Branch History
         </Button>
