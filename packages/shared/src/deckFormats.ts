@@ -31,6 +31,27 @@ export function maximumCardAmount(card: OracleCard, format: Format) {
 }
 
 /**
+ * Whether the card can be put into the commander zone.
+ * Covers legendary creatures, cards that explicitly say they "can be your commander" (e.g. Tasha, the Witch Queen),
+ * cards that are creatures outside the battlefield (e.g. Grist, the Hunger Tide) and Backgrounds.
+ * Only the front face counts, so e.g. a non-legendary card transforming into a legendary creature is excluded.
+ */
+export function canBeCommander(card: OracleCard) {
+  const frontFace = card.card_faces[0];
+  const typeLine = frontFace?.type_line ?? card.type_line;
+  const oracleText = frontFace?.oracle_text ?? "";
+
+  if (!typeLine.includes("Legendary")) {
+    return false;
+  }
+
+  return typeLine.includes("Creature")
+    || typeLine.includes("Background")
+    || oracleText.includes("can be your commander")
+    || /isn't on the battlefield, it's an? [^.]*\bcreature\b/i.test(oracleText);
+}
+
+/**
  * The maximum amount of a card a deck of the given format can legally have.
  * Use only for preflight, as it gets cards like basic lands
  * or cards like Rat colony, which have an uncapped maximum no matter what.

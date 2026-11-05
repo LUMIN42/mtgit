@@ -1,6 +1,6 @@
 import React from "react";
 import {useRepositoryContext} from "../../../context/RepositoryContext.tsx";
-import {relevantSections} from "@mtgit/shared";
+import {canBeCommander, relevantSections} from "@mtgit/shared";
 import {Paper, Table} from "@mantine/core";
 import CardAmountEditor from "../CardAmountEditor.tsx";
 import {useCardCache} from "../../../context/CardCacheContext.tsx";
@@ -24,11 +24,7 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
   const hydratedCard = tryGetCard(oracle_id);
 
 
-  // todo extract to a proper place
-  const canBeCommander =
-    hydratedCard ?
-      hydratedCard.type_line.includes("Legendary") &&
-      hydratedCard.type_line.includes("Creature") : false;
+  const isCommanderCandidate = hydratedCard ? canBeCommander(hydratedCard) : false;
 
 
   return (
@@ -42,7 +38,7 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
               relevantSections(repository.format)
                 .map(
                   sectionName => {
-                    if (sectionName == "Commander" && !canBeCommander) {
+                    if (sectionName == "Commander" && !isCommanderCandidate) {
                       return null;
                     }
 
@@ -68,7 +64,7 @@ function CardAddingPanel({oracle_id}: CardAddingPanelProps) {
                     relevantSections(repository.format)
                       .map(
                         sectionName => {
-                          if (sectionName == "Commander" && !canBeCommander) {
+                          if (sectionName == "Commander" && !isCommanderCandidate) {
                             return null;
                           }
 
