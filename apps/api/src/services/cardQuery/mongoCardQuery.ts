@@ -115,6 +115,7 @@ const PREDICATE_COMPILERS: PredicateCompilers = {
   rarity: ({comparison, rarity}) => ({rarity: {$in: raritiesMatching(comparison, rarity)}}),
   // the parser only allows alphanumeric formats, so this cannot address an arbitrary path
   format: ({format}) => ({[`legalities.${format}`]: {$in: ["legal", "restricted"]}}),
+  oracleTag: ({tag}) => ({otags: tag}),
   // tags belong to a deck, not to a card in the db, so no card matches
   tag: () => ({$expr: false})
 };

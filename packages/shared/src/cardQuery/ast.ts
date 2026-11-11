@@ -50,6 +50,8 @@ export type CardPredicate =
   | {field: "identity", comparison: Comparison, target: ColorTarget}
   | {field: "rarity", comparison: Comparison, rarity: Rarity}
   | {field: "format", format: string}
+  /** scryfall oracle tag, matched exactly, e.g. `removal` (normalized: lowercase, hyphens instead of spaces) */
+  | {field: "oracleTag", tag: string}
   /** deck tags, they only exist in the frontend */
   | {field: "tag", value: string};
 

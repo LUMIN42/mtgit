@@ -249,6 +249,25 @@ const FIELD_DEFINITIONS: readonly FieldDefinition[] = [
     }
   },
 
+  // `otag:removal`: tagged with the scryfall oracle tag, matched exactly like on scryfall
+  {
+    aliases: ["oracletag", "otag", "function"],
+    parse: (operator, value, keyword) => {
+      if (operator !== ":" && operator !== "=") {
+        return unsupportedOperator(keyword, operator);
+      }
+
+      // tags are lowercase words joined by hyphens, `otag:"card advantage"` means `otag:card-advantage`
+      const tag = value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+
+      if (!/^[a-z0-9-]+$/.test(tag)) {
+        return fail(`'${value}' is not an oracle tag for '${keyword}', the clause was ignored.`);
+      }
+
+      return ok({field: "oracleTag", tag});
+    }
+  },
+
   // `is:` is a shorthand for other keywords, so evaluators need nothing extra for it:
   // `is:multicolor`/`is:mono`/`is:colorless` compare the color identity, `is:legendary`/`is:creature` the type line
   {

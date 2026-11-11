@@ -76,6 +76,7 @@ const PREDICATE_MATCHERS: PredicateMatchers = {
   rarity: (card, {comparison, rarity}) =>
     (raritiesMatching(comparison, rarity) as string[]).includes(card.rarity),
   format: (card, {format}) => ["legal", "restricted"].includes(card.legalities[format] ?? ""),
+  oracleTag: (card, {tag}) => card.otags.includes(tag),
   tag: (card, {value}) => card.tags.some(tag => containsText(tag, value))
 };
 

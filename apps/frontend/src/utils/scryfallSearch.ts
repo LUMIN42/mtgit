@@ -1,7 +1,9 @@
 import {
+  GroupSourceSchema,
   parseCardQuery,
   ScryfallSearchResponseSchema,
   type DeckCardCounts,
+  type GroupSource,
   type ScryfallApiOracleCard
 } from "@mtgit/shared";
 import {useState} from "react";
@@ -14,6 +16,30 @@ import {trpcRaw} from "../trpcClient.ts";
  */
 export function isRecommendationQuery(query: string): boolean {
   return parseCardQuery(query).directives.order === "rec";
+}
+
+/**
+ * `order:neurons` shows the neurons of the commander's recommendation model with the cards activating them,
+ * `order:clustering` the clusters of the commander's decks with their most distinctive cards, shown the same way;
+ * the rest of the query then filters those cards.
+ */
+export function isGroupQuery(query: string): boolean {
+  return groupSource(query) !== undefined;
+}
+
+/**
+ * @returns which group view an `order:neurons` or `order:clustering` query asks for, undefined for other queries
+ */
+export function groupSource(query: string): GroupSource | undefined {
+  const parsed = GroupSourceSchema.safeParse(parseCardQuery(query).directives.order);
+  return parsed.success ? parsed.data : undefined;
+}
+
+/**
+ * @returns whether the query's results are computed from the deck (its commander), see {@link isRecommendationQuery}
+ */
+export function isDeckDependentQuery(query: string): boolean {
+  return isRecommendationQuery(query) || isGroupQuery(query);
 }
 
 const SCRYFALL_API_BASE_URL = "https://api.scryfall.com";
@@ -136,13 +162,16 @@ interface SubmittedSearch {
 }
 
 /**
- * Infinite scryfall search. Queries containing `order:rec` are served by the recommendation backend instead.
+ * Infinite scryfall search. Queries containing `order:rec` are served by the recommendation backend instead,
+ * `order:neurons` queries are not fetched here, see `useCommanderGroups`.
  */
 export function useScryfallCardRetriever() {
   const [submitted, setSubmitted] = useState<SubmittedSearch>({query: "", deck: {}});
 
   const queryString = submitted.query;
   const isRecommendation = isRecommendationQuery(queryString);
+  // served by useCommanderGroups instead
+  const isGroups = isGroupQuery(queryString);
 
   const query = useInfiniteQuery<
     ScryfallSearchPageResult,
@@ -178,18 +207,21 @@ export function useScryfallCardRetriever() {
       }
     },
 
-    enabled: queryString.length > 0
+    enabled: queryString.length > 0 && !isGroups
   });
 
   return {
     ids: query.data?.pages.flatMap(page => page.ok ? page.cards : []) ?? [],
 
     query: queryString,
+    /** deck the submitted query was made for */
+    deck: submitted.deck,
     /**
-     * @param deck needed only for `order:rec` queries
+     * @param deck needed only for `order:rec` and `order:neurons` queries
      */
     setQuery: (query: string, deck: DeckCardCounts = {}) => setSubmitted({query, deck}),
     isRecommendation,
+    isGroups,
     messages: query.data?.pages.flatMap(page => page.message ? [page.message] : []) ?? [],
 
     ...query

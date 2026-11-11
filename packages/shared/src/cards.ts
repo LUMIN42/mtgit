@@ -164,7 +164,9 @@ const ScryfallOracleCardBaseSchema = z
     // set: z.string(),
     // set_name: z.string(),
     rarity: z.string(),
-    prices: PricesSchema.optional()
+    prices: PricesSchema.optional(),
+    /** scryfall oracle tags (`otag:`), e.g. `removal`, added to the db after importing the bulk dump */
+    otags: z.array(z.string()).catch([])
   });
 
 const SingleFacedScryfallOracleCardSchema = ScryfallOracleCardBaseSchema.and(

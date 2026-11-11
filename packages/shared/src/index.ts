@@ -9,3 +9,4 @@ export * from "./deckExport.js";
 export * from "./preferencesTypes.js";
 export * from "./snapshotTypes.js";
 export * from "./cardQuery/index.js";
+export * from "./recommendationTypes.js";

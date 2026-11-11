@@ -11,7 +11,9 @@ import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {Link} from "react-router-dom";
 import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
 import {useWindowScroll} from "@mantine/hooks";
-import {isRecommendationQuery, useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
+import {isDeckDependentQuery, groupSource, useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
+import {useCommanderGroups} from "../utils/groupSearch.ts";
+import {CommanderGroups} from "../components/CommanderGroups.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
 
 export function SearchResultsScreen() {
@@ -30,7 +32,7 @@ export function SearchResultsScreen() {
 
   // recommendations are computed from the deck, so wait for it to load (relevant after a page reload)
   useEffect(() => {
-    if (!isRepositoryLoading || !isRecommendationQuery(searchQuery)) {
+    if (!isRepositoryLoading || !isDeckDependentQuery(searchQuery)) {
       handleSearchSubmit();
     }
   }, [isRepositoryLoading]);
@@ -56,7 +58,8 @@ export function SearchResultsScreen() {
       window.scrollY + window.innerHeight >=
       document.documentElement.scrollHeight - threshold;
 
-    if (atBottom) {
+    // the group view shows everything at once, its scryfall query is disabled
+    if (atBottom && !isGroups) {
       fetchNextPage();
     }
   }, [scroll.y]);
@@ -68,9 +71,28 @@ export function SearchResultsScreen() {
     isFetchingNextPage,
     isLoading: isLoadingScryfall,
     query: lockedInQuery,
-    messages,
-    isRecommendation
+    messages: searchMessages,
+    isRecommendation,
+    isGroups,
+    deck: lockedInDeck
   } = useScryfallCardRetriever();
+
+  const groupQuery = useCommanderGroups(lockedInQuery, lockedInDeck, isGroups);
+  const isClustering = groupSource(lockedInQuery) === "clustering";
+
+  const groupMessages = isGroups
+    ? [
+      groupQuery.error?.message,
+      groupQuery.data?.message ?? (groupQuery.data?.commanderName
+        ? isClustering
+          ? `Clusters of ${groupQuery.data.commanderName} decks (${groupQuery.data.modelDescription}).`
+          : `Neurons of ${groupQuery.data.commanderName}'s recommendation model (${groupQuery.data.modelDescription}).`
+        : undefined),
+      ...(groupQuery.data?.warnings ?? [])
+    ].filter(message => message !== undefined)
+    : [];
+
+  const messages = isGroups ? groupMessages : searchMessages;
 
   useEffect(() => {
     document.title = `MTGit Card Search Results`;
@@ -81,7 +103,7 @@ export function SearchResultsScreen() {
 
   const isLoadingRedownloaded = redownloadedCards.length !== cardIds.length;
 
-  const isLoading = isLoadingScryfall || isLoadingRedownloaded;
+  const isLoading = isGroups ? groupQuery.isLoading : isLoadingScryfall || isLoadingRedownloaded;
 
   useEffect(() => {
     fetchMissingCards(cardIds);
@@ -93,6 +115,10 @@ export function SearchResultsScreen() {
     [redownloadedCards]
   );
 
+
+  const isDeckDependentResultEmpty = isGroups
+    ? groupQuery.isError || groupQuery.data?.groups.length === 0
+    : isRecommendation && cardIds.length === 0;
 
   const handleSearchSubmit = () => {
     setQuery(`${defaultQueryField} ${searchQuery}`, selectedBranchContent);
@@ -164,33 +190,44 @@ export function SearchResultsScreen() {
 
       <Text size="sm" c="dimmed">
         {lockedInQuery
-          ? `Showing ${cardIds.length} result(s) for: ${lockedInQuery}`
-          : "Type a search and press Enter or click the search icon. Use order:rec for deck recommendations."}
+          ? isGroups
+            ? `Showing ${groupQuery.data?.groups.length ?? 0} ${isClustering ? "cluster" : "neuron"}(s) for: ${lockedInQuery}`
+            : `Showing ${cardIds.length} result(s) for: ${lockedInQuery}`
+          : "Type a search and press Enter or click the search icon. Use order:rec for deck recommendations, "
+            + "order:neurons to see what the recommendation model has learned about your commander, "
+            + "order:clustering for the kinds of decks built around it."}
       </Text>
       {
         messages.map(message => (
-          <Text key={message} size="sm" c={isRecommendation && cardIds.length === 0 ? "red" : "dimmed"}>
+          <Text key={message} size="sm" c={isDeckDependentResultEmpty ? "red" : "dimmed"}>
             {message}
           </Text>
         ))
       }
-      <CardGroup
-        cards={cardsWithTags}
-        sectionName="Main"
-        quicklyAdjustable
-        onCardSelect={location => {
-          openModal(
-            // location set to empty, since there is only one location, thus is not needed
-            cardIds
-              .map(oracle_id => {
-                return {oracle_id, location: {}};
-              }),
-            {oracle_id: location.oracle_id, location: {}}
-          );
-        }}
-        minWidth={190}
-        displayMode={"Images"}
-      />
+      {isGroups
+        ? (
+          <CommanderGroups
+            groups={groupQuery.data?.groups ?? []}
+            onCardSelect={openModal}
+          />
+        )
+        : <CardGroup
+          cards={cardsWithTags}
+          sectionName="Main"
+          quicklyAdjustable
+          onCardSelect={location => {
+            openModal(
+              // location set to empty, since there is only one location, thus is not needed
+              cardIds
+                .map(oracle_id => {
+                  return {oracle_id, location: {}};
+                }),
+              {oracle_id: location.oracle_id, location: {}}
+            );
+          }}
+          minWidth={190}
+          displayMode={"Images"}
+        />}
 
       {
         (isFetchingNextPage || isLoading) &&
