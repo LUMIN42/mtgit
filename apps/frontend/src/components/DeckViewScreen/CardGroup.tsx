@@ -4,7 +4,7 @@ import type {DeckSectionName, TaggedCard} from "@mtgit/shared";
 import {CardDisplayMode} from "../../context/DeckUiContext.tsx";
 import type {CardSortMode} from "../../types/grouping.ts";
 import {useElementSize} from "@mantine/hooks";
-import {useMemo} from "react";
+import {memo, useMemo} from "react";
 import {DeckGroupCardLocation} from "../../types/addressedCards.ts";
 
 interface CardGroupProps {
@@ -110,23 +110,14 @@ export function CardGroup({
       {!!columnCount &&
         cards.map(card => (
           <Grid.Col key={card.oracle_id} span={1}>
-            <Card
+            <CardGroupItem
               card={card}
               displayMode={displayMode}
-              onHoverImage={onCardHover}
-              onSelect={
-                onCardSelect &&
-                (() =>
-                  onCardSelect({
-                    oracle_id: card.oracle_id,
-                    location: {
-                      group: groupKey,
-                      section: sectionName ?? null
-                    }
-                  }))
-              }
+              onCardHover={onCardHover}
+              onCardSelect={onCardSelect}
+              groupKey={groupKey}
+              sectionName={sectionName}
               quicklyAdjustable={quicklyAdjustable}
-              deckSection={sectionName}
               comparison={comparison}
             />
           </Grid.Col>
@@ -135,3 +126,51 @@ export function CardGroup({
     </Grid>
   );
 }
+
+interface CardGroupItemProps {
+  card: TaggedCard;
+  displayMode: CardDisplayMode;
+  onCardHover?: (imageUrl: string | null) => void;
+  onCardSelect?: (location: DeckGroupCardLocation) => void;
+  groupKey: string;
+  sectionName?: DeckSectionName;
+  quicklyAdjustable: boolean;
+  comparison: boolean;
+}
+
+/**
+ * Memoized, so a group re-renders only the cards whose props changed (e.g. only the newly loaded search results),
+ * as long as the callbacks passed to the group are stable.
+ */
+const CardGroupItem = memo(function CardGroupItem({
+  card,
+  displayMode,
+  onCardHover,
+  onCardSelect,
+  groupKey,
+  sectionName,
+  quicklyAdjustable,
+  comparison
+}: CardGroupItemProps) {
+  return (
+    <Card
+      card={card}
+      displayMode={displayMode}
+      onHoverImage={onCardHover}
+      onSelect={
+        onCardSelect &&
+        (() =>
+          onCardSelect({
+            oracle_id: card.oracle_id,
+            location: {
+              group: groupKey,
+              section: sectionName ?? null
+            }
+          }))
+      }
+      quicklyAdjustable={quicklyAdjustable}
+      deckSection={sectionName}
+      comparison={comparison}
+    />
+  );
+});

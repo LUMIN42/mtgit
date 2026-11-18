@@ -1,41 +1,53 @@
-import {useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {ActionIcon, Button, Center, Group, Loader, Stack, Text, TextInput} from "@mantine/core";
 import {SearchBox} from "../components/SearchBox.tsx";
 import {CardGroup} from "../components/DeckViewScreen/CardGroup.tsx";
 import {CardDetailsModal} from "../components/DeckViewScreen/CardDetailsModal/CardDetailsModal.tsx";
-import {useDeckUiContext} from "../context/DeckUiContext.tsx";
 import {useCardSelectionManager} from "../hooks/CardSelectionManager.ts";
 import {useCardCache} from "../context/CardCacheContext.tsx";
 import {useRepositoryPreferences} from "../context/RepositoryPreferencesContext.tsx";
 import {IconCheck, IconPencil} from "@tabler/icons-react";
 import {Link} from "react-router-dom";
 import {useDeckUrlManager} from "../hooks/DeckUrlManager.tsx";
-import {useWindowScroll} from "@mantine/hooks";
 import {isDeckDependentQuery, groupSource, useScryfallCardRetriever} from "../utils/scryfallSearch.ts";
 import {useCommanderGroups} from "../utils/groupSearch.ts";
 import {CommanderGroups} from "../components/CommanderGroups.tsx";
 import {useRepositoryContext} from "../context/RepositoryContext.tsx";
+import type {DeckGroupCardLocation} from "../types/addressedCards.ts";
+import type {TaggedCard} from "@mtgit/shared";
+import type {OracleCard} from "@mtgit/shared/scryfall";
 
 export function SearchResultsScreen() {
 
-  const {searchQuery, setSearchQuery} = useDeckUiContext();
+  // the submitted query lives in the URL, so a reload repeats the search
+  const {buildDeckViewPath, searchQuery, navigateToSearch} = useDeckUrlManager();
 
-  const {preferences: {defaultQuery}, updatePreferences} = useRepositoryPreferences();
+  // text being typed into the search box, submitted into the URL on enter
+  const [searchText, setSearchText] = useState(searchQuery);
 
-  const [defaultQueryField, setDefaultQueryField] = useState(defaultQuery);
+  // follow the URL on back / forward navigation
+  useEffect(() => {
+    setSearchText(searchQuery);
+  }, [searchQuery]);
 
-  const [editingDefaultQuery, setEditingDefaultQuery] = useState<boolean>(false);
+  const {
+    preferences: {defaultQuery},
+    updatePreferences,
+    isPending: arePreferencesLoading
+  } = useRepositoryPreferences();
+
+  // draft of the default query, only used while it is being edited
+  const [defaultQueryDraft, setDefaultQueryDraft] = useState<string | null>(null);
+  const editingDefaultQuery = defaultQueryDraft !== null;
+
+  const saveDefaultQuery = () => {
+    if (defaultQueryDraft !== null && defaultQueryDraft !== defaultQuery) {
+      updatePreferences({defaultQuery: defaultQueryDraft.trim()});
+    }
+    setDefaultQueryDraft(null);
+  };
 
   const {selectedBranchContent, isLoading: isRepositoryLoading} = useRepositoryContext();
-
-  const {buildDeckViewPath} = useDeckUrlManager();
-
-  // recommendations are computed from the deck, so wait for it to load (relevant after a page reload)
-  useEffect(() => {
-    if (!isRepositoryLoading || !isDeckDependentQuery(searchQuery)) {
-      handleSearchSubmit();
-    }
-  }, [isRepositoryLoading]);
 
   const {fetchMissingCards, tryGetCard} = useCardCache();
 
@@ -49,21 +61,6 @@ export function SearchResultsScreen() {
     hasNextRight
   } = useCardSelectionManager();
 
-  const [scroll] = useWindowScroll();
-
-  useEffect(() => {
-    const threshold = window.innerHeight;
-
-    const atBottom =
-      window.scrollY + window.innerHeight >=
-      document.documentElement.scrollHeight - threshold;
-
-    // the group view shows everything at once, its scryfall query is disabled
-    if (atBottom && !isGroups) {
-      fetchNextPage();
-    }
-  }, [scroll.y]);
-
   const {
     fetchNextPage,
     ids: cardIds,
@@ -76,6 +73,24 @@ export function SearchResultsScreen() {
     isGroups,
     deck: lockedInDeck
   } = useScryfallCardRetriever();
+
+  const fullQuery = `${defaultQuery} ${searchQuery}`.trim();
+
+  // runs the search once everything it depends on is loaded (relevant after a page reload)
+  // and again whenever the query or the default query changes
+  useEffect(() => {
+    if (arePreferencesLoading) {
+      return;
+    }
+
+    // recommendations are computed from the deck, so wait for it to load
+    if (isDeckDependentQuery(fullQuery) && isRepositoryLoading) {
+      return;
+    }
+
+    // the deck is deliberately not a dependency, so adding a card does not reshuffle the recommendations
+    setQuery(fullQuery, selectedBranchContent);
+  }, [fullQuery, arePreferencesLoading, isRepositoryLoading]);
 
   const groupQuery = useCommanderGroups(lockedInQuery, lockedInDeck, isGroups);
   const isClustering = groupSource(lockedInQuery) === "clustering";
@@ -98,10 +113,40 @@ export function SearchResultsScreen() {
     document.title = `MTGit Card Search Results`;
   }, [lockedInQuery]);
 
-  const redownloadedCards = cardIds
-    .map(tryGetCard).filter(card => card !== undefined);
+  const redownloadedCards = useMemo(
+    () => cardIds.map(tryGetCard).filter(card => card !== undefined),
+    [cardIds, tryGetCard]
+  );
 
   const isLoadingRedownloaded = redownloadedCards.length !== cardIds.length;
+
+  // infinite scroll: load the next page once a sentinel below the results gets within a screen of the viewport,
+  // observing instead of listening to scroll events, which re-rendered the whole result grid on every scrolled pixel
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+
+    // the group view shows everything at once, its scryfall query is disabled
+    if (!sentinel || isGroups) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          fetchNextPage();
+        }
+      },
+      {rootMargin: "0px 0px 100% 0px"}
+    );
+
+    // observing reports the current state right away, so re-creating the observer after each loaded page
+    // keeps loading while the sentinel is still in view
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [isGroups, fetchNextPage, cardIds.length]);
 
   const isLoading = isGroups ? groupQuery.isLoading : isLoadingScryfall || isLoadingRedownloaded;
 
@@ -110,8 +155,18 @@ export function SearchResultsScreen() {
   }, [cardIds]);
 
 
+  // reuse the tagged object of every already shown card, so loading the next page re-renders only the new cards
+  const taggedCardCache = useRef(new WeakMap<OracleCard, TaggedCard>());
+
   const cardsWithTags = useMemo(
-    () => redownloadedCards.map(card => ({...card, tags: []})),
+    () => redownloadedCards.map(card => {
+      let tagged = taggedCardCache.current.get(card);
+      if (!tagged) {
+        tagged = {...card, tags: []};
+        taggedCardCache.current.set(card, tagged);
+      }
+      return tagged;
+    }),
     [redownloadedCards]
   );
 
@@ -120,14 +175,17 @@ export function SearchResultsScreen() {
     ? groupQuery.isError || groupQuery.data?.groups.length === 0
     : isRecommendation && cardIds.length === 0;
 
-  const handleSearchSubmit = () => {
-    setQuery(`${defaultQueryField} ${searchQuery}`, selectedBranchContent);
+  // stable, so the memoized cards in the grid do not re-render when unrelated screen state changes
+  const handleCardSelect = useCallback((location: DeckGroupCardLocation) => {
+    openModal(
+      // location set to empty, since there is only one location, thus is not needed
+      cardIds.map(oracle_id => ({oracle_id, location: {}})),
+      {oracle_id: location.oracle_id, location: {}}
+    );
+  }, [cardIds, openModal]);
 
-    if (defaultQueryField) {
-      updatePreferences({
-        defaultQuery: defaultQueryField
-      });
-    }
+  const handleSearchSubmit = (text: string) => {
+    navigateToSearch(text.trim());
   };
 
   return (
@@ -137,8 +195,8 @@ export function SearchResultsScreen() {
         {/*  todo rewrite as a chevron */}
       </Button>
       <SearchBox
-        value={searchQuery}
-        onChange={text => setSearchQuery(text)}
+        value={searchText}
+        onChange={setSearchText}
         onSearch={handleSearchSubmit}
         label={"Scryfall Search Query"}
       />
@@ -151,22 +209,20 @@ export function SearchResultsScreen() {
         {editingDefaultQuery ? (
           <>
             <TextInput
-              value={defaultQueryField}
-              onInput={event => setDefaultQueryField(event.currentTarget.value)}
+              value={defaultQueryDraft}
+              onChange={event => setDefaultQueryDraft(event.currentTarget.value)}
               onKeyDown={e => {
                 if (e.key === "Enter") {
-                  handleSearchSubmit();
+                  saveDefaultQuery();
                 }
               }}
+              autoFocus
               style={{flex: 1}}
             />
 
             <ActionIcon
               variant={"gradient"}
-              onClick={() => {
-                handleSearchSubmit();
-                setEditingDefaultQuery(false);
-              }}
+              onClick={saveDefaultQuery}
             >
               <IconCheck/>
             </ActionIcon>
@@ -174,12 +230,12 @@ export function SearchResultsScreen() {
         ) : (
           <>
             <Text size="xs">
-              {defaultQueryField}
+              {defaultQuery}
             </Text>
             <ActionIcon
               variant="white"
               size="xs"
-              onClick={() => setEditingDefaultQuery(true)}
+              onClick={() => setDefaultQueryDraft(defaultQuery)}
             >
               <IconPencil size={14} color="var(--mantine-color-dimmed)"/>
             </ActionIcon>
@@ -215,19 +271,12 @@ export function SearchResultsScreen() {
           cards={cardsWithTags}
           sectionName="Main"
           quicklyAdjustable
-          onCardSelect={location => {
-            openModal(
-              // location set to empty, since there is only one location, thus is not needed
-              cardIds
-                .map(oracle_id => {
-                  return {oracle_id, location: {}};
-                }),
-              {oracle_id: location.oracle_id, location: {}}
-            );
-          }}
+          onCardSelect={handleCardSelect}
           minWidth={190}
           displayMode={"Images"}
         />}
+
+      <div ref={loadMoreSentinelRef}/>
 
       {
         (isFetchingNextPage || isLoading) &&

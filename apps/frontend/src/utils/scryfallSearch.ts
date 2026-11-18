@@ -6,7 +6,7 @@ import {
   type GroupSource,
   type ScryfallApiOracleCard
 } from "@mtgit/shared";
-import {useState} from "react";
+import {useMemo, useState} from "react";
 import {InfiniteData, useInfiniteQuery} from "@tanstack/react-query";
 import {trpcRaw} from "../trpcClient.ts";
 
@@ -210,8 +210,19 @@ export function useScryfallCardRetriever() {
     enabled: queryString.length > 0 && !isGroups
   });
 
+  // memoized, so consumers re-render the result grid only when a page actually arrives
+  const ids = useMemo(
+    () => query.data?.pages.flatMap(page => page.ok ? page.cards : []) ?? [],
+    [query.data]
+  );
+
+  const messages = useMemo(
+    () => query.data?.pages.flatMap(page => page.message ? [page.message] : []) ?? [],
+    [query.data]
+  );
+
   return {
-    ids: query.data?.pages.flatMap(page => page.ok ? page.cards : []) ?? [],
+    ids,
 
     query: queryString,
     /** deck the submitted query was made for */
@@ -222,7 +233,7 @@ export function useScryfallCardRetriever() {
     setQuery: (query: string, deck: DeckCardCounts = {}) => setSubmitted({query, deck}),
     isRecommendation,
     isGroups,
-    messages: query.data?.pages.flatMap(page => page.message ? [page.message] : []) ?? [],
+    messages,
 
     ...query
   };

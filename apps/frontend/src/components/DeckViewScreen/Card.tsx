@@ -2,7 +2,7 @@ import {Box, Text, Image, Overlay, Paper, ActionIcon, Tooltip, Stack, Loader, Gr
 import {type DeckCard, DeckSectionName, getCardImageUrls, isDeckCard} from "@mtgit/shared";
 import type {OracleCard} from "@mtgit/shared/scryfall";
 import {CardDisplayMode} from "../../context/DeckUiContext.tsx";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import CardAmountEditor from "./CardAmountEditor.tsx";
 import {IconRefresh} from "@tabler/icons-react";
 import {useDeckUrlManager} from "../../hooks/DeckUrlManager.tsx";
@@ -34,7 +34,8 @@ export function Card({
   imageStyle = {},
   comparison = false
 }: CardProps) {
-  const imageUrls = getCardImageUrls(card);
+  // stable per card, so the effect below does not run on every render
+  const imageUrls = useMemo(() => getCardImageUrls(card), [card]);
   const {editedBranchName} = useDeckUrlManager();
 
   const [currentFaceImageUrl, setCurrentFaceImageUrl] = useState<string>(imageUrls[0]);
@@ -148,7 +149,8 @@ export function Card({
         imageUrls.map(
           (imageUrl, imageIdx) => <Image
             onClick={() => onSelect?.(card)}
-            loading={"eager"}
+            // front faces load lazily as they near the viewport, back faces eagerly so flipping is instant
+            loading={imageIdx === 0 ? "lazy" : "eager"}
             src={imageUrl}
             key={imageUrl}
             alt={card.name}

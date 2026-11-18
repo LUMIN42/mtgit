@@ -9,6 +9,8 @@ type RepositoryPreferencesContextValue = {
   preferences: RepositoryPreferences;
   updatePreferences: (p: Partial<RepositoryPreferences>) => void;
   isFetching: boolean;
+  /** true until the preferences are first loaded, unlike isFetching not set again by refetches */
+  isPending: boolean;
 };
 
 const RepositoryPreferencesContext = createContext<RepositoryPreferencesContextValue | undefined>(
@@ -55,7 +57,7 @@ export function RepositoryPreferencesProvider({
     [repositoryId]
   );
 
-  const {data, isFetching} = trpcHooks.repositoryPreferences.get.useQuery(
+  const {data, isFetching, isPending} = trpcHooks.repositoryPreferences.get.useQuery(
     preferencesQueryKey
   );
 
@@ -104,9 +106,10 @@ export function RepositoryPreferencesProvider({
     () => ({
       preferences,
       updatePreferences,
-      isFetching
+      isFetching,
+      isPending
     }),
-    [preferences, updatePreferences, isFetching]
+    [preferences, updatePreferences, isFetching, isPending]
   );
 
   return (

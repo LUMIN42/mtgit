@@ -3,6 +3,8 @@ import {useNavigate, useParams, useSearchParams} from "react-router-dom";
 export const EDITED_BRANCH_NAME_URL_KEY = "SelectedBranchName";
 export const COMPARISON_BRANCH_NAME_URL_KEY = "ComparisonBranchName";
 export const COMPARISON_SNAPSHOT_ID_URL_KEY = "ComparisonSnapshotId";
+/** scryfall query of the search screen, kept in the URL so it survives a reload */
+export const SEARCH_QUERY_URL_KEY = "q";
 
 /**
  * Screens of a deck, relative to the deck's base path.
@@ -23,6 +25,7 @@ export function useDeckUrlManager() {
   const editedBranchName = searchParams.get(EDITED_BRANCH_NAME_URL_KEY) ?? undefined;
   const comparisonBranchName = searchParams.get(COMPARISON_BRANCH_NAME_URL_KEY) ?? undefined;
   const comparisonSnapshotId = searchParams.get(COMPARISON_SNAPSHOT_ID_URL_KEY) ?? undefined;
+  const searchQuery = searchParams.get(SEARCH_QUERY_URL_KEY) ?? "";
 
   /**
    * @param extraParams added next to the edited branch
@@ -82,14 +85,19 @@ export function useDeckUrlManager() {
     navigate(buildDeckViewPath());
   }
 
-  function navigateToSearch() {
-    navigate(buildSearchPath());
+  /**
+   * Opens the search screen with the query, also used to submit a new query from it,
+   * each search becoming its own history entry.
+   */
+  function navigateToSearch(query: string) {
+    navigate(buildDeckPath("search", query ? {[SEARCH_QUERY_URL_KEY]: query} : {}));
   }
 
   return {
     editedBranchName,
     comparisonBranchName,
     comparisonSnapshotId,
+    searchQuery,
     setEditedBranchName,
     swapBranches,
     setComparisonBranchName,

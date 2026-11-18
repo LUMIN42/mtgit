@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useCallback, useState} from "react";
 import {CardLocation} from "../types/addressedCards.ts";
 
 function equalRecords(
@@ -9,6 +9,20 @@ function equalRecords(
     if (a[key] !== b[key]) return false;
   }
   return true;
+}
+
+function findIndexInArray(location: CardLocation, locations: CardLocation[]) {
+  const foundIndex = locations.findIndex(
+    card => card.oracle_id === location.oracle_id
+      &&
+      equalRecords(card.location, location.location)
+  );
+
+  if (foundIndex === -1) {
+    throw new Error(`Could not find location ${location}`);
+  }
+
+  return foundIndex;
 }
 
 /**
@@ -24,29 +38,16 @@ export function useCardSelectionManager() {
 
   const oracleId = index != null ? locations[index]?.oracle_id : null;
 
-  function findIndexInArray(location: CardLocation, locations: CardLocation[]) {
-    const foundIndex = locations.findIndex(
-      card => card.oracle_id === location.oracle_id
-        &&
-        equalRecords(card.location, location.location)
-    );
-
-    if (foundIndex === -1) {
-      throw new Error(`Could not find location ${location}`);
-    }
-
-    return foundIndex;
-  }
-
-  function openModal(
+  // stable, so components receiving it as a prop can be memoized
+  const openModal = useCallback((
     allLocations: CardLocation[],
     selectedLocation: CardLocation
-  ) {
+  ) => {
     setLocations(allLocations);
     setIndex(
       findIndexInArray(selectedLocation, allLocations)
     );
-  }
+  }, []);
 
   function closeModal() {
     setIndex(null);
