@@ -269,7 +269,8 @@ export const ScryfallSearchListSchema = z.object({
   data: z.array(ScryfallApiCardIdSchema),
   total_cards: z.number().int().nonnegative(),
   next_page: z.string().optional(),
-  warnings: z.array(z.string()).optional()
+  // nullish like in ScryfallErrorSchema, in case lists also send null
+  warnings: z.array(z.string()).nullish()
 });
 
 export const ScryfallErrorSchema = z.object({
@@ -278,7 +279,8 @@ export const ScryfallErrorSchema = z.object({
   status: z.number().int(),
   details: z.string(),
   type: z.string().optional(),
-  warnings: z.array(z.string()).optional()
+  // scryfall sends null in some errors, e.g. unclosed parentheses
+  warnings: z.array(z.string()).nullish()
 });
 
 export const ScryfallSearchResponseSchema = z.union([
