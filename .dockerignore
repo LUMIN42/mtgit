@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+secrets.txt
+.git
+.idea
+.vercel
+# Windows-generated lock misses Linux native bindings; also ignored by git/Vercel
+package-lock.json

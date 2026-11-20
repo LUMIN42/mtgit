@@ -250,6 +250,7 @@ export function SearchResultsScreen() {
             ? `Showing ${groupQuery.data?.groups.length ?? 0} ${isClustering ? "cluster" : "neuron"}(s) for: ${lockedInQuery}`
             : `Showing ${cardIds.length} result(s) for: ${lockedInQuery}`
           : "Type a search and press Enter or click the search icon. Use order:rec for deck recommendations, "
+            + "order:color-elsa for recommendations from your commander's color identity model alone, "
             + "order:neurons to see what the recommendation model has learned about your commander, "
             + "order:clustering for the kinds of decks built around it."}
       </Text>

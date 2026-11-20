@@ -23,6 +23,17 @@ By default, this starts:
 - API: `http://localhost:3001`
 
 
+## Docker
+
+Frontend and API run in one container (the API serves the built frontend). It reads `MONGODB_URI` from
+`apps/api/.env` and reaches the recommender of `../mtgit recsys` on the host's port 5000.
+
+```bash
+docker compose up -d --build
+```
+
+Then open `http://localhost:3000`.
+
 ## Code Structure
 - [Data Structure Definitions](packages/shared/src)
 - [Frontend](apps/frontend)

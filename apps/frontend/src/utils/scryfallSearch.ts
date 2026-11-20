@@ -1,9 +1,11 @@
 import {
   GroupSourceSchema,
   parseCardQuery,
+  recommendationModelForOrder,
   ScryfallSearchResponseSchema,
   type DeckCardCounts,
   type GroupSource,
+  type RecommendationModel,
   type ScryfallApiOracleCard
 } from "@mtgit/shared";
 import {useMemo, useState} from "react";
@@ -12,10 +14,18 @@ import {trpcRaw} from "../trpcClient.ts";
 
 /**
  * `order:rec` makes the search list recommendations for the deck instead of querying scryfall,
+ * `order:color-elsa` the same ranked by the commander's color identity ELSA alone;
  * the rest of the query then filters the recommendations.
  */
 export function isRecommendationQuery(query: string): boolean {
-  return parseCardQuery(query).directives.order === "rec";
+  return recommendationModel(query) !== undefined;
+}
+
+/**
+ * @returns which recommendation model an `order:rec` or `order:color-elsa` query asks for, undefined for other queries
+ */
+export function recommendationModel(query: string): RecommendationModel | undefined {
+  return recommendationModelForOrder(parseCardQuery(query).directives.order);
 }
 
 /**
@@ -128,12 +138,15 @@ async function fetchRecommendationPage(
   page: number
 ): Promise<ScryfallSearchPageResult> {
   try {
-    const result = await trpcRaw.recommendations.search.query({deck, query, page});
+    const model = recommendationModel(query) ?? "blend";
+    const result = await trpcRaw.recommendations.search.query({deck, query, page, model});
 
     // every page repeats the same notes, show them only once
     const notes = page === 1
       ? [
-        result.message ?? (result.commanderName ? `Recommendations for ${result.commanderName}.` : undefined),
+        result.message ?? (result.commanderName
+          ? `Recommendations for ${result.commanderName}${model === "color-elsa" ? " (color identity ELSA only)" : ""}.`
+          : undefined),
         ...result.warnings
       ]
       : [];

@@ -15,9 +15,11 @@ import {
   CardGroupSchema,
   GroupSourceSchema,
   OracleIdSchema,
+  RecommendationModelSchema,
   type DeckCardCounts,
   type GroupSource,
-  type OracleId
+  type OracleId,
+  type RecommendationModel
 } from "@mtgit/shared";
 
 const RECSYS_API_URL = (process.env.RECSYS_API_URL ?? "http://127.0.0.1:5000").replace(/\/+$/, "");
@@ -32,7 +34,8 @@ const NO_COMMANDER_MESSAGE = "Recommendations need a commander. Add one to the d
 const RecommendRequestSchema = z.object({
   commander: OracleIdSchema,
   /** the whole deck including the commanders, oracle id -> count */
-  deck: CardCountsSchema
+  deck: CardCountsSchema,
+  model: RecommendationModelSchema
 });
 
 /** response of `POST /recommend` */
@@ -197,12 +200,13 @@ async function callRecsys<Schema extends z.ZodType>(
  */
 async function computeRecommendations(
   commanders: OracleId[],
-  deck: z.infer<typeof CardCountsSchema>
+  deck: z.infer<typeof CardCountsSchema>,
+  model: RecommendationModel
 ): Promise<Recommendations> {
   const messages: string[] = [];
 
   for (const commander of commanders) {
-    const body = RecommendRequestSchema.parse({commander, deck});
+    const body = RecommendRequestSchema.parse({commander, deck, model});
 
     // 404: no model for the commander, 422: no card of the deck is known to the model
     const result = await callRecsys(
@@ -231,9 +235,13 @@ async function computeRecommendations(
 }
 
 /**
+ * @param model the commander's model blended with its color identity's, or the color identity's ELSA alone
  * @returns the full recommendation ranking for a deck.
  */
-export async function getRecommendations(deckCounts: DeckCardCounts): Promise<Recommendations> {
+export async function getRecommendations(
+  deckCounts: DeckCardCounts,
+  model: RecommendationModel = "blend"
+): Promise<Recommendations> {
   const commanders = Object.keys(deckCounts.Commander ?? {});
 
   if (commanders.length === 0) {
@@ -243,7 +251,7 @@ export async function getRecommendations(deckCounts: DeckCardCounts): Promise<Re
   return computeRecommendations(commanders, {
     ...deckCounts.Main,
     ...deckCounts.Commander
-  });
+  }, model);
 }
 
 // ---------- groups ----------

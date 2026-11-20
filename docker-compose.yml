@@ -1,0 +1,22 @@
+# Frontend + API in one container: `docker compose up -d --build`, then open http://localhost:3000
+# Own project name so it never collides with the "mtgit" project of ../mtgit recsys.
+name: mtgit-app
+
+services:
+  app:
+    build: .
+    container_name: mtgit-app
+    ports:
+      - "3000:3000"
+    # Provides MONGODB_URI (and anything else set there)
+    env_file:
+      - path: apps/api/.env
+        required: false
+    environment:
+      PORT: 3000
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:3000}
+      # Recsys API published by ../mtgit recsys on the host's port 5000
+      RECSYS_API_URL: ${RECSYS_API_URL:-http://host.docker.internal:5000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

@@ -16,6 +16,8 @@ import {filterOracleIds, listEligibleOracleIdsByEdhrec} from "../services/cardQu
 export const recommendationsRouter = router({
   /**
    * Paginated card recommendations for a deck, best first, filtered by a scryfall-like query.
+   * `model` picks the ranking: the commander's model blended with its color identity's (`order:rec`),
+   * or the color identity's ELSA alone (`order:color-elsa`); the frontend sets it from the directive.
    * Directives in the query (like `order:rec`) are ignored, unsupported parts are reported in `warnings`.
    * After the recommendations, every other eligible card (commander legal, within the commanders' identity) follows by EDHREC rank.
    * Mirrors the shape of a scryfall search page so the search screen can treat both alike.
@@ -25,7 +27,7 @@ export const recommendationsRouter = router({
     .output(RecommendationSearchOutputSchema)
     .query(async ({input}) => {
       const {filter, warnings} = parseCardQuery(input.query);
-      const recommendations = await getRecommendations(input.deck);
+      const recommendations = await getRecommendations(input.deck, input.model);
       const recommended = await filterOracleIds(recommendations.cards, filter);
 
       const start = (input.page - 1) * input.pageSize;
